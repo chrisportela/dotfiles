@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+mapfile -t dirs < <(find "${HOME}" -maxdepth 2 -type d -name ".git" ! -path "${HOME}")
+
+for dir in "${dirs[@]}"; do
+	dir=$(dirname "$dir")
+	base=$(basename "$dir")
+
+	echo "Updating repo for ${base}..."
+	echo
+	(
+	cd "$dir"
+	git pull
+
+	case "$base" in
+		".vim")
+			echo
+			echo "Running 'make update' in .vim repo..."
+			make update
+			git status
+			;;
+		".dotfiles")
+			echo
+			echo "Running 'make' in dotfiles repo..."
+			make
+			;;
+	esac
+
+	echo
+	echo "Successfully updated ${base}!"
+	echo
+	)
+done
