@@ -1,6 +1,7 @@
 [user]
 	name = cmp
 	email = me@cmp.is
+	signingkey = 0x7704CA15B81FB227
 
 [alias]
 	co = checkout
