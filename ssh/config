@@ -1,0 +1,21 @@
+PKCS11Provider /usr/local/lib/opensc-pkcs11.so
+
+Host github.com
+    HostName github.com
+    Port 22
+    IdentityFile ~/.ssh/id_rsa_yubikey.pub
+    IdentitiesOnly yes
+
+Host nas
+    HostName 192.168.2.86
+    User cmp
+    Port 6120
+    IdentityFile ~/.ssh/id_rsa_yubikey.pub
+    IdentitiesOnly yes
+
+Host alpine1
+    HostName 192.168.2.74
+    User cmp
+    Port 22
+    IdentityFile ~/.ssh/id_rsa_yubikey.pub
+    IdentitiesOnly yes
