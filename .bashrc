@@ -107,3 +107,10 @@ for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports}; do
 	fi
 done
 unset file
+
+export VIRTUALENVWRAPPER_PYTHON="$(which python3)"
+source "$HOME/Library/Python/3.7/bin/virtualenvwrapper.sh"
+
+
+# heroku autocomplete setup
+HEROKU_AC_BASH_SETUP_PATH=/Users/cmp/Library/Caches/heroku/autocomplete/bash_setup && test -f $HEROKU_AC_BASH_SETUP_PATH && source $HEROKU_AC_BASH_SETUP_PATH;
