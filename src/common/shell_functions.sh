@@ -34,16 +34,6 @@ dataurl() {
 	echo "data:${mimeType};base64,$(openssl base64 -in "$1" | tr -d '\n')"
 }
 
-# `v` with no arguments opens the current directory in Vim, otherwise opens the
-# given location
-v() {
-	if [ $# -eq 0 ]; then
-		vim .
-	else
-		vim "$@"
-	fi
-}
-
 # `o` with no arguments opens the current directory, otherwise opens the given
 # location
 o() {
@@ -119,86 +109,31 @@ man() {
 		man "$@"
 }
 
-restart_gpgagent(){
-	# Restart the gpg agent.
-	# shellcheck disable=SC2046
-	killall scdaemon >/dev/null 2>&1
-	# shellcheck disable=SC2046
-	killall gpg-agent >/dev/null 2>&1
-	gpg-connect-agent /bye >/dev/null 2>&1
-	gpg-connect-agent updatestartuptty /bye >/dev/null 2>&1
-}
 
 gitsetoriginnopush() {
 	git remote set-url --push origin no_push
 }
 
-# build go static binary from root of project
-gostatic(){
-	local dir=$1
-	local arg=$2
 
-	if [[ -z $dir ]]; then
-		dir=$(pwd)
-	fi
+gco () {
+    if [[ ! -z "$1" ]]; then
+        git checkout $@
+        return
+    fi
 
-	local name
-	name=$(basename "$dir")
-	(
-	cd "$dir" || exit
-	export GOOS=linux
-	echo "Building static binary for $name in $dir"
-
-	case $arg in
-		"netgo")
-			set -x
-			go build -a \
-				-tags 'netgo static_build' \
-				-installsuffix netgo \
-				-ldflags "-w" \
-				-o "$name" .
-			;;
-		"cgo")
-			set -x
-			CGO_ENABLED=1 go build -a \
-				-tags 'cgo static_build' \
-				-ldflags "-w -extldflags -static" \
-				-o "$name" .
-			;;
-		*)
-			set -x
-			CGO_ENABLED=0 go build -a \
-				-installsuffix cgo \
-				-ldflags "-w" \
-				-o "$name" .
-			;;
-	esac
-	)
+    git checkout $(git branch --color=always --sort=-committerdate --format='%(refname:short)' | fzf)
 }
 
-# go to a folder easily in your gopath
-gogo(){
-	local d=$1
+switch-darwin () {
+    darwin-rebuild switch --flake $HOME/src/dotfiles
+}
 
-	if [[ -z $d ]]; then
-		echo "You need to specify a project name."
-		return 1
-	fi
+switch-nix () {
+    sudo nixos-rebuild switch --flake $HOME/src/dotfiles
+}
 
-	if [[ "$d" == github* ]]; then
-		d=$(echo "$d" | sed 's/.*\///')
-	fi
-	d=${d%/}
+switch-home () {
+    local dotfiles=${DOTFILES_DIR:="$HOME/src/dotfiles"}
 
-	# search for the project dir in the GOPATH
-	mapfile -t path < <(find "${GOPATH}/src" \( -type d -o -type l \) -iname "$d"  | awk '{print length, $0;}' | sort -n | awk '{print $2}')
-
-	if [ "${path[0]}" == "" ] || [ "${path[*]}" == "" ]; then
-		echo "Could not find a directory named $d in $GOPATH"
-		echo "Maybe you need to 'go get' it ;)"
-		return 1
-	fi
-
-	# enter the first path found
-	cd "${path[0]}" || return 1
+    home-manager switch --flake $dotfiles
 }

@@ -1,30 +1,25 @@
-[user]
-	name = cmp
-	email = me@cmp.is
-	signingkey = 0x7704CA15B81FB227
-
 [alias]
 	co = checkout
 	cm = !git add -A && git commit
 	br = branch
-        ci = commit
-        st = status
-        unstage = reset HEAD --
-        recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
-        overview = log --all --oneline --no-merges
-        recap = !git log --all --oneline --no-merges --author=${1-$(git config user.email)}
-        today = !git log --all --since=00:00:00 --oneline --no-merges --author=${1-$(git config user.email)}
-        changelog = !git log --oneline --no-merges ${1-$(git describe --abbrev=0)}..HEAD
-        upstream = !git log --oneline --no-merges HEAD..${1-$(git branch -lvv | perl -ne '/^\\*.*\\[(.*?)\\]/ and print "$1\n"')}
-        local = !git log --oneline --no-merges ${1-$(git branch -lvv | perl -ne '/^\\*.*\\[(.*?)\\]/ and print "$1\n"')}..HEAD
-        graph = log --oneline --graph --all --decorate --date=iso
-        save = !git add -A && git commit -m 'SAVEPOINT'
-        undo = reset HEAD~1 --mixed
-        lint = !git branch --merged | grep -v \"^\\s*master$\" | grep -v \"\\*\" | xargs -n 1 git branch -d
+  ci = commit
+  st = status
+  unstage = reset HEAD --
+  recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
+  overview = log --all --oneline --no-merges
+  recap = !git log --all --oneline --no-merges --author=${1-$(git config user.email)}
+  today = !git log --all --since=00:00:00 --oneline --no-merges --author=${1-$(git config user.email)}
+  changelog = !git log --oneline --no-merges ${1-$(git describe --abbrev=0)}..HEAD
+  upstream = !git log --oneline --no-merges HEAD..${1-$(git branch -lvv | perl -ne '/^\\*.*\\[(.*?)\\]/ and print "$1\n"')}
+  local = !git log --oneline --no-merges ${1-$(git branch -lvv | perl -ne '/^\\*.*\\[(.*?)\\]/ and print "$1\n"')}..HEAD
+  graph = log --oneline --graph --all --decorate --date=iso
+  save = !git add -A && git commit -m 'SAVEPOINT'
+  undo = reset HEAD~1 --mixed
+  lint = !git branch --merged | grep -v \"^\\s*master$\" | grep -v \"\\*\" | xargs -n 1 git branch -d
 
 	# View abbreviated SHA, description, and history graph of the latest 20 commits
 	l = log --pretty=oneline -n 20 --graph --abbrev-commit
-	
+
 	# View the current working tree status using the short format
 	s = status -s
 
