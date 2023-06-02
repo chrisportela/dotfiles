@@ -1,7 +1,7 @@
 ({ pkgs, lib, config, ... }: {
   imports = [ ];
   home.username = lib.mkDefault "cmp";
-  home.homeDirectory = lib.mkDefault if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}";
+  home.homeDirectory = lib.mkDefault (if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}");
   home.stateVersion = lib.mkDefault "22.11";
   home.packages = with pkgs; [
     curl
