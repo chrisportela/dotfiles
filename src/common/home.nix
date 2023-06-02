@@ -1,28 +1,18 @@
 ({ pkgs, lib, config, ... }: {
   imports = [ ];
   home.username = lib.mkDefault "cmp";
-  home.homeDirectory = lib.mkDefault "/home/${config.home.username}";
+  home.homeDirectory = lib.mkDefault if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}";
   home.stateVersion = lib.mkDefault "22.11";
   home.packages = with pkgs; [
-    nixpkgs-fmt
-    fd
-    fzf
-    bat
+    curl
     ripgrep
     ripgrep-all
     du-dust
-    delta
-    # rmesg
-    grex
-    bandwhich
-    bottom
-    sd
-    curl
-    jq
-    github-cli
   ];
 
   home.shellAliases = {
+    "reload" = "[[ -o login ]] && exec $SHELL -l || exec $SHELL";
+
     "g" = "${pkgs.git}/bin/git ";
     "gs" = "${pkgs.git}/bin/git status ";
     "gl" = "${pkgs.git}/bin/git log ";
@@ -33,13 +23,14 @@
     "fpush" = "${pkgs.git}/bin/git push --force-with-lease";
     "pull" = "${pkgs.git}/bin/git pull --ff --tags --prune";
     "fpull" = "${pkgs.git}/bin/git pull --force --ff --tags --prune";
+    # "grh" = "git reset --hard origin/HEAD";
+
+    # These are just nice helpers for whatever "terraform" is in the environment.
     "t" = "terraform";
     "tf" = "terraform";
     "tip" = "terraform init && terraform plan -out plan.out";
     "tp" = "terraform plan -out plan.out";
     "tap" = "terraform apply plan.out";
-    # "grh" = "git reset --hard origin/HEAD";
-    "reload" = "exec $SHELL -l";
   };
 
   programs.home-manager.enable = true;

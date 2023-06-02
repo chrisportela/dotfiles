@@ -135,5 +135,5 @@ switch-nix () {
 switch-home () {
     local dotfiles=${DOTFILES_DIR:="$HOME/src/dotfiles"}
 
-    home-manager switch --flake $dotfiles
+    home-manager switch -b backup --flake $dotfiles
 }
