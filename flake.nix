@@ -200,6 +200,7 @@
         default = pkgs.mkShell {
           # The Nix packages provided in the environment
           packages = (with pkgs; [
+            cachix
             nixVersions.nix_2_14
             nixpkgs-fmt
             shfmt
