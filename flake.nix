@@ -1,6 +1,11 @@
 {
   description = "My Home Manager flake";
 
+  nixConfig = {
+    extra-substituters = [ "https://chrisportela.cachix.org" ];
+    extra-trusted-public-keys = [ "chrisportela.cachix.org-1:pynxY+k9+yz8noyGAYjfqkZMO5zkVauwcBwEoD3tkZk=" ];
+  };
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixpkgs-22_05.url = "github:nixos/nixpkgs/nixos-22.05-aarch64";
@@ -54,7 +59,7 @@
         "aarch64-darwin" # 64-bit ARM macOS
       ];
 
-      importPkgs = (system: import nixpkgs {inherit overlays system;});
+      importPkgs = (system: import nixpkgs { inherit overlays system; });
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
@@ -68,7 +73,7 @@
       overlays = { };
 
       packages = forAllSystems
-        ({ pkgs }: {
+        ({ pkgs }: rec {
           hush = pkgs.rustPlatform.buildRustPackage rec {
             pname = "hush";
             version = "0.1.5a";
@@ -86,8 +91,16 @@
               maintainers = [ ];
             };
           };
+          home-mba = homeConfigurations."cmp@cp-mba".activationPackage;
+          home-rs2 = homeConfigurations."cmp@rs2".activationPackage;
+          home-deck = homeConfigurations."deck@steamdeck".activationPackage;
+          home-nixserver = homeConfigurations."cmp@nix".activationPackage;
+          all = pkgs.symlinkJoin {
+            name = "all";
+            paths = [ home-mba home-rs2 home-deck home-nixserver ];
+          };
+          default = all;
         });
-
 
       generators = {
         vm-install-iso = inputs.nixos-generators.nixosGenerate {
