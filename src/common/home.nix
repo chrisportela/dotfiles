@@ -12,6 +12,7 @@
 
   home.shellAliases = {
     "reload" = "[[ -o login ]] && exec $SHELL -l || exec $SHELL";
+    "realcd" = "cd $(${pkgs.coreutils}/bin/readlink -f .)";
 
     "g" = "${pkgs.git}/bin/git ";
     "gs" = "${pkgs.git}/bin/git status ";

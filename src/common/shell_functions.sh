@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# change into directory of a file
+cdd() {
+  cd $(dirname $@)
+}
+
 # Create a new directory and enter it
 mkd() {
 	mkdir -p "$@"
