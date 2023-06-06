@@ -36,8 +36,8 @@
     parted
     openssl_3
   ];
-  environment.variables = { 
-    EDITOR = "vim"; 
+  environment.variables = {
+    EDITOR = "vim";
   };
 
   networking = {
