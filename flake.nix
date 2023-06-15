@@ -63,6 +63,7 @@
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
+        inherit system;
         pkgs = (importPkgs system);
       });
 
@@ -73,7 +74,7 @@
       overlays = { };
 
       packages = forAllSystems
-        ({ pkgs }: rec {
+        ({ pkgs, system }: rec {
           hush = pkgs.rustPlatform.buildRustPackage rec {
             pname = "hush";
             version = "0.1.5a";
@@ -100,36 +101,15 @@
             paths = [ home-mba home-rs2 home-deck home-nixserver ];
           };
           default = all;
-        });
-
-      generators = {
-        vm-install-iso = inputs.nixos-generators.nixosGenerate {
-          system = "aarch64-linux";
-          modules = [
-            nixosModules.nixpkgs_overlay
-            inputs.vscode-server.nixosModule
-            ./src/machines/vm/configuration.nix
-          ];
-          format = "install-iso";
+        }) // {
+        installer = {
+          x86_64-linux = let pkgs = importPkgs "x86_64-linux"; in (pkgs.callPackage ./src/installer.nix {
+            system = "x86_64-linux";
+            nixosGenerate = inputs.nixos-generators.nixosGenerate;
+            nixpkgs_overlay = nixosModules.nixpkgs_overlay;
+          });
         };
       };
-
-      checks = forAllSystems ({ pkgs }: {
-        shell-functions = pkgs.stdenvNoCC.mkDerivation {
-          name = "shell-functions-check";
-          dontBuild = true;
-          src = ./src/common/shell_functions.sh;
-          nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
-          checkPhase = ''
-            shfmt -d -s -i 2 -ci ${./src/common/shell_functions.sh}
-            alejandra -c .
-            shellcheck -x ${./src/common/shell_functions.sh}
-          '';
-          installPhase = ''
-            mkdir "$out"
-          '';
-        };
-      });
 
       homeConfigurations = {
         "cmp@cp-mba" = home-manager.lib.homeManagerConfiguration {
@@ -209,7 +189,7 @@
         };
       };
 
-      devShells = forAllSystems ({ pkgs }: {
+      devShells = forAllSystems ({ pkgs, system }: {
         default = pkgs.mkShell {
           # The Nix packages provided in the environment
           packages = (with pkgs; [
@@ -218,9 +198,29 @@
             nixpkgs-fmt
             shfmt
             shellcheck
-            packages.${pkgs.stdenv.system}.hush
+            packages.${system}.hush
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ]);
         };
       });
+
+      checks = forAllSystems
+        ({ pkgs, system }: {
+          homeConfigurations = packages.${system}.installer;
+
+          shell-functions = pkgs.stdenvNoCC.mkDerivation {
+            name = "shell-functions-check";
+            dontBuild = true;
+            src = ./src/common/shell_functions.sh;
+            nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
+            checkPhase = ''
+              shfmt -d -s -i 2 -ci ${./src/common/shell_functions.sh}
+              alejandra -c .
+              shellcheck -x ${./src/common/shell_functions.sh}
+            '';
+            installPhase = ''
+              mkdir "$out"
+            '';
+          };
+        });
     };
 }
