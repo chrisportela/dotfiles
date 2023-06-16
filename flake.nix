@@ -102,13 +102,15 @@
           };
           default = all;
         }) // {
-        installer = {
-          x86_64-linux = let pkgs = importPkgs "x86_64-linux"; in (pkgs.callPackage ./src/installer.nix {
+        x86_64-linux.installer =
+          let
+            pkgs = importPkgs "x86_64-linux";
+          in
+          (pkgs.callPackage ./src/installer.nix {
             system = "x86_64-linux";
             nixosGenerate = inputs.nixos-generators.nixosGenerate;
             nixpkgs_overlay = nixosModules.nixpkgs_overlay;
           });
-        };
       };
 
       homeConfigurations = {
