@@ -102,15 +102,205 @@
           };
           default = all;
         }) // {
-        x86_64-linux.installer =
+        x86_64-linux =
           let
-            pkgs = importPkgs "x86_64-linux";
-          in
-          (pkgs.callPackage ./src/installer.nix {
             system = "x86_64-linux";
+            pkgs = (importPkgs system);
+            modulesPath = (toString nixpkgs) + "/nixos/modules";
             nixosGenerate = inputs.nixos-generators.nixosGenerate;
             nixpkgs_overlay = nixosModules.nixpkgs_overlay;
-          });
+            mkContainer = { name ? "base", config }: (import ./src/lib/proxmox.nix).mkContainer { inherit system nixosGenerate nixpkgs_overlay modulesPath name config; };
+          in
+          rec {
+            installer = (pkgs.callPackage ./src/installer.nix {
+              inherit system nixosGenerate nixpkgs_overlay;
+            });
+
+            proxmox-vm = nixosGenerate {
+              inherit system;
+              modules = [
+                nixosModules.nixpkgs_overlay
+                #(import "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix")
+                ({ pkgs, modulesPath, ... }: {
+                  imports = [
+                    (modulesPath + "/virtualisation/proxmox-image.nix")
+                  ];
+
+                  options.proxmox.virtio0 = "local-zfs:vm-9999-disk-0";
+
+                  config = {
+                    services.cloud-init.network.enable = true;
+
+                    services = {
+                      openssh = {
+                        enable = true;
+                        settings = {
+                          PermitRootLogin = "no";
+                          PasswordAuthentication = false;
+                          KexAlgorithms = [
+                            "curve25519-sha256"
+                            "curve25519-sha256@libssh.org"
+                            "diffie-hellman-group-exchange-sha256"
+                            "ecdh-sha2-nistp256"
+                          ];
+                        };
+                        hostKeys = [
+                          {
+                            type = "rsa";
+                            bits = 4096;
+                            path = "/etc/ssh/ssh_host_rsa_key";
+                          }
+                          {
+                            type = "ed25519";
+                            path = "/etc/ssh/ssh_host_ed25519_key";
+                          }
+                          {
+                            type = "ecdsa";
+                            bits = 256;
+                            path = "/etc/ssh/ssh_host_ecdsa_key";
+                          }
+                        ];
+                      };
+
+                      tailscale = {
+                        enable = true;
+                        package = pkgs.tailscale;
+                      };
+                    };
+
+                    programs = {
+                      neovim = {
+                        enable = true;
+                        vimAlias = true;
+                        viAlias = true;
+                        defaultEditor = true;
+                      };
+
+                      tmux = { enable = true; };
+
+                      zsh = {
+                        enable = true;
+                        enableBashCompletion = true;
+                        #enableCompletion = true;
+                      };
+                    };
+
+                    users = {
+                      defaultUserShell = pkgs.zsh;
+
+                      users = {
+                        cmp = {
+                          isNormalUser = true;
+                          extraGroups = [ "wheel" ];
+                          packages = [ ];
+                          openssh.authorizedKeys.keys = [
+                            "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLKmP5UUboT3SkiyHzY81/7UGG0SrVcSWxywkD8lpxYznrFz2uWT6zGfiQNj8FrLSwrh/AthIZJfe0LvbKEtTq8= home@secretive.cp-mba.local"
+                            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII5kFjpHHMhPxXAp54egnvuGVidd0g83jrw9AzD3AB5N cp@cp-win1"
+                          ];
+                        };
+                      };
+                    };
+
+                    security.sudo.wheelNeedsPassword = false;
+                  };
+                })
+              ];
+              format = "proxmox";
+            };
+
+            baseContainer = mkContainer {
+              name = "base";
+              config = { ... }: { };
+            };
+
+            servicesContainer = mkContainer {
+              name = "services";
+              config = { pkgs, lib, ... }: {
+                #Postgresql
+                services.postgresql = {
+                  enable = true;
+                  package = pkgs.postgresql_15;
+
+                  enableTCPIP = false;
+                  settings = {
+                    listen_addresses = lib.mkForce "";
+                    max_connections = 20;
+                    ssl = "off";
+                  };
+
+                  initialScript = ./lib/servicesPsqlInit.psql;
+
+                  ensureUsers = [
+                    {
+                      name = "vault";
+                      ensurePermissions = {
+                        "DATABASE vault" = "ALL PRIVILEGES";
+                      };
+                    }
+                    {
+                      name = "nextcloud";
+                      ensurePermissions = {
+                        "DATABASE nextcloud" = "ALL PRIVILEGES";
+                      };
+                    }
+                    {
+                      name = "admin";
+                      ensurePermissions = {
+                        "ALL TABLES IN SCHEMA public" = "ALL PRIVILEGES";
+                      };
+                    }
+                  ];
+
+                  ensureDatabases = [
+                    "vault"
+                    "nextcloud"
+                  ];
+                };
+
+                #Redis?
+                #Consul?
+
+                # Bitwarden (vault warden)
+                services.vaultwarden = {
+                  enable = true;
+                };
+
+                #Vault
+                services.vault = {
+                  enable = true;
+                  storageBackend = "postgresql";
+                  storageConfig = ''
+                    storage "postgresql" {
+                      connection_url = "postgres:///vault?host=/var/run/postgresql"
+                      max_idle_connections = "1";
+                      max_parallel = "10";
+                      ha_enabled = "false";
+                      table = "vault_kv_store";
+                    }
+                  '';
+                };
+
+                # Nextcloud
+                services.nextcloud = {
+                  enable = true;
+                  package = pkgs.nextcloud27;
+                  hostName = "localhost";
+                  config.adminpassFile = "${pkgs.writeText "adminpass" "test123"}"; # DON'T DO THIS IN PRODUCTION - the password file will be world-readable in the Nix Store!
+                };
+
+
+                users.users = {
+                  # Included by mkContainer
+                  # admin = {};
+
+                  # nextcloud = {}; # Created by nextcloud service config
+
+                  # vault = {}; # Created by vault service config
+                };
+              };
+            };
+
+          };
       };
 
       homeConfigurations = {
