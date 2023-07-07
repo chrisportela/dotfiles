@@ -213,9 +213,39 @@
               config = { ... }: { };
             };
 
+            infraServicesContainer = mkContainer {
+              name = "infra_services";
+              config = { pkgs, lib, ... }: {
+                networking.hostName = "lucy";
+
+                services.vault = {
+                  enable = true;
+                  address = "0.0.0.0:8200";
+
+                  extraConfig = ''
+                    disable_mlock = true
+
+                    api_addr = "http://0.0.0.0:8200"
+                    cluster_addr = "http://0.0.0.0:8201"
+                    ui = true
+                  '';
+
+                  storageBackend = "file";
+                };
+
+                # TODO: Nginx service
+
+                users.users.admin.openssh.authorizedKeys.keys = [
+                  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBPiggx+I4oYlNW9nWX6TG91k0pqpHAF/dkB9tCh+Ppf cmp@nix"
+                ];
+              };
+            };
+
             servicesContainer = mkContainer {
               name = "services";
-              config = { pkgs, lib, ... }: {
+              config = { pkgs, lib, config, ... }: {
+                networking.hostName = "katara";
+
                 #Postgresql
                 services.postgresql = {
                   enable = true;
@@ -228,19 +258,17 @@
                     ssl = "off";
                   };
 
-                  initialScript = ./lib/servicesPsqlInit.psql;
-
                   ensureUsers = [
-                    {
-                      name = "vault";
-                      ensurePermissions = {
-                        "DATABASE vault" = "ALL PRIVILEGES";
-                      };
-                    }
                     {
                       name = "nextcloud";
                       ensurePermissions = {
                         "DATABASE nextcloud" = "ALL PRIVILEGES";
+                      };
+                    }
+                    {
+                      name = "vaultwarden";
+                      ensurePermissions = {
+                        "DATABASE vaultwarden" = "ALL PRIVILEGES";
                       };
                     }
                     {
@@ -252,32 +280,20 @@
                   ];
 
                   ensureDatabases = [
-                    "vault"
                     "nextcloud"
+                    "vaultwarden"
                   ];
                 };
-
-                #Redis?
-                #Consul?
 
                 # Bitwarden (vault warden)
                 services.vaultwarden = {
                   enable = true;
-                };
-
-                #Vault
-                services.vault = {
-                  enable = true;
-                  storageBackend = "postgresql";
-                  storageConfig = ''
-                    storage "postgresql" {
-                      connection_url = "postgres:///vault?host=/var/run/postgresql"
-                      max_idle_connections = "1";
-                      max_parallel = "10";
-                      ha_enabled = "false";
-                      table = "vault_kv_store";
-                    }
-                  '';
+                  dbBackend = "postgresql";
+                  config = {
+                    ROCKET_ADDRESS = "127.0.0.1";
+                    ROCKET_PORT = "8222";
+                    DATABASE_URL = "postgresql:///vaultwarden";
+                  };
                 };
 
                 # Nextcloud
@@ -285,17 +301,41 @@
                   enable = true;
                   package = pkgs.nextcloud27;
                   hostName = "localhost";
-                  config.adminpassFile = "${pkgs.writeText "adminpass" "test123"}"; # DON'T DO THIS IN PRODUCTION - the password file will be world-readable in the Nix Store!
+                  config.adminpassFile = "/var/run/nextcloud/adminpass.secret";
                 };
 
+                services.vault-agent.instances.nextcloud = {
+                  user = "nextcloud";
+                  group = "nextcloud";
+                  enable = true;
+                  settings = {
+                    vault = {
+                      address = "http://127.0.0.1:8200";
+                      retry = {
+                        num_retries = 5;
+                      };
+                    };
+                    cache = { };
+                    template = [
+                      {
+                        source = "${pkgs.writeText "adminsecret.ctmpl" ''
+                            {{ with secret "nextcloud" }}
+                            {{ .Data.data.adminpass }}
+                            {{ end }}
+                          ''}";
+                        destination = "/var/run/nextcloud/adminpass.secret";
+                      }
+                    ];
+                  };
 
-                users.users = {
-                  # Included by mkContainer
-                  # admin = {};
+                };
 
-                  # nextcloud = {}; # Created by nextcloud service config
-
-                  # vault = {}; # Created by vault service config
+                services.nginx.virtualHosts."bitwarden.liara.i.cafecito.cloud" = {
+                  enableACME = true;
+                  forceSSL = true;
+                  locations."/" = {
+                    proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+                  };
                 };
               };
             };

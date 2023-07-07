@@ -14,6 +14,7 @@
     ripgrep
     ripgrep-all
     du-dust
+    vault
   ];
 
   home.shellAliases = {

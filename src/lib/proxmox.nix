@@ -3,6 +3,7 @@
     inherit system;
 
     modules = [
+      nixpkgs_overlay
       ({ lib, pkgs, modulesPath, ... }: {
         imports = [
           ./neovim.nix
@@ -34,6 +35,7 @@
 
               tcp dport 80 accept
               tcp dport 443 accept
+              tcp dport 8200 accept
           
               # count and drop any other traffic
               counter drop
