@@ -15,6 +15,7 @@
     ripgrep-all
     du-dust
     vault
+    nixpkgs-fmt
   ];
 
   home.shellAliases = {
