@@ -152,7 +152,7 @@
         };
       };
 
-      # nixosConfigurations = {
+      nixosConfigurations = {
       #   "nix" = nixpkgs.lib.nixosSystem {
       #     system = "x86_64-linux";
       #     modules = [
@@ -161,7 +161,7 @@
       #       ./src/configuration.nix
       #     ];
       #   };
-      # };
+      };
 
       devShells = forAllSystems
         ({ pkgs, system }: {
