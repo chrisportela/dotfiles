@@ -1,21 +1,18 @@
 ({ pkgs, lib, config, ... }: {
   imports = [
-    ../lib/fzf.nix
-    ../lib/neovim.nix
-    ../lib/starship.nix
-    ../lib/zsh.nix
-    ../lib/tmux.nix
+    ./lib/home/shell.nix
+    ./lib/home/neovim.nix
+    ./lib/home/tmux.nix
   ];
-  home.username = lib.mkDefault "cmp";
+
   home.homeDirectory = lib.mkDefault (if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}");
   home.stateVersion = lib.mkDefault "22.11";
   home.packages = with pkgs; [
     curl
+    du-dust
     ripgrep
     ripgrep-all
-    du-dust
     vault
-    nixpkgs-fmt
   ];
 
   home.shellAliases = {
@@ -42,9 +39,10 @@
     "tap" = "terraform apply plan.out";
   };
 
-  programs.home-manager.enable = true;
 
   programs = {
+    home-manager.enable = true;
+
     direnv = {
       enable = true;
       enableZshIntegration = true;
@@ -79,11 +77,10 @@
       userEmail = lib.mkDefault "chris@chrisportela.com";
     };
 
-
     bash.enable = true;
     readline = {
       enable = true;
-      extraConfig = (builtins.readFile ./inputrc);
+      extraConfig = (builtins.readFile ./lib/home/inputrc);
     };
 
     zoxide = {

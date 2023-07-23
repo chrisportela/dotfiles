@@ -8,8 +8,8 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixpkgs-22_05.url = "github:nixos/nixpkgs/nixos-22.05-aarch64";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-22.05-darwin";
+    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-23.05-darwin";
+    nixos-23_05.url = "github:nixos/nixpkgs/nixos-23.05";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -33,33 +33,33 @@
     };
   };
 
-  outputs = { nixpkgs, darwin, home-manager, ... } @inputs:
+  outputs = inputs @ { self, nixpkgs, darwin, home-manager, ... }:
     let
       # Overlays enable you to customize the Nixpkgs attribute set
-      overlays = [
-        (self: super:
-          let
-            system = self.stdenv.system;
-          in
-          {
-            pkgs_2205 = inputs.nixpkgs-22_05.legacyPackages.${system};
-            pkgs_aarch64 = import nixpkgs {
-              system = "aarch64-${builtins.head (builtins.match ".+-([[:lower:]]+)" system)}";
-            };
-            pkgs_x86_64 = nixpkgs.legacyPackages.${"x86_64-${builtins.head (builtins.match ".+-([[:lower:]]+)" system)}"};
-            pkgs_darwin = inputs.nixpkgs-darwin { inherit system; };
-          })
-      ];
+      pkgs_overlay = (self: super:
+        let
+          system = self.stdenv.system;
+          osName = builtins.head (builtins.match ".+-([[:lower:]]+)" system);
+        in
+        {
+          pkgs-23_05 = import inputs.nixos-23_05 { inherit system; };
+          pkgs-aarch64 = import nixpkgs { system = "aarch64-${osName}"; };
+          pkgs-x86_64 = import nixpkgs { system = "x86_64-${osName}"; };
+          pkgs-darwin = import inputs.nixpkgs-darwin { inherit system; };
+        });
 
       # Systems supported
       allSystems = [
         "x86_64-linux" # 64-bit Intel/AMD Linux
         "aarch64-linux" # 64-bit ARM Linux
+
         "x86_64-darwin" # 64-bit Intel macOS
         "aarch64-darwin" # 64-bit ARM macOS
       ];
 
-      importPkgs = (system: import nixpkgs { inherit overlays system; });
+      importPkgs = (system: import nixpkgs {
+        inherit system; overlays = [ pkgs_overlay ];
+      });
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
@@ -67,15 +67,30 @@
         pkgs = (importPkgs system);
       });
 
-    in
-    rec {
-      inherit allSystems importPkgs forAllSystems home-manager;
+      homeConfig = ({ home, username ? "cmp", pkgs ? (importPkgs self.stdenv.system) }:
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
 
-      overlays = { };
+          modules = [
+            { home.username = username; }
+            nixosModules.nixpkgs_overlay
+            nixosModules.deploy_rs_overlay
+            home
+          ];
+        });
+
+      nixosModules = {
+        nixpkgs_overlay = ({ config, pkgs, ... }: { nix.registry.nixpkgs.flake = nixpkgs; });
+        deploy_rs_overlay = { ... }: { nixpkgs.overlays = [ (self: super: { deploy-rs = inputs.deploy-rs.defaultPackage.${self.stdenv.system}; }) ]; };
+        hush = ({ pkgs, config, ... }: { nixpkgs.overlays = [ (self: super: { hush = self.packages.${self.stdenv.system}.hush; }) ]; });
+      };
+    in
+    {
+      inherit allSystems importPkgs forAllSystems home-manager nixosModules;
 
       packages = forAllSystems
-        ({ pkgs, system }: rec {
-          hush = pkgs.rustPlatform.buildRustPackage rec {
+        ({ pkgs, system }: {
+          hush = pkgs.rustPlatform.buildRustPackage {
             pname = "hush";
             version = "0.1.5a";
 
@@ -92,352 +107,80 @@
               maintainers = [ ];
             };
           };
-          home-mba = homeConfigurations."cmp@cp-mba".activationPackage;
-          home-rs2 = homeConfigurations."cmp@rs2".activationPackage;
-          home-deck = homeConfigurations."deck@steamdeck".activationPackage;
-          home-nixserver = homeConfigurations."cmp@nix".activationPackage;
-          all = pkgs.symlinkJoin {
-            name = "all";
-            paths = [ home-mba home-rs2 home-deck home-nixserver ];
-          };
-          default = all;
         }) // {
         x86_64-linux =
           let
+            inherit (importPkgs system) callPackage;
+            inherit (inputs.nixos-generators) nixosGenerate;
+            inherit (nixosModules) nixpkgs_overlay;
             system = "x86_64-linux";
-            pkgs = (importPkgs system);
-            modulesPath = (toString nixpkgs) + "/nixos/modules";
-            nixosGenerate = inputs.nixos-generators.nixosGenerate;
-            nixpkgs_overlay = nixosModules.nixpkgs_overlay;
-            mkContainer = { name ? "base", config }: (import ./src/lib/proxmox.nix).mkContainer { inherit system nixosGenerate nixpkgs_overlay modulesPath name config; };
+            mkContainer = { name ? "base", config }: (import ./src/lib/nixos/proxmox.nix).mkContainer { inherit system name config nixosGenerate nixpkgs_overlay; };
           in
-          rec {
-            installer = (pkgs.callPackage ./src/installer.nix {
-              inherit system nixosGenerate nixpkgs_overlay;
-            });
-
-            proxmox-vm = nixosGenerate {
-              inherit system;
-              modules = [
-                nixosModules.nixpkgs_overlay
-                #(import "${nixpkgs}/nixos/modules/virtualisation/proxmox-image.nix")
-                ({ pkgs, modulesPath, ... }: {
-                  imports = [
-                    (modulesPath + "/virtualisation/proxmox-image.nix")
-                  ];
-
-                  options.proxmox.virtio0 = "local-zfs:vm-9999-disk-0";
-
-                  config = {
-                    services.cloud-init.network.enable = true;
-
-                    services = {
-                      openssh = {
-                        enable = true;
-                        settings = {
-                          PermitRootLogin = "no";
-                          PasswordAuthentication = false;
-                          KexAlgorithms = [
-                            "curve25519-sha256"
-                            "curve25519-sha256@libssh.org"
-                            "diffie-hellman-group-exchange-sha256"
-                            "ecdh-sha2-nistp256"
-                          ];
-                        };
-                        hostKeys = [
-                          {
-                            type = "rsa";
-                            bits = 4096;
-                            path = "/etc/ssh/ssh_host_rsa_key";
-                          }
-                          {
-                            type = "ed25519";
-                            path = "/etc/ssh/ssh_host_ed25519_key";
-                          }
-                          {
-                            type = "ecdsa";
-                            bits = 256;
-                            path = "/etc/ssh/ssh_host_ecdsa_key";
-                          }
-                        ];
-                      };
-
-                      tailscale = {
-                        enable = true;
-                        package = pkgs.tailscale;
-                      };
-                    };
-
-                    programs = {
-                      neovim = {
-                        enable = true;
-                        vimAlias = true;
-                        viAlias = true;
-                        defaultEditor = true;
-                      };
-
-                      tmux = { enable = true; };
-
-                      zsh = {
-                        enable = true;
-                        enableBashCompletion = true;
-                        #enableCompletion = true;
-                      };
-                    };
-
-                    users = {
-                      defaultUserShell = pkgs.zsh;
-
-                      users = {
-                        cmp = {
-                          isNormalUser = true;
-                          extraGroups = [ "wheel" ];
-                          packages = [ ];
-                          openssh.authorizedKeys.keys = [
-                            "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLKmP5UUboT3SkiyHzY81/7UGG0SrVcSWxywkD8lpxYznrFz2uWT6zGfiQNj8FrLSwrh/AthIZJfe0LvbKEtTq8= home@secretive.cp-mba.local"
-                            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII5kFjpHHMhPxXAp54egnvuGVidd0g83jrw9AzD3AB5N cp@cp-win1"
-                          ];
-                        };
-                      };
-                    };
-
-                    security.sudo.wheelNeedsPassword = false;
-                  };
-                })
-              ];
-              format = "proxmox";
-            };
-
-            baseContainer = mkContainer {
-              name = "base";
-              config = { ... }: { };
-            };
-
-            infraServicesContainer = mkContainer {
-              name = "infra_services";
-              config = { pkgs, lib, ... }: {
-                networking.hostName = "lucy";
-
-                services.vault = {
-                  enable = true;
-                  address = "0.0.0.0:8200";
-
-                  extraConfig = ''
-                    disable_mlock = true
-
-                    api_addr = "http://0.0.0.0:8200"
-                    cluster_addr = "http://0.0.0.0:8201"
-                    ui = true
-                  '';
-
-                  storageBackend = "file";
-                };
-
-                # TODO: Nginx service
-
-                users.users.admin.openssh.authorizedKeys.keys = [
-                  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBPiggx+I4oYlNW9nWX6TG91k0pqpHAF/dkB9tCh+Ppf cmp@nix"
-                ];
-              };
-            };
-
-            servicesContainer = mkContainer {
-              name = "services";
-              config = { pkgs, lib, config, ... }: {
-                networking.hostName = "katara";
-
-                #Postgresql
-                services.postgresql = {
-                  enable = true;
-                  package = pkgs.postgresql_15;
-
-                  enableTCPIP = false;
-                  settings = {
-                    listen_addresses = lib.mkForce "";
-                    max_connections = 20;
-                    ssl = "off";
-                  };
-
-                  ensureUsers = [
-                    {
-                      name = "nextcloud";
-                      ensurePermissions = {
-                        "DATABASE nextcloud" = "ALL PRIVILEGES";
-                      };
-                    }
-                    {
-                      name = "vaultwarden";
-                      ensurePermissions = {
-                        "DATABASE vaultwarden" = "ALL PRIVILEGES";
-                      };
-                    }
-                    {
-                      name = "admin";
-                      ensurePermissions = {
-                        "ALL TABLES IN SCHEMA public" = "ALL PRIVILEGES";
-                      };
-                    }
-                  ];
-
-                  ensureDatabases = [
-                    "nextcloud"
-                    "vaultwarden"
-                  ];
-                };
-
-                # Bitwarden (vault warden)
-                services.vaultwarden = {
-                  enable = true;
-                  dbBackend = "postgresql";
-                  config = {
-                    ROCKET_ADDRESS = "127.0.0.1";
-                    ROCKET_PORT = "8222";
-                    DATABASE_URL = "postgresql:///vaultwarden";
-                  };
-                };
-
-                # Nextcloud
-                services.nextcloud = {
-                  enable = true;
-                  package = pkgs.nextcloud27;
-                  hostName = "localhost";
-                  config.adminpassFile = "/var/run/nextcloud/adminpass.secret";
-                };
-
-                services.vault-agent.instances.nextcloud = {
-                  user = "nextcloud";
-                  group = "nextcloud";
-                  enable = true;
-                  settings = {
-                    vault = {
-                      address = "http://127.0.0.1:8200";
-                      retry = {
-                        num_retries = 5;
-                      };
-                    };
-                    cache = { };
-                    template = [
-                      {
-                        source = "${pkgs.writeText "adminsecret.ctmpl" ''
-                            {{ with secret "nextcloud" }}
-                            {{ .Data.data.adminpass }}
-                            {{ end }}
-                          ''}";
-                        destination = "/var/run/nextcloud/adminpass.secret";
-                      }
-                    ];
-                  };
-
-                };
-
-                services.nginx.virtualHosts."bitwarden.liara.i.cafecito.cloud" = {
-                  enableACME = true;
-                  forceSSL = true;
-                  locations."/" = {
-                    proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
-                  };
-                };
-              };
-            };
-
+          {
+            installer = (callPackage ./src/lib/nixos/installer.nix { inherit system nixosGenerate nixpkgs_overlay; });
+            infraServicesContainer = (import ./src/lib/nixos/containers/infra-services.nix) { inherit mkContainer; name = "infra-services"; };
+            servicesContainer = (import ./src/lib/nixos/containers/services.nix) { inherit mkContainer; name = "services"; };
           };
       };
 
       homeConfigurations = {
-        "cmp@cp-mba" = home-manager.lib.homeManagerConfiguration {
+        "cmp" = homeConfig { home = ./src/home.nix; };
+        "cmp@cp-mba" = homeConfig {
           pkgs = importPkgs "aarch64-darwin";
-
-          modules = [
-            nixosModules.nixpkgs_overlay
-            nixosModules.deploy_rs_overlay
-            ./src/machines/mba/home.nix
-          ];
+          home = ./src/home.nix;
         };
-        "cmp@rs2" = home-manager.lib.homeManagerConfiguration {
+        "deck@steamdeck" = homeConfig {
+          username = "deck";
           pkgs = importPkgs "x86_64-linux";
-
-          modules = [
-            nixosModules.nixpkgs_overlay
-            nixosModules.deploy_rs_overlay
-            ./src/machines/server/home.nix
-          ];
+          home = ./src/home.nix;
         };
-        "cmp@nix" = home-manager.lib.homeManagerConfiguration {
-          pkgs = importPkgs "x86_64-linux";
-
-          modules = [
-            nixosModules.nixpkgs_overlay
-            nixosModules.deploy_rs_overlay
-            ./src/machines/server/home.nix
-          ];
-        };
-        "deck@steamdeck" = home-manager.lib.homeManagerConfiguration {
-          pkgs = importPkgs "x86_64-linux";
-
-          modules = [
-            nixosModules.nixpkgs_overlay
-            nixosModules.deploy_rs_overlay
-            ./src/machines/steamdeck/home.nix
-          ];
-        };
-      };
-
-      nixosModules = {
-        nixpkgs_overlay = ({ config, pkgs, ... }: { nix.registry.nixpkgs.flake = nixpkgs; });
-        deploy_rs_overlay = { ... }: {
-          nixpkgs.overlays = [
-            (self: super: {
-              deploy-rs = inputs.deploy-rs.defaultPackage.${self.stdenv.system};
-            })
-          ];
-        };
-        hush = ({ pkgs, config, ... }: {
-          nixpkgs.overlays = [
-            (self: super: {
-              hush = packages.${self.stdenv.system}.hush;
-            })
-          ];
-        });
       };
 
       darwinConfigurations = {
         "cp-mba" = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
+          # pkgs = pkgs-darwin;
+          pkgs = (import inputs.nixpkgs-darwin) {
+            overlays = [ pkgs_overlay ];
+            system = "aarch64-darwin";
+            config.allowUnfree = true;
+          };
           modules = [
-            nixosModules.nixpkgs_overlay
-            ./src/machines/mba/configuration.nix
+            self.nixosModules.nixpkgs_overlay
+            ./src/mba.nix
           ];
         };
       };
 
-      nixosConfigurations = {
-        "nix" = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            nixosModules.nixpkgs_overlay
-            inputs.vscode-server.nixosModule
-            ./src/machines/server/configuration.nix
-          ];
-        };
-      };
+      # nixosConfigurations = {
+      #   "nix" = nixpkgs.lib.nixosSystem {
+      #     system = "x86_64-linux";
+      #     modules = [
+      #       self.nixosModules.nixpkgs_overlay
+      #       inputs.vscode-server.nixosModule
+      #       ./src/configuration.nix
+      #     ];
+      #   };
+      # };
 
-      devShells = forAllSystems ({ pkgs, system }: {
-        default = pkgs.mkShell {
-          # The Nix packages provided in the environment
-          packages = (with pkgs; [
-            cachix
-            nixVersions.nix_2_14
-            nixpkgs-fmt
-            shfmt
-            shellcheck
-            packages.${system}.hush
-          ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ]);
-        };
-      });
+      devShells = forAllSystems
+        ({ pkgs, system }: {
+          default = pkgs.mkShell {
+            # The Nix packages provided in the environment
+            packages = (with pkgs; [
+              cachix
+              nixVersions.nix_2_14
+              nixpkgs-fmt
+              shfmt
+              shellcheck
+              self.packages.${system}.hush
+            ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ]);
+          };
+        });
 
       checks = forAllSystems
         ({ pkgs, system }: {
-          homeConfigurations = packages.${system}.installer;
+          homeConfigurations = self.packages.${system}.installer;
 
           shell-functions = pkgs.stdenvNoCC.mkDerivation {
             name = "shell-functions-check";
@@ -456,3 +199,4 @@
         });
     };
 }
+

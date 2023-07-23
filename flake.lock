@@ -126,6 +126,22 @@
         "type": "github"
       }
     },
+    "nixos-23_05": {
+      "locked": {
+        "lastModified": 1689956312,
+        "narHash": "sha256-NV9yamMhE5jgz+ZSM2IgXeYqOvmGIbIIJ+AFIhfD7Ek=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "6da4bc6cb07cba1b8e53d139cbf1d2fb8061d967",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-23.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixos-generators": {
       "inputs": {
         "nixlib": "nixlib",
@@ -163,34 +179,18 @@
         "type": "github"
       }
     },
-    "nixpkgs-22_05": {
-      "locked": {
-        "lastModified": 1685573264,
-        "narHash": "sha256-Zffu01pONhs/pqH07cjlF10NnMDLok8ix5Uk4rhOnZQ=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "380be19fbd2d9079f677978361792cb25e8a3635",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-22.05-aarch64",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-darwin": {
       "locked": {
-        "lastModified": 1685573264,
-        "narHash": "sha256-Zffu01pONhs/pqH07cjlF10NnMDLok8ix5Uk4rhOnZQ=",
+        "lastModified": 1690066826,
+        "narHash": "sha256-6L2qb+Zc0BFkh72OS9uuX637gniOjzU6qCDBpjB2LGY=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "380be19fbd2d9079f677978361792cb25e8a3635",
+        "rev": "ce45b591975d070044ca24e3003c830d26fea1c8",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixpkgs-22.05-darwin",
+        "ref": "nixpkgs-23.05-darwin",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -217,9 +217,9 @@
         "deploy-rs": "deploy-rs",
         "home-manager": "home-manager",
         "hush": "hush",
+        "nixos-23_05": "nixos-23_05",
         "nixos-generators": "nixos-generators",
         "nixpkgs": "nixpkgs_2",
-        "nixpkgs-22_05": "nixpkgs-22_05",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "vscode-server": "vscode-server"
       }
