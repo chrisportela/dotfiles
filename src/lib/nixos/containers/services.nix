@@ -87,6 +87,8 @@
 
     };
 
+    security.acme.acceptTerms = true;
+    security.acme.defaults.email = "chris+acme@chrisportela.com";
     services.nginx.virtualHosts."bitwarden.liara.i.cafecito.cloud" = {
       enableACME = true;
       forceSSL = true;
@@ -94,4 +96,5 @@
         proxyPass = "http://127.0.0.1:${toString config.services.vaultwarden.config.ROCKET_PORT}";
       };
     };
-  }
+  };
+}

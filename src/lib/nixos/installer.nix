@@ -1,4 +1,4 @@
-{ pkgs, system, nixosGenerate, nixpkgs_overlay, ... }:
+{ pkgs, system, nixosGenerate, pinned_nixpkgs, ... }:
 let
   hostName = "installer";
 
@@ -30,7 +30,7 @@ in
 nixosGenerate {
   system = pkgs.stdenv.system;
   modules = [
-    nixpkgs_overlay
+    pinned_nixpkgs
     nixosConfig
   ];
   format = "install-iso";

@@ -1,4 +1,5 @@
 ({ config, pkgs, ... }: {
+  imports = [ ./lib/nixos/base-darwin.nix ];
 
   # nixpkgs.config.allowUnfree = true;
 

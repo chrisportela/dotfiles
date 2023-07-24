@@ -1,9 +1,9 @@
 {
-  mkPromoxVM = { name, config, inputs, nixpkgs_overlay, system ? "x86_64-linux" }: inputs.nixos-generators.nixosGenerate {
+  mkPromoxVM = { name, config, inputs, pinned_nixpkgs, system ? "x86_64-linux" }: inputs.nixos-generators.nixosGenerate {
     inherit system;
     modules = [
       config
-      nixpkgs_overlay
+      pinned_nixpkgs
       ({ pkgs, config, modulesPath, ... }: {
         imports = [
           (modulesPath + "/virtualisation/proxmox-image.nix")
@@ -87,16 +87,14 @@
     ];
     format = "proxmox";
   };
-  mkContainer = { name, config, inputs, nixpkgs_overlay, system ? "x86_64-linux" }: inputs.nixos-generators.nixosGenerate {
+  mkContainer = { name, config, inputs, pinned_nixpkgs, system ? "x86_64-linux" }: inputs.nixos-generators.nixosGenerate {
     inherit system;
 
     modules = [
       config
-      nixpkgs_overlay
+      pinned_nixpkgs
       ({ lib, pkgs, config, modulesPath, ... }: {
-        imports = [
-          ./neovim.nix
-        ];
+        imports = [ ];
 
         boot.kernelParams = [ "console=/dev/console" ];
 
@@ -148,17 +146,25 @@
           wheelNeedsPassword = false;
         };
 
-        services.getty.autologinUser = lib.mkForce "admin";
-        users.mutableUsers = lib.mkDefault false;
-        users.allowNoPasswordLogin = lib.mkDefault true;
-        users.defaultUserShell = lib.mkForce pkgs.zsh;
-
-        programs.zsh.enable = true;
-
-        users.users.admin = {
-          isNormalUser = true;
-          extraGroups = [ "wheel" ];
+        programs = {
+          neovim = {
+            enable = lib.mkDefault true;
+            viAlias = lib.mkDefault true;
+            vimAlias = lib.mkDefault true;
+          };
+          zsh.enable = true;
         };
+
+        users = {
+          mutableUsers = lib.mkDefault false;
+          allowNoPasswordLogin = lib.mkDefault true;
+          defaultUserShell = lib.mkForce pkgs.zsh;
+          users.admin = {
+            isNormalUser = true;
+            extraGroups = [ "wheel" ];
+          };
+        };
+        services.getty.autologinUser = lib.mkForce "admin";
 
         hardware.pulseaudio.enable = false;
         services.printing.enable = false;

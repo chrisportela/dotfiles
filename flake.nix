@@ -35,19 +35,6 @@
 
   outputs = inputs @ { self, nixpkgs, darwin, home-manager, ... }:
     let
-      # Overlays enable you to customize the Nixpkgs attribute set
-      pkgs_overlay = (self: super:
-        let
-          system = self.stdenv.system;
-          osName = builtins.head (builtins.match ".+-([[:lower:]]+)" system);
-        in
-        {
-          pkgs-23_05 = import inputs.nixos-23_05 { inherit system; };
-          pkgs-aarch64 = import nixpkgs { system = "aarch64-${osName}"; };
-          pkgs-x86_64 = import nixpkgs { system = "x86_64-${osName}"; };
-          pkgs-darwin = import inputs.nixpkgs-darwin { inherit system; };
-        });
-
       # Systems supported
       allSystems = [
         "x86_64-linux" # 64-bit Intel/AMD Linux
@@ -58,7 +45,7 @@
       ];
 
       importPkgs = (system: import nixpkgs {
-        inherit system; overlays = [ pkgs_overlay ];
+        inherit system; overlays = [ cross_pkgs_overlay ];
       });
 
       # Helper to provide system-specific attributes
@@ -67,22 +54,37 @@
         pkgs = (importPkgs system);
       });
 
-      homeConfig = ({ home, username ? "cmp", pkgs ? (importPkgs self.stdenv.system) }:
+      homeConfig = ({ home, username ? "cmp", pkgs }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
 
           modules = [
             { home.username = username; }
-            nixosModules.nixpkgs_overlay
-            nixosModules.deploy_rs_overlay
+            nixosModules.pinned_nixpkgs
+            nixosModules.deploy_rs
             home
           ];
         });
 
+      cross_pkgs_overlay = (final: prev:
+        let
+          system = final.stdenv.system;
+          osName = builtins.head (builtins.match ".+-([[:lower:]]+)" system);
+        in
+        {
+          pkgs-23_05 = import inputs.nixos-23_05 { inherit system; };
+          pkgs-aarch64 = import nixpkgs { system = "aarch64-${osName}"; };
+          pkgs-x86_64 = import nixpkgs { system = "x86_64-${osName}"; };
+          pkgs-darwin = import inputs.nixpkgs-darwin { inherit system; };
+        });
+
+      deploy_rs_overlay = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${self.stdenv.system}; });
+      hush_overlay = (final: prev: { hush = self.packages.${self.stdenv.system}.hush; });
+
       nixosModules = {
-        nixpkgs_overlay = ({ config, pkgs, ... }: { nix.registry.nixpkgs.flake = nixpkgs; });
-        deploy_rs_overlay = { ... }: { nixpkgs.overlays = [ (self: super: { deploy-rs = inputs.deploy-rs.defaultPackage.${self.stdenv.system}; }) ]; };
-        hush = ({ pkgs, config, ... }: { nixpkgs.overlays = [ (self: super: { hush = self.packages.${self.stdenv.system}.hush; }) ]; });
+        pinned_nixpkgs = ({ config, pkgs, ... }: { nix.registry.nixpkgs.flake = nixpkgs; });
+        deploy_rs = { ... }: { nixpkgs.overlays = [ deploy_rs_overlay ]; };
+        hush = ({ pkgs, config, ... }: { nixpkgs.overlays = [ hush_overlay ]; });
       };
     in
     {
@@ -112,28 +114,26 @@
           let
             inherit (importPkgs system) callPackage;
             inherit (inputs.nixos-generators) nixosGenerate;
-            inherit (nixosModules) nixpkgs_overlay;
+            inherit (nixosModules) pinned_nixpkgs;
             system = "x86_64-linux";
-            mkContainer = { name ? "base", config }: (import ./src/lib/nixos/proxmox.nix).mkContainer { inherit system name config nixosGenerate nixpkgs_overlay; };
+            mkContainer = { name ? "base", config }: (import ./src/lib/nixos/proxmox.nix).mkContainer { inherit system name config inputs pinned_nixpkgs; };
           in
           {
-            installer = (callPackage ./src/lib/nixos/installer.nix { inherit system nixosGenerate nixpkgs_overlay; });
+            installer = (callPackage ./src/lib/nixos/installer.nix { inherit system nixosGenerate pinned_nixpkgs; });
             infraServicesContainer = (import ./src/lib/nixos/containers/infra-services.nix) { inherit mkContainer; name = "infra-services"; };
             servicesContainer = (import ./src/lib/nixos/containers/services.nix) { inherit mkContainer; name = "services"; };
           };
       };
 
+      overlays = {
+        cross_nixpkgs = cross_pkgs_overlay;
+        deploy-rs = deploy_rs_overlay;
+        hush = hush_overlay;
+      };
+
       homeConfigurations = {
-        "cmp" = homeConfig { home = ./src/home.nix; };
-        "cmp@cp-mba" = homeConfig {
-          pkgs = importPkgs "aarch64-darwin";
-          home = ./src/home.nix;
-        };
-        "deck@steamdeck" = homeConfig {
-          username = "deck";
-          pkgs = importPkgs "x86_64-linux";
-          home = ./src/home.nix;
-        };
+        "cmp@cp-mba" = homeConfig { pkgs = importPkgs "aarch64-darwin"; home = ./src/home.nix; };
+        "deck@steamdeck" = homeConfig { username = "deck"; pkgs = importPkgs "x86_64-linux"; home = ./src/home.nix; };
       };
 
       darwinConfigurations = {
@@ -141,62 +141,58 @@
           system = "aarch64-darwin";
           # pkgs = pkgs-darwin;
           pkgs = (import inputs.nixpkgs-darwin) {
-            overlays = [ pkgs_overlay ];
+            overlays = [ self.overlays.cross_nixpkgs ];
             system = "aarch64-darwin";
             config.allowUnfree = true;
           };
           modules = [
-            self.nixosModules.nixpkgs_overlay
+            self.nixosModules.pinned_nixpkgs
             ./src/mba.nix
           ];
         };
       };
 
       nixosConfigurations = {
-      #   "nix" = nixpkgs.lib.nixosSystem {
-      #     system = "x86_64-linux";
-      #     modules = [
-      #       self.nixosModules.nixpkgs_overlay
-      #       inputs.vscode-server.nixosModule
-      #       ./src/configuration.nix
-      #     ];
-      #   };
+        #   "nix" = nixpkgs.lib.nixosSystem {
+        #     system = "x86_64-linux";
+        #     modules = [
+        #       self.nixosModules.nixpkgs_overlay
+        #       inputs.vscode-server.nixosModule
+        #       ./src/configuration.nix
+        #     ];
+        #   };
       };
 
-      devShells = forAllSystems
-        ({ pkgs, system }: {
-          default = pkgs.mkShell {
-            # The Nix packages provided in the environment
-            packages = (with pkgs; [
-              cachix
-              nixVersions.nix_2_14
-              nixpkgs-fmt
-              shfmt
-              shellcheck
-              self.packages.${system}.hush
-            ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ]);
-          };
-        });
+      devShells = forAllSystems ({ pkgs, system }: {
+        default = pkgs.mkShell {
+          # The Nix packages provided in the environment
+          packages = (with pkgs; [
+            cachix
+            nixVersions.nix_2_14
+            nixpkgs-fmt
+            shfmt
+            shellcheck
+          ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ]);
+        };
+      });
 
-      checks = forAllSystems
-        ({ pkgs, system }: {
-          homeConfigurations = self.packages.${system}.installer;
-
-          shell-functions = pkgs.stdenvNoCC.mkDerivation {
-            name = "shell-functions-check";
-            dontBuild = true;
-            src = ./src/common/shell_functions.sh;
-            nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
-            checkPhase = ''
-              shfmt -d -s -i 2 -ci ${./src/common/shell_functions.sh}
-              alejandra -c .
-              shellcheck -x ${./src/common/shell_functions.sh}
-            '';
-            installPhase = ''
-              mkdir "$out"
-            '';
-          };
-        });
+      checks = forAllSystems ({ pkgs, system }: {
+        shell-functions = let script = ./src/lib/home/shell_functions.sh; in pkgs.stdenvNoCC.mkDerivation {
+          name = "shell-functions-check";
+          dontBuild = true;
+          src = script;
+          nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
+          unpackPhase = ":";
+          checkPhase = ''
+            shfmt -d -s -i 2 -ci ${script}
+            alejandra -c .
+            shellcheck -x ${script}
+          '';
+          installPhase = ''
+            mkdir "$out"
+          '';
+        };
+      });
     };
 }
 

@@ -13,6 +13,7 @@
     ripgrep
     ripgrep-all
     vault
+    nixpkgs-fmt
   ];
 
   home.shellAliases = {
