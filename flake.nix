@@ -78,8 +78,8 @@
           pkgs-darwin = import inputs.nixpkgs-darwin { inherit system; };
         });
 
-      deploy_rs_overlay = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${self.stdenv.system}; });
-      hush_overlay = (final: prev: { hush = self.packages.${self.stdenv.system}.hush; });
+      deploy_rs_overlay = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system}; });
+      hush_overlay = (final: prev: { hush = self.packages.${final.stdenv.system}.hush; });
 
       nixosModules = {
         pinned_nixpkgs = ({ config, pkgs, ... }: { nix.registry.nixpkgs.flake = nixpkgs; });
