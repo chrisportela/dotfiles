@@ -89,14 +89,6 @@
       ];
       ports = [ 2222 ];
     };
-
-    tailscale = {
-      enable = true;
-      package = pkgs.tailscale;
-      useRoutingFeatures = "server";
-    };
-
-    vscode-server.enable = true;
   };
 
   environment.systemPackages = with pkgs; [ parted ];
