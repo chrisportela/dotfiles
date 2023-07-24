@@ -134,7 +134,7 @@
       homeConfigurations = {
         "cmp@cp-mba" = homeConfig { pkgs = importPkgs "aarch64-darwin"; home = ./src/home.nix; };
         "deck@steamdeck" = homeConfig { username = "deck"; pkgs = importPkgs "x86_64-linux"; home = ./src/home.nix; };
-      };
+      } // forAllSystems ({ pkgs, system }: { "cmp" = homeConfig { inherit pkgs; home = ./src/home.nix; }; });
 
       darwinConfigurations = {
         "cp-mba" = darwin.lib.darwinSystem {
