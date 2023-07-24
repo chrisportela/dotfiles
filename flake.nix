@@ -70,9 +70,12 @@
         let
           system = final.stdenv.system;
           osName = builtins.head (builtins.match ".+-([[:lower:]]+)" system);
+          allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+            "mongodb"
+          ];
         in
         {
-          pkgs-23_05 = import inputs.nixos-23_05 { inherit system; };
+          pkgs-23_05 = import inputs.nixos-23_05 { inherit system; config.allowUnfreePredicate = allowUnfreePredicate; };
           pkgs-aarch64 = import nixpkgs { system = "aarch64-${osName}"; };
           pkgs-x86_64 = import nixpkgs { system = "x86_64-${osName}"; };
           pkgs-darwin = import inputs.nixpkgs-darwin { inherit system; };
