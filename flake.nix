@@ -164,7 +164,8 @@
       };
 
       devShells = forAllSystems ({ pkgs, system }: {
-        default = pkgs.mkShell {
+        default = self.devShells.${system}.dotfiles;
+        dotfiles = pkgs.mkShell {
           # The Nix packages provided in the environment
           packages = (with pkgs; [
             cachix
