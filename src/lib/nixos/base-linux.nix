@@ -125,9 +125,12 @@
   users = {
     defaultUserShell = pkgs.zsh;
 
+    groups.cmp = {};
+
     users = {
       cmp = {
         isNormalUser = true;
+        group = "cmp";
         extraGroups = [ "wheel" ];
         packages = [ ];
         openssh.authorizedKeys.keys = (import ../sshKeys.nix).cmp;
