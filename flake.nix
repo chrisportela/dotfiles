@@ -45,7 +45,7 @@
       ];
 
       importPkgs = (system: import nixpkgs {
-        inherit system; overlays = [ cross_pkgs_overlay ];
+        inherit system; overlays = [ cross_pkgs_overlay deploy_rs_overlay hush_overlay ];
       });
 
       # Helper to provide system-specific attributes

@@ -117,7 +117,7 @@
   users = {
     defaultUserShell = pkgs.zsh;
 
-    groups.cmp = {};
+    groups.cmp = { };
 
     users = {
       cmp = {
