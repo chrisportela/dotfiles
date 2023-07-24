@@ -3,7 +3,7 @@
   imports = [
     inputs.agenix.nixosModules.default
     inputs.vscode-server.nixosModule
-    inputs.dotfiles.nixosModules.deploy_rs_overlay
+    inputs.dotfiles.nixosModules.deploy_rs
     ./base.nix
   ];
 
