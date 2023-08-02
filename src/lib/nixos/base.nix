@@ -2,7 +2,7 @@
   imports = [ ];
 
   nix = {
-    package = pkgs.nixVersions.nix_2_15;
+    package = pkgs.nixVersions.nix_2_16;
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-public-keys = [
@@ -22,8 +22,6 @@
     neovim
     nixpkgs-fmt
     openssl_3
-    parted
-    tmux
     wget
   ];
 

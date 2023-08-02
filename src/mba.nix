@@ -4,26 +4,24 @@
   # nixpkgs.config.allowUnfree = true;
 
   nix = {
-    package = pkgs.nixVersions.nix_2_15;
-
     distributedBuilds = true;
     configureBuildUsers = true;
     settings = {
       sandbox = "relaxed";
       trusted-users = [ "cmp" ];
       experimental-features = [ "nix-command" "flakes" ];
-      extra-platforms = [ "aarch64-linux" "aarch64-darwin" ];
+      extra-platforms = [ "aarch64-darwin" ];
       keep-outputs = true;
       keep-derivations = true;
     };
     buildMachines = [
       {
         systems = [ "x86_64-linux" "aarch64-linux" ];
-        sshUser = "builder";
+        sshUser = "cmp";
         maxJobs = 20;
-        hostName = "nix.gorgon-basilisk.ts.net";
-        speedFactor = 100;
-        supportedFeatures = [ "kvm" "big-parallel" "nixos-test" "benchmark" ];
+        hostName = "nix-builder";
+        speedFactor = 10;
+        supportedFeatures = [ ];
       }
     ];
   };

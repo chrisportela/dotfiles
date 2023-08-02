@@ -2,8 +2,6 @@
   imports = [ ./base.nix ];
 
   nix = {
-    package = pkgs.nixVersions.nix_2_15;
-
     configureBuildUsers = true;
     settings = {
       sandbox = lib.mkDefault "relaxed";
