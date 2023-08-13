@@ -55,7 +55,7 @@
         pkgs = (importPkgs system);
       });
 
-      homeConfig = ({ home ? ./src/home.nix, username ? "cmp", pkgs }:
+      homeConfig = ({ home ? ./home.nix, username ? "cmp", pkgs }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
 
@@ -120,7 +120,7 @@
             inherit (self.nixosModules) pinned_nixpkgs;
           in
           {
-            installer = (callPackage ./src/lib/nixos/installer.nix { inherit system nixosGenerate pinned_nixpkgs; });
+            installer = (callPackage ./lib/nixos/installer.nix { inherit system nixosGenerate pinned_nixpkgs; });
           };
       };
 
@@ -134,13 +134,13 @@
         pinned_nixpkgs = { ... }: { nix.registry.nixpkgs.flake = nixpkgs; };
         deploy_rs = { ... }: { nixpkgs.overlays = [ deploy_rs_overlay ]; };
         hush = { ... }: { nixpkgs.overlays = [ hush_overlay ]; };
-        firewall = import ./src/lib/nixos/firewall.nix;
-        nginx-cloudflare = import ./src/lib/nixos/nginx-cloudflare.nix;
-        openssh = import ./src/lib/nixos/openssh.nix;
-        router = import ./src/lib/nixos/router.nix;
-        webserver = import ./src/lib/nixos/webserver.nix;
-        darwin = import ./src/lib/nixos/darwin.nix;
-        linux = import ./src/lib/nixos/linux.nix;
+        firewall = import ./lib/nixos/firewall.nix;
+        nginx-cloudflare = import ./lib/nixos/nginx-cloudflare.nix;
+        openssh = import ./lib/nixos/openssh.nix;
+        router = import ./lib/nixos/router.nix;
+        webserver = import ./lib/nixos/webserver.nix;
+        darwin = import ./lib/nixos/darwin.nix;
+        linux = import ./lib/nixos/linux.nix;
       };
 
       homeConfigurations = {
@@ -158,7 +158,7 @@
           };
           modules = [
             self.nixosModules.pinned_nixpkgs
-            ./src/mba.nix
+            ./mba.nix
           ];
         };
       };
@@ -194,7 +194,7 @@
       });
 
       checks = forAllSystems ({ pkgs, system }: {
-        shell-functions = let script = ./src/lib/home/shell_functions.sh; in pkgs.stdenvNoCC.mkDerivation {
+        shell-functions = let script = ./lib/home/shell_functions.sh; in pkgs.stdenvNoCC.mkDerivation {
           name = "shell-functions-check";
           dontBuild = true;
           src = script;
