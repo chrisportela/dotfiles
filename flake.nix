@@ -45,7 +45,8 @@
       ];
 
       importPkgs = (system: import nixpkgs {
-        inherit system; overlays = [ cross_pkgs_overlay deploy_rs_overlay hush_overlay ];
+        inherit system;
+        overlays = [ cross_pkgs_overlay deploy_rs_overlay hush_overlay ];
       });
 
       # Helper to provide system-specific attributes
@@ -54,14 +55,14 @@
         pkgs = (importPkgs system);
       });
 
-      homeConfig = ({ home, username ? "cmp", pkgs }:
+      homeConfig = ({ home ? ./src/home.nix, username ? "cmp", pkgs }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
 
           modules = [
             { home.username = username; }
-            nixosModules.pinned_nixpkgs
-            nixosModules.deploy_rs
+            self.nixosModules.pinned_nixpkgs
+            self.nixosModules.deploy_rs
             home
           ];
         });
@@ -80,18 +81,12 @@
 
       deploy_rs_overlay = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system}; });
       hush_overlay = (final: prev: { hush = self.packages.${final.stdenv.system}.hush; });
-
-      nixosModules = {
-        pinned_nixpkgs = ({ config, pkgs, ... }: { nix.registry.nixpkgs.flake = nixpkgs; });
-        deploy_rs = { ... }: { nixpkgs.overlays = [ deploy_rs_overlay ]; };
-        hush = ({ pkgs, config, ... }: { nixpkgs.overlays = [ hush_overlay ]; });
-      };
     in
     {
-      inherit allSystems importPkgs forAllSystems home-manager nixosModules;
+      inherit allSystems importPkgs forAllSystems;
 
       packages = forAllSystems
-        ({ pkgs, system }: {
+        ({ pkgs, system }: rec {
           hush = pkgs.rustPlatform.buildRustPackage {
             pname = "hush";
             version = "0.1.5a";
@@ -109,19 +104,23 @@
               maintainers = [ ];
             };
           };
+
+          darwin = self.darwinConfigurations.cp-mba.config.system.build.toplevel;
+          builder = self.nixosConfigurations.${system}.builder.config.system.build.toplevel;
+          homeConfig = self.homeConfigurations.${system}.cmp.activationPackage;
+
+          default = homeConfig;
+
         }) // {
         x86_64-linux =
           let
+            system = "x86_64-linux";
             inherit (importPkgs system) callPackage;
             inherit (inputs.nixos-generators) nixosGenerate;
-            inherit (nixosModules) pinned_nixpkgs;
-            system = "x86_64-linux";
-            mkContainer = { name ? "base", config }: (import ./src/lib/nixos/proxmox.nix).mkContainer { inherit system name config inputs pinned_nixpkgs; };
+            inherit (self.nixosModules) pinned_nixpkgs;
           in
           {
             installer = (callPackage ./src/lib/nixos/installer.nix { inherit system nixosGenerate pinned_nixpkgs; });
-            infraServicesContainer = (import ./src/lib/nixos/containers/infra-services.nix) { inherit mkContainer; name = "infra-services"; };
-            servicesContainer = (import ./src/lib/nixos/containers/services.nix) { inherit mkContainer; name = "services"; };
           };
       };
 
@@ -131,15 +130,27 @@
         hush = hush_overlay;
       };
 
+      nixosModules = {
+        pinned_nixpkgs = { ... }: { nix.registry.nixpkgs.flake = nixpkgs; };
+        deploy_rs = { ... }: { nixpkgs.overlays = [ deploy_rs_overlay ]; };
+        hush = { ... }: { nixpkgs.overlays = [ hush_overlay ]; };
+        firewall = import ./src/lib/nixos/firewall.nix;
+        nginx-cloudflare = import ./src/lib/nixos/nginx-cloudflare.nix;
+        openssh = import ./src/lib/nixos/openssh.nix;
+        router = import ./src/lib/nixos/router.nix;
+        webserver = import ./src/lib/nixos/webserver.nix;
+        darwin = import ./src/lib/nixos/darwin.nix;
+        linux = import ./src/lib/nixos/linux.nix;
+      };
+
       homeConfigurations = {
-        "cmp@cp-mba" = homeConfig { pkgs = importPkgs "aarch64-darwin"; home = ./src/home.nix; };
-        "deck@steamdeck" = homeConfig { username = "deck"; pkgs = importPkgs "x86_64-linux"; home = ./src/home.nix; };
-      } // forAllSystems ({ pkgs, system }: { "cmp" = homeConfig { inherit pkgs; home = ./src/home.nix; }; });
+        "cmp@cp-mba" = homeConfig { pkgs = importPkgs "aarch64-darwin"; };
+        "deck@steamdeck" = homeConfig { username = "deck"; pkgs = importPkgs "x86_64-linux"; };
+      } // forAllSystems ({ pkgs, system }: { "cmp" = homeConfig { inherit pkgs; }; });
 
       darwinConfigurations = {
-        "cp-mba" = darwin.lib.darwinSystem {
+        cp-mba = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
-          # pkgs = pkgs-darwin;
           pkgs = (import inputs.nixpkgs-darwin) {
             overlays = [ self.overlays.cross_nixpkgs ];
             system = "aarch64-darwin";
@@ -152,29 +163,34 @@
         };
       };
 
-      nixosConfigurations = {
-        #   "nix" = nixpkgs.lib.nixosSystem {
-        #     system = "x86_64-linux";
-        #     modules = [
-        #       self.nixosModules.nixpkgs_overlay
-        #       inputs.vscode-server.nixosModule
-        #       ./src/configuration.nix
-        #     ];
-        #   };
-      };
+      nixosConfigurations =
+        let
+          nixBuilder = (system: nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = with self.nixosModules; [
+              pinned_nixpkgs
+              linux
+              firewall
+            ];
+          });
+        in
+        {
+          aarch64-linux.builder = nixBuilder "aarch64-linux";
+          x86_64-linux.builder = nixBuilder "x86_64-linux";
+        };
 
       devShells = forAllSystems ({ pkgs, system }: {
-        default = self.devShells.${system}.dotfiles;
         dotfiles = pkgs.mkShell {
-          # The Nix packages provided in the environment
           packages = (with pkgs; [
             cachix
-            nixVersions.nix_2_14
+            nixVersions.nix_2_16
             nixpkgs-fmt
             shfmt
             shellcheck
-          ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ]);
+          ]);
         };
+
+        default = self.devShells.${system}.dotfiles;
       });
 
       checks = forAllSystems ({ pkgs, system }: {

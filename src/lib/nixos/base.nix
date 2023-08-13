@@ -1,28 +1,52 @@
-{ lib, config, pkgs, vscode-server, ... }: {
+{ lib, pkgs, ... }: with lib; {
   imports = [ ];
 
-  nix = {
-    package = pkgs.nixVersions.nix_2_16;
-    settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      trusted-public-keys = [
-        "binarycache.cp-mba.local:xH/m5WHjOty8a0/n27WSKGhNC0eDf/HX6GREG+G6czM="
-        "cache.cp-mba.local-1:YJIH05Ett5Tcq2eEyfroindEQdpwBG5F5f7ztZ+gFCw="
-      ];
+  options = { base = { }; };
+
+  config = {
+    # environment.pathsToLink = [ "/share/nix-direnv" ];
+    environment.systemPackages = with pkgs; [
+      nixpkgs-fmt
+      curl
+      git
+    ];
+
+    programs = {
+      vim = mkIf pkgs.stdenv.isDarwin {
+        enable = mkDefault true;
+        enableSensible = mkDefault true;
+      };
+
+      neovim = mkIf pkgs.stdenv.isLinux {
+        enable = mkDefault true;
+        vimAlias = mkDefault true;
+        viAlias = mkDefault true;
+        defaultEditor = mkDefault true;
+      };
+
+      zsh = {
+        enable = mkDefault true;
+        enableBashCompletion = mkDefault true;
+        enableCompletion = mkDefault true;
+      } // optionalAttrs pkgs.stdenv.isDarwin {
+        enableFzfCompletion = mkDefault true;
+        enableFzfGit = mkDefault true;
+        enableFzfHistory = mkDefault true;
+      };
+
+      tmux = {
+        enable = mkDefault true;
+      } // optionalAttrs pkgs.stdenv.isLinux {
+        terminal = "screen-256color";
+        clock24 = true;
+        baseIndex = 1;
+        newSession = true;
+        plugins = with pkgs.tmuxPlugins; [ sensible ];
+      } // optionalAttrs pkgs.stdenv.isDarwin {
+        enableMouse = mkDefault true;
+        enableSensible = mkDefault true;
+      };
     };
   };
-
-  nixpkgs.config.allowUnfree = true;
-
-  environment.pathsToLink = [ "/share/nix-direnv" ];
-  environment.systemPackages = with pkgs; [
-    curl
-    git
-    htop
-    neovim
-    nixpkgs-fmt
-    openssl_3
-    wget
-  ];
 
 }

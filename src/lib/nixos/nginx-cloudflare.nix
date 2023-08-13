@@ -30,13 +30,49 @@ let
     "2c0f:f248::/32"
   ];
 in
-{ ... }: {
-  services.nginx.appendHttpConfig = ''
-    ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};") (ipv4_ips)}
+{ lib, config, ... }:
+let
+  cfg = config.services.nginx;
+in
+with lib;
+{
+  options = {
+    services.nginx = {
+      allowCloudflareProxyIPs = mkOption {
+        default = false;
+        type = types.bool;
+        description = ''
+          Enable router features and configuration
+        '';
+      };
+      cloudflareIPv4IPs = mkOption {
+        default = ipv4_ips;
+        type = with types; listOf string;
+        description = ''
+          List of Cloudflare IPv4 blocks from https://www.cloudflare.com/ips-v4
+        '';
+      };
+      cloudflareIPv6IPs = mkOption {
+        default = ipv6_ips;
+        type = with types; listOf string;
+        description = ''
+          List of Cloudflare IPv6 blocks from https://www.cloudflare.com/ips-v6
+        '';
+      };
+    };
+  };
 
-    ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};") (ipv6_ips)}
+  config = mkIf cfg.allowCloudflareProxyIPs {
+    services.nginx.appendHttpConfig = ''
+      # Cloudflare IPv4 Addresses
+      ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};") (cfg.cloudflareIPv4IPs)}
 
-    real_ip_header CF-Connecting-IP;
-    real_ip_recursive on;
-  '';
+      # Cloudflare IPv6 Addresses
+      ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};") (cfg.cloudflareIPv6IPs)}
+
+      # Tell nginx to use CF's header to get the real IP
+      real_ip_header CF-Connecting-IP;
+      real_ip_recursive on;
+    '';
+  };
 }

@@ -1,6 +1,6 @@
 let
-  cmp = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMkZLn/cpSwMC3sgYGQJP7vCykLBN1emYuYv9L8N4izp cmp@cp-mba.local";
+  inherit (import ../lib/sshKeys.nix) cmp;
 in
 {
-  "vault.age".publicKeys = [ cmp ];
+  "example.age".publicKeys = [ cmp ];
 }
