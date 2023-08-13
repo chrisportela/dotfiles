@@ -18,8 +18,8 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
-    vscode-server = {
-      url = "github:msteen/nixos-vscode-server";
+    agenix = {
+      url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hush = {
