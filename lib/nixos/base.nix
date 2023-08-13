@@ -12,17 +12,7 @@
     ];
 
     programs = {
-      vim = mkIf pkgs.stdenv.isDarwin {
-        enable = mkDefault true;
-        enableSensible = mkDefault true;
-      };
 
-      neovim = mkIf pkgs.stdenv.isLinux {
-        enable = mkDefault true;
-        vimAlias = mkDefault true;
-        viAlias = mkDefault true;
-        defaultEditor = mkDefault true;
-      };
 
       zsh = {
         enable = mkDefault true;
@@ -46,7 +36,18 @@
         enableMouse = mkDefault true;
         enableSensible = mkDefault true;
       };
-    };
+    } // (if pkgs.stdenv.isDarwin then {
+      vim = mkIf pkgs.stdenv.isDarwin {
+        enable = mkDefault true;
+        enableSensible = mkDefault true;
+      };
+    } else {
+      neovim = {
+        enable = mkDefault true;
+        vimAlias = mkDefault true;
+        viAlias = mkDefault true;
+        defaultEditor = mkDefault true;
+      };
+    });
   };
-
 }
