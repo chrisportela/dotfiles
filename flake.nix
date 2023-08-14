@@ -120,7 +120,7 @@
             inherit (self.nixosModules) pinned_nixpkgs;
           in
           {
-            installer = (callPackage ./lib/nixos/installer.nix { inherit system nixosGenerate pinned_nixpkgs; });
+            installer = (callPackage ./lib/installer.nix { inherit system nixosGenerate pinned_nixpkgs; });
           };
       };
 
