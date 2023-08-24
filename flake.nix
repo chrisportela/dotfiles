@@ -88,14 +88,14 @@
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
         (forAllSystems ({ pkgs, system }:
           let
-            hm_cmp = (homeConfig { inherit pkgs; }).activationPackage;
+            hm_cmp = (homeConfig { inherit pkgs; });
           in
           rec {
             homeConfigurations = {
               "cmp" = hm_cmp;
             };
 
-            default = hm_cmp;
+            default = hm_cmp.activationPackage;
           }))
         (forAllLinuxSystems ({ pkgs, system }: {
           installer = (pkgs.callPackage ./lib/installer.nix {
