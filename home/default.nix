@@ -2,9 +2,9 @@
 with lib;
 {
   imports = [
-    ./lib/home/shell.nix
-    ./lib/home/neovim.nix
-    ./lib/home/tmux.nix
+    ./shell.nix
+    ./neovim.nix
+    ./tmux.nix
   ];
 
   home = {
@@ -85,7 +85,7 @@ with lib;
     bash.enable = true;
     readline = {
       enable = true;
-      extraConfig = (builtins.readFile ./lib/home/inputrc);
+      extraConfig = (builtins.readFile ./inputrc);
     };
 
     zoxide = {

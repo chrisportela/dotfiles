@@ -2,28 +2,38 @@
 let
   nixLocalVM = {
     systems = [ "x86_64-linux" "aarch64-linux" ];
+    maxJobs = 4;
+    protocol = "ssh-ng";
     sshUser = "cmp";
-    maxJobs = 10;
     hostName = "nix-builder";
     speedFactor = 10;
     supportedFeatures = [ ];
   };
   nixServer = {
     systems = [ "x86_64-linux" "aarch64-linux" ];
-    sshUser = "cmp";
     maxJobs = 20;
+    protocol = "ssh-ng";
+    sshUser = "cmp";
     hostName = "nix.gorgon-basilisk.ts.net";
-    speedFactor = 100;
+    speedFactor = 1;
     supportedFeatures = [ ];
   };
 in
 {
-  imports = [ ./lib/nixos/darwin.nix ];
+  imports = [ ../lib/darwin/common.nix ];
 
   nix = {
     distributedBuilds = true;
-    settings.extra-platforms = [ "aarch64-darwin" ];
-    buildMachines = [ nixLocalVM ];
+    buildMachines = [ nixLocalVM nixServer];
+    settings = {
+      connect-timeout = "5";
+      extra-platforms = [ "x86_64-darwin" "aarch64-darwin" ];
+
+      trusted-substituters = [
+        "ssh-ng://cmp@${nixLocalVM.hostName}"
+        "ssh-ng://cmp@${nixServer.hostName}"
+      ];
+    };
   };
 
   # Used for backwards compatibility, please read the changelog before changing.

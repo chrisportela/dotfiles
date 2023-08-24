@@ -14,4 +14,4 @@
     license = licenses.mit;
     maintainers = [ ];
   };
-};
+}
