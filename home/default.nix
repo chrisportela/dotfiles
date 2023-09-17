@@ -14,7 +14,6 @@ with lib;
       curl
       du-dust
       ripgrep
-      ripgrep-all
       vault
       nixpkgs-fmt
     ];
@@ -60,7 +59,7 @@ with lib;
 
     bat.enable = true;
 
-    exa = {
+    eza = {
       enable = true;
       enableAliases = true;
     };
