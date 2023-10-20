@@ -61,7 +61,7 @@
       forAllLinuxSystems = forEachSystem linuxSystems;
       forAllDarwinSystems = forEachSystem darwinSystems;
 
-      homeConfig = ({ home ? ./home/default.nix, username ? "cmp", pkgs }:
+      homeConfig = ({ home ? ./home/default.nix, username ? "cmp", pkgs, options ? { } }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
 
@@ -70,6 +70,7 @@
             # self.nixosModules.pinned_nixpkgs
             # self.nixosModules.deploy_rs
             home
+            options
           ];
         });
 
@@ -93,6 +94,18 @@
           rec {
             homeConfigurations = {
               "cmp" = hm_cmp;
+              "cmp@ada" = homeConfig {
+                inherit pkgs;
+                options = {lib, ...}: {
+                  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+                    "vscode"
+                  ];
+                  programs = {
+                    vscode.enable = true;
+                    chromium.enable = true;
+                  };
+                };
+              };
             };
 
             default = hm_cmp.activationPackage;
@@ -122,7 +135,12 @@
         builder = (import ./hosts/builder.nix) {
           inherit inputs;
           nixosModules = self.nixosModules;
-          overlays = with self.overlays; [deploy-rs hush];
+          overlays = with self.overlays; [ deploy-rs hush ];
+        };
+        ada = (import ./hosts/ada.nix) {
+          inherit inputs;
+          nixosModules = self.nixosModules;
+          overlays = with self.overlays; [ deploy-rs hush ];
         };
       };
 
