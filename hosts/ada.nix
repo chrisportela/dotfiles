@@ -8,7 +8,7 @@ let
 
     boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
     boot.initrd.kernelModules = [ ];
-    boot.kernelModules = [ "kvm-intel" ];
+    boot.kernelModules = [ "kvm-intel" "i2c-dev" ];
     boot.extraModulePackages = [ ];
     boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
     boot.zfs.forceImportRoot = false;
@@ -126,12 +126,6 @@ inputs.nixpkgs.lib.nixosSystem {
         dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
       };
 
-      services.xserver.dpi = 180;
-      #       environment.variables = {
-      #         GDK_SCALE = "2";
-      #         GDK_DPI_SCALE = "0.5";
-      #         _JAVA_OPTIONS = "-Dsun.java2d.uiScale=2";
-      #       };
       environment.sessionVariables = {
         STEAM_FORCE_DESKTOPUI_SCALING = "2";
       };
@@ -154,7 +148,15 @@ inputs.nixpkgs.lib.nixosSystem {
         ookla-speedtest
         speedtest-cli
         virt-manager
+        ddcutil
+        ddcui
       ];
+
+      services.udev.extraRules = ''
+        KERNEL=="i2c-[0-9]*", GROUP="ddc", MODE="0660", PROGRAM="${pkgs.ddcutil}/bin/ddcutil --bus=%n getvcp 0x10"
+      '';
+
+      services.ddccontrol.enable = true;
 
       networking.nftables.enable = lib.mkDefault true;
       networking.nftables.checkRuleset = lib.mkDefault true;
@@ -172,7 +174,8 @@ inputs.nixpkgs.lib.nixosSystem {
 
       services.resolved = {
         enable = true;
-        fallbackDns = [ "127.0.0.1" ];
+        fallbackDns = [ "127.0.0.1" "1.1.1.1" ];
+        dnssec = "allow-downgrade";
       };
 
       services.unbound = {
@@ -205,6 +208,8 @@ inputs.nixpkgs.lib.nixosSystem {
       services.xserver = {
         # Enable the X11 windowing system.
         enable = true;
+
+        dpi = 180;
 
         # Configure keymap in X11
         layout = "us";
@@ -245,10 +250,30 @@ inputs.nixpkgs.lib.nixosSystem {
       programs._1password.enable = true;
       programs._1password-gui.enable = true;
 
+      virtualisation.docker = {
+        enable = true;
+        enableNvidia = true;
+        storageDriver = "zfs";
+      };
+
+      security.pki.certificates = [
+        ''
+          Root Cafecito Cloud CA
+          =======================
+          ${builtins.readFile ../lib/cafecitocloud-root_ca.crt}
+        ''
+        ''
+          YubiKey 4 Cafecito Cloud Intermediate CA
+          =======================
+          ${builtins.readFile ../lib/cafecitocloud-yubikey4-intermediate_ca.crt}
+        ''
+      ];
+
       virtualisation.libvirtd.enable = true;
       programs.dconf.enable = true;
 
 
+      users.groups.ddc = { };
       # Define a user account. Don't forget to set a password with ‘passwd’.
       users.users.cmp = {
         isNormalUser = true;
@@ -257,6 +282,7 @@ inputs.nixpkgs.lib.nixosSystem {
           "networkmanager"
           "wheel"
           "libvirtd"
+          "ddc"
         ];
         packages = with pkgs; [
           firefox

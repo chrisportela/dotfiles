@@ -96,14 +96,21 @@
               "cmp" = hm_cmp;
               "cmp@ada" = homeConfig {
                 inherit pkgs;
-                options = {lib, ...}: {
+                options = {pkgs, lib, ...}: {
                   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
                     "vscode"
+                    "discord"
+                    "obsidian"
                   ];
                   programs = {
                     vscode.enable = true;
                     chromium.enable = true;
                   };
+                  home.packages = with pkgs; [
+                    trayscale
+                    discord
+                    obsidian
+                  ];
                 };
               };
             };

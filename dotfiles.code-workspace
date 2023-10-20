@@ -3,5 +3,18 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"extensions": {
+		"recommendations": [
+			"jnoortheen.nix-ide",
+			"editorconfig.editorconfig",
+			"mkhl.direnv",
+			"streetsidesoftware.code-spell-checker",
+			"eamodio.gitlens",
+			"bbenoist.nix",
+			"hashicorp.terraform",
+			"vscodevim.vim",
+			"yzhang.markdown-all-in-one"
+		]
+	}
 }
