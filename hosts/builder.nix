@@ -1,4 +1,4 @@
-{inputs, nixosModules, overlays, ...}: inputs.nixpkgs.lib.nixosSystem {
+{ inputs, nixosModules, overlays, ... }: inputs.nixpkgs.lib.nixosSystem {
   system = "aarch64-linux";
   specialArgs = {
     inherit inputs overlays;
