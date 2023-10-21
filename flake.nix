@@ -101,6 +101,7 @@
                     "vscode"
                     "discord"
                     "obsidian"
+                    "cider"
                   ];
                   programs = {
                     vscode.enable = true;
@@ -110,6 +111,7 @@
                     trayscale
                     discord
                     obsidian
+                    cider
                   ];
                 };
               };
