@@ -150,6 +150,7 @@ inputs.nixpkgs.lib.nixosSystem {
         virt-manager
         ddcutil
         ddcui
+        lm_sensors
       ];
 
       services.udev.extraRules = ''
