@@ -112,7 +112,11 @@
                     discord
                     obsidian
                     cider
+                    signal-desktop
                   ];
+                  home.shellAliases = {
+                    "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
+                  };
                 };
               };
             };

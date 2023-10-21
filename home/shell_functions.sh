@@ -2,7 +2,7 @@
 
 # change into directory of a file
 cdd() {
-  cd $(dirname $@)
+  cd $(dirname ${@:})
 }
 
 # Create a new directory and enter it
