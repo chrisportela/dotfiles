@@ -11,6 +11,8 @@ let
     boot.kernelModules = [ "kvm-intel" "i2c-dev" ];
     boot.extraModulePackages = [ ];
     boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
+    boot.zfs.extraPools = [ "spool" ];
+    boot.zfs.requestEncryptionCredentials = [ "spool" ];
     boot.zfs.forceImportRoot = false;
 
     fileSystems = {
@@ -135,8 +137,17 @@ inputs.nixpkgs.lib.nixosSystem {
       # networking.wireless.enable = true; # Enables wireless support via wpa_supplicant.
 
       # Enable networking
+      networking.useNetworkd = true;
+      networking.dhcpcd.enable = false;
+      networking.useDHCP = false;
       networking.networkmanager.enable = true;
-      networking.networkmanager.dns = lib.mkForce "systemd-resolved";
+      networking.networkmanager.dns = lib.mkForce "default";
+      networking.nameservers = [
+        "100.100.100.100"
+        "127.0.0.1"
+        "1.1.1.1#853"
+      ];
+      networking.resolvconf.dnsExtensionMechanism = false;
       environment.systemPackages = with pkgs; [
         inetutils
         ipcalc
@@ -175,8 +186,12 @@ inputs.nixpkgs.lib.nixosSystem {
 
       services.resolved = {
         enable = true;
-        fallbackDns = [ "127.0.0.1" "1.1.1.1" ];
-        dnssec = "allow-downgrade";
+        fallbackDns = [
+          "100.100.100.100"
+          "127.0.0.1"
+          "1.1.1.1#853"
+        ];
+        dnssec = "false";
       };
 
       services.unbound = {
@@ -284,6 +299,7 @@ inputs.nixpkgs.lib.nixosSystem {
           "wheel"
           "libvirtd"
           "ddc"
+          "docker"
         ];
         packages = with pkgs; [
           firefox

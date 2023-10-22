@@ -113,6 +113,8 @@
                     obsidian
                     cider
                     signal-desktop
+                    onlyoffice-bin_7_4
+                    sqlitebrowser
                   ];
                   home.shellAliases = {
                     "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
