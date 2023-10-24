@@ -265,6 +265,8 @@ inputs.nixpkgs.lib.nixosSystem {
 
       programs._1password.enable = true;
       programs._1password-gui.enable = true;
+      programs._1password-gui.polkitPolicyOwners = ["cmp"];
+      security.pam.services.kwallet.enableKwallet = true;
 
       virtualisation.docker = {
         enable = true;
