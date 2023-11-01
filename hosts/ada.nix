@@ -103,6 +103,8 @@ inputs.nixpkgs.lib.nixosSystem {
         enable = true;
         consoleMode = "max";
 
+        configurationLimit = 5;
+
         memtest86.enable = true;
 
         #         extraFiles = {
