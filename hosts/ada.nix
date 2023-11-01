@@ -155,6 +155,8 @@ inputs.nixpkgs.lib.nixosSystem {
         "1.1.1.1#853"
       ];
       networking.resolvconf.dnsExtensionMechanism = false;
+      systemd.network.wait-online.anyInterface = true;
+
       environment.systemPackages = with pkgs; [
         inetutils
         ipcalc
