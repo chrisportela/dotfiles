@@ -16,6 +16,7 @@ with lib;
       ripgrep
       vault
       nixpkgs-fmt
+      git-annex
     ];
 
     shellAliases = {
