@@ -12,7 +12,11 @@ let
     boot.extraModulePackages = [ ];
     boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
     boot.zfs.extraPools = [ "spool" ];
-    boot.zfs.requestEncryptionCredentials = [ "spool" ];
+    boot.zfs.requestEncryptionCredentials = [
+      "spool"
+      "spool/docker"
+      "spool/home"
+    ];
     boot.zfs.forceImportRoot = false;
 
     fileSystems = {
@@ -88,6 +92,7 @@ inputs.nixpkgs.lib.nixosSystem {
     nixpkgs = inputs.nixpkgs;
   };
   modules = [
+    inputs.vscode-server.nixosModules.default
     nixosModules.common
     nixosModules.nixpkgs
     nixosModules.openssh
@@ -262,6 +267,8 @@ inputs.nixpkgs.lib.nixosSystem {
         viAlias = true;
         vimAlias = true;
       };
+
+      services.vscode-server.enable = true;
 
       programs._1password.enable = true;
       programs._1password-gui.enable = true;

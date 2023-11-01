@@ -27,6 +27,10 @@
       flake = false;
     };
     deploy-rs.url = "github:serokell/deploy-rs";
+    vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -115,6 +119,7 @@
                     signal-desktop
                     onlyoffice-bin_7_4
                     sqlitebrowser
+                    jrnl
                   ];
                   home.shellAliases = {
                     "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
