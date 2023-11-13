@@ -1,4 +1,4 @@
-{ lib, config, ... }: {
+{ lib, config, pkgs, ... }: {
   programs.fzf = {
     enable = lib.mkDefault true;
     enableZshIntegration = lib.mkDefault true;
@@ -59,6 +59,10 @@
       fi
 
       source ${./shell_functions.sh}
+
+      notify() {
+        "${pkgs.notify-desktop}/bin/notify-desktop" -u critical "Command finished: $?" "!!" 1>/dev/null
+      }
     '';
   };
 
