@@ -242,9 +242,11 @@ inputs.nixpkgs.lib.nixosSystem {
 
         # Enable the KDE Plasma Desktop Environment.
         displayManager.sddm.enable = true;
+        displayManager.sddm.wayland.enable = true;
         desktopManager.plasma5.enable = true;
         desktopManager.plasma5.useQtScaling = true;
       };
+      programs.xwayland.enable = true;
 
 
       # Enable CUPS to print documents.
