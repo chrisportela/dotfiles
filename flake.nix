@@ -117,7 +117,7 @@
                     obsidian
                     cider
                     signal-desktop
-                    onlyoffice-bin_7_4
+                    onlyoffice-bin_latest
                     sqlitebrowser
                     jrnl
                   ];
