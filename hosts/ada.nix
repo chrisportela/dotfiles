@@ -76,7 +76,7 @@ let
     # (the default) this is the recommended approach. When using systemd-networkd it's
     # still possible to use this option, but it's recommended to use it in conjunction
     # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
-    networking.useDHCP = lib.mkDefault true;
+    networking.useDHCP = lib.mkDefault false;
     networking.interfaces.enp6s0.useDHCP = lib.mkDefault true;
     networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
 
@@ -147,15 +147,36 @@ inputs.nixpkgs.lib.nixosSystem {
       networking.useNetworkd = true;
       networking.dhcpcd.enable = false;
       networking.useDHCP = false;
-      networking.networkmanager.enable = true;
+      networking.networkmanager.enable = false;
       networking.networkmanager.dns = lib.mkForce "default";
-      networking.nameservers = [
-        "100.100.100.100"
-        "127.0.0.1"
-        "1.1.1.1#853"
-      ];
       networking.resolvconf.dnsExtensionMechanism = false;
-      systemd.network.wait-online.anyInterface = true;
+      boot.initrd.systemd.network.wait-online = {
+        enable = false;
+        ignoredInterfaces = [ "wlo1" ];
+        # anyInterface = true;
+      };
+      systemd.network.wait-online = {
+        enable = false;
+        ignoredInterfaces = [ "wlo1" ];
+        # anyInterface = true;
+      };
+      networking.interfaces.enp6s0 = {
+        ipv4 = {
+          addresses = [{
+            address = "10.38.0.50";
+            prefixLength = 22;
+          }];
+        };
+
+        useDHCP = false;
+      };
+      networking.defaultGateway = {
+        address = "10.38.0.1";
+        interface = "enp6s0";
+      };
+      networking.nameservers = [ "1.1.1.1#853" ];
+      networking.interfaces.wlo1.useDHCP = false;
+
 
       environment.systemPackages = with pkgs; [
         inetutils
@@ -196,19 +217,9 @@ inputs.nixpkgs.lib.nixosSystem {
       services.resolved = {
         enable = true;
         fallbackDns = [
-          "100.100.100.100"
-          "127.0.0.1"
           "1.1.1.1#853"
         ];
         dnssec = "false";
-      };
-
-      services.unbound = {
-        enable = true;
-        resolveLocalQueries = true;
-        localControlSocketPath = "/run/unbound/unbount.ctl";
-        enableRootTrustAnchor = true;
-        settings.server.interface = [ "127.0.0.1" ];
       };
 
       # Set your time zone.
@@ -242,7 +253,7 @@ inputs.nixpkgs.lib.nixosSystem {
 
         # Enable the KDE Plasma Desktop Environment.
         displayManager.sddm.enable = true;
-        displayManager.sddm.wayland.enable = true;
+        displayManager.sddm.wayland.enable = false;
         desktopManager.plasma5.enable = true;
         desktopManager.plasma5.useQtScaling = true;
       };
@@ -278,13 +289,17 @@ inputs.nixpkgs.lib.nixosSystem {
 
       programs._1password.enable = true;
       programs._1password-gui.enable = true;
-      programs._1password-gui.polkitPolicyOwners = ["cmp"];
+      programs._1password-gui.polkitPolicyOwners = [ "cmp" ];
       security.pam.services.kwallet.enableKwallet = true;
 
       virtualisation.docker = {
-        enable = true;
+        enable = false;
         enableNvidia = true;
         storageDriver = "zfs";
+      };
+
+      virtualisation.virtualbox.host = {
+        enable = true;
       };
 
       security.pki.certificates = [
