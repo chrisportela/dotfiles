@@ -113,7 +113,9 @@
                   };
                   home.packages = with pkgs; [
                     trayscale
-                    discord
+                    (discord.override {
+                      withOpenASAR = true;
+                    })
                     obsidian
                     cider
                     signal-desktop
