@@ -7,6 +7,12 @@ with lib;
     ./tmux.nix
   ];
 
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    "terraform"
+    "vault"
+    "vault-1.15.4"
+  ];
+
   home = {
     homeDirectory = (if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}");
     stateVersion = mkDefault "22.11";
