@@ -20,7 +20,10 @@ let
   };
 in
 {
-  imports = [ ../lib/darwin/common.nix ];
+  imports = [
+    ../lib/darwin/common.nix
+    ../lib/darwin/nixpkgs.nix
+  ];
 
   nix = {
     distributedBuilds = true;

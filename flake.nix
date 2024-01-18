@@ -8,8 +8,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-23.05-darwin";
-    nixos-23_05.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-23.11-darwin";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -100,7 +99,7 @@
               "cmp" = hm_cmp;
               "cmp@ada" = homeConfig {
                 inherit pkgs;
-                options = {pkgs, lib, ...}: {
+                options = { pkgs, lib, ... }: {
                   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
                     "vscode"
                     "discord"
@@ -169,6 +168,11 @@
       darwinConfigurations = {
         lux = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
+          specialArgs = {
+            inherit inputs;
+            overlays = with self.overlays; [ deploy-rs hush ];
+            nixpkgs = inputs.nixpkgs;
+          };
           modules = with self.darwinModules; [
             common
             ./hosts/mba.nix

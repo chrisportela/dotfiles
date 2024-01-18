@@ -1,6 +1,6 @@
 { lib, config, pkgs, inputs, nixpkgs, overlays, ... }: with lib; {
   nix = {
-    package = mkDefault pkgs.nixVersions.nix_2_16;
+    package = mkDefault pkgs.nixVersions.nix_2_18;
     registry.nixpkgs.flake = nixpkgs;
     configureBuildUsers = true;
 
