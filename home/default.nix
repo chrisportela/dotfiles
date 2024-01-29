@@ -11,6 +11,10 @@ with lib;
     "terraform"
     "vault"
     "vault-1.15.4"
+    "vscode"
+    "discord"
+    "obsidian"
+    "cider"
   ];
 
   home = {

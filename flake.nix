@@ -106,15 +106,16 @@
                     "obsidian"
                     "cider"
                   ];
+                  nixpkgs.config.permittedInsecurePackages = [
+                    "electron-25.9.0"
+                  ];
                   programs = {
                     vscode.enable = true;
                     chromium.enable = true;
                   };
                   home.packages = with pkgs; [
                     trayscale
-                    (discord.override {
-                      withOpenASAR = true;
-                    })
+                    discord
                     obsidian
                     cider
                     signal-desktop
