@@ -150,33 +150,34 @@ inputs.nixpkgs.lib.nixosSystem {
       networking.useNetworkd = true;
       networking.dhcpcd.enable = false;
       networking.useDHCP = false;
-      networking.networkmanager.enable = false;
-      networking.networkmanager.dns = lib.mkForce "default";
-      networking.resolvconf.dnsExtensionMechanism = false;
-      boot.initrd.systemd.network.wait-online = {
-        enable = false;
-        ignoredInterfaces = [ "wlo1" ];
-        # anyInterface = true;
-      };
+      networking.networkmanager.enable = true;
+      # networking.networkmanager.dns = lib.mkForce "default";
+      # networking.resolvconf.dnsExtensionMechanism = false;
+      boot.initrd.systemd.network.wait-online =
+        {
+          enable = false;
+          ignoredInterfaces = [ "wlo1" ];
+          # anyInterface = true;
+        };
       systemd.network.wait-online = {
         enable = false;
         ignoredInterfaces = [ "wlo1" ];
         # anyInterface = true;
       };
       networking.interfaces.enp6s0 = {
-        ipv4 = {
-          addresses = [{
-            address = "10.38.0.50";
-            prefixLength = 22;
-          }];
-        };
+        # ipv4 = {
+        #  addresses = [{
+        #    address = "192.168.2.50";
+        #    prefixLength = 24;
+        #  }];
+        # };
 
-        useDHCP = false;
+        useDHCP = true;
       };
-      networking.defaultGateway = {
-        address = "10.38.0.1";
-        interface = "enp6s0";
-      };
+      # networking.defaultGateway = {
+      #   address = "192.168.2.1";
+      #   interface = "enp6s0";
+      # };
       networking.nameservers = [ "1.1.1.1#853" ];
       networking.interfaces.wlo1.useDHCP = false;
 
@@ -203,8 +204,10 @@ inputs.nixpkgs.lib.nixosSystem {
 
       services.ddccontrol.enable = true;
 
-      networking.nftables.enable = lib.mkDefault true;
-      networking.nftables.checkRuleset = lib.mkDefault true;
+      networking.nftables.enable = lib.mkDefault
+        true;
+      networking.nftables.checkRuleset = lib.mkDefault
+        true;
       networking.firewall = {
         enable = true;
         allowedTCPPorts = config.services.openssh.ports;
