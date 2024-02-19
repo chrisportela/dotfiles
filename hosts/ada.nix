@@ -254,8 +254,10 @@ inputs.nixpkgs.lib.nixosSystem {
         dpi = 180;
 
         # Configure keymap in X11
-        layout = "us";
-        xkbVariant = "";
+        xkb = {
+          layout = "us";
+          variant = "";
+        };
 
         # Enable the KDE Plasma Desktop Environment.
         displayManager.sddm.enable = true;
