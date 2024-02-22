@@ -22,6 +22,8 @@ with lib;
     stateVersion = mkDefault "22.11";
     packages = with pkgs; [
       curl
+      dogdns
+      doggo
       du-dust
       ripgrep
       vault
