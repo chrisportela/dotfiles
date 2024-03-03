@@ -102,29 +102,30 @@ inputs.nixpkgs.lib.nixosSystem {
     hardwareConfig
     ({ pkgs, config, lib, ... }: {
       # Bootloader.
-      boot.loader.systemd-boot = {
-        enable = true;
-        consoleMode = "max";
+      boot.loader = {
+        efi = {
+          canTouchEfiVariables = true;
+          efiSysMountPoint = "/boot";
+        };
 
-        configurationLimit = 5;
+        grub = {
+          enable = true;
+          configurationLimit = 5;
+          efiSupport = true;
+          # efiInstallAsRemovable = true;
+          devices = [ "nodev" ];
+          timeoutStyle = "hidden";
 
-        memtest86.enable = true;
-
-        #         extraFiles = {
-        #           "esp/windows.nsh" = lib.writeTextFile "esp_windows.nsh" ''
-        #           HD0a66666a2:EFI\Microsoft\Boot\Bootmgfw.efi
-        #           '';
-        #         };
-        #
-        #         extraEntries = {
-        #           "Windows" = ''
-        #           title Windows 11
-        #           efi /shellx64.efi
-        #           options -nointerrupt -noconsolein -noconsoleout windows.nsh
-        #           '';
-        #         };
+          extraEntries = ''
+            menuentry 'Windows' --class windows --class os {
+              insmod part_gpt
+              insmod fat
+              search --no-floppy --fs-uuid --set=root BE3A-DC27
+              chainloader /efi/Microsoft/Boot/bootmgfw.efi
+            }
+          '';
+        };
       };
-      boot.loader.efi.canTouchEfiVariables = true;
 
       nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         "steam"
