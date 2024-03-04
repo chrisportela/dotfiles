@@ -85,18 +85,15 @@
         inherit allSystems importPkgs forAllSystems forAllDarwinSystems forAllLinuxSystems;
       };
 
-      defaultPackage = forAllSystems ({ pkgs, system }: self.legacyPackages.${system}.default);
-
       packages = forAllSystems ({ pkgs, system }: rec {
         hush = pkgs.callPackage ./pkgs/hush-shell.nix { inherit inputs; };
+
+        default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });
 
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
         (forAllSystems ({ pkgs, system }:
-          let
-            hm_cmp = (homeConfig { inherit pkgs; });
-          in
-          {
+          let hm_cmp = (homeConfig { inherit pkgs; }); in {
             homeConfigurations = {
               "cmp" = hm_cmp;
               "cmp@ada" = homeConfig {
@@ -131,15 +128,9 @@
                 };
               };
             };
-
-            default = hm_cmp.activationPackage;
           }))
         (forAllLinuxSystems ({ pkgs, system }: {
-          installer = (pkgs.callPackage ./lib/installer.nix {
-            inherit system;
-            nixosGenerate = inputs.nixos-generators.nixosGenerate;
-            pinned_nixpkgs = self.nixosModules.pinned_nixpkgs;
-          });
+          installer-iso = self.nixosConfigurations.installer.config.formats.iso;
         }))
       ]);
 
@@ -156,6 +147,7 @@
       };
 
       nixosConfigurations = {
+        installer = (import ./lib/installer.nix) { inherit inputs; };
         builder = (import ./hosts/builder.nix) {
           inherit inputs;
           nixosModules = self.nixosModules;

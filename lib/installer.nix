@@ -1,16 +1,17 @@
-{ hostName ? "installer", pkgs, system, nixosGenerate, nixpkgs_overlay, ... }:
-nixosGenerate {
+{ inputs
+, system ? "x86_64-linux"
+, hostName ? "installer"
+, ...
+}:
+inputs.nixpkgs.lib.nixosSystem {
   inherit system;
 
   modules = [
-    nixpkgs_overlay
+    inputs.nixos-generators.nixosModules.all-formats
+    "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+    ({ pkgs, lib, ... }: {
 
-    ({ lib, config, modulesPath, ... }: {
-      imports = [
-        "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
-      ];
-
-      nixpkgs.hostPlatform.system = system;
+      # nixpkgs.hostPlatform.system = system;
       networking.hostName = hostName;
 
       boot.loader.timeout = lib.mkOverride 10 10;
@@ -23,6 +24,7 @@ nixosGenerate {
 
       systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
 
+      users.groups.nix = {};
       users.users.nix = {
         isSystemUser = true;
         group = "nix";
@@ -30,5 +32,4 @@ nixosGenerate {
       };
     })
   ];
-  format = "install-iso";
 }
