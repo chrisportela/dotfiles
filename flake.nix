@@ -86,7 +86,7 @@
       };
 
       packages = forAllSystems ({ pkgs, system }: rec {
-        hush = pkgs.callPackage ./pkgs/hush-shell.nix { inherit inputs; };
+        hush = pkgs.callPackage ./pkgs/hush-shell.nix { src = inputs.hush; };
 
         default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });

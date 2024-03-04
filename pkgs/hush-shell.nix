@@ -1,8 +1,8 @@
-{ pkgs, inputs, ... }: pkgs.rustPlatform.buildRustPackage rec {
+{ pkgs, src, ... }: pkgs.rustPlatform.buildRustPackage rec {
   pname = "hush";
   version = "0.1.5a";
 
-  src = inputs.hush;
+  inherit src;
 
   cargoSha256 = "sha256-0WYC4ScLNYE1jKEfWeYaBeY1Zl+gQa1Wl7xJK0CI8+I=";
 
