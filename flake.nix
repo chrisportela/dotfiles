@@ -51,34 +51,33 @@
 
       importPkgs = (system: import nixpkgs {
         inherit system;
-        overlays = [ deploy_rs_overlay hush_overlay ];
+        overlays = [ ];
       });
 
       # Helper to provide system-specific attributes
       forEachSystem = systems: f: nixpkgs.lib.genAttrs systems (system: f {
         inherit system;
-        pkgs = (importPkgs system);
+        pkgs = (import nixpkgs { inherit system; });
       });
 
       forAllSystems = forEachSystem allSystems;
       forAllLinuxSystems = forEachSystem linuxSystems;
       forAllDarwinSystems = forEachSystem darwinSystems;
 
-      homeConfig = ({ home ? ./home/default.nix, username ? "cmp", pkgs, options ? { } }:
+      homeConfig = ({ pkgs
+                    , home ? ./home/default.nix
+                    , username ? "cmp"
+                    , options ? { }
+                    }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
 
           modules = [
             { home.username = username; }
-            # self.nixosModules.pinned_nixpkgs
-            # self.nixosModules.deploy_rs
             home
             options
           ];
         });
-
-      deploy_rs_overlay = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system}; });
-      hush_overlay = (final: prev: { hush = self.packages.${final.stdenv.system}.hush; });
     in
     {
       lib = {
@@ -86,79 +85,86 @@
       };
 
       packages = forAllSystems ({ pkgs, system }: rec {
-        hush = pkgs.callPackage ./pkgs/hush-shell.nix { src = inputs.hush; };
+        hush = pkgs.callPackage ./pkgs/hush-shell.nix {
+          src = inputs.hush;
+        };
 
         default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });
 
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
-        (forAllSystems ({ pkgs, system }:
-          let hm_cmp = (homeConfig { inherit pkgs; }); in {
-            homeConfigurations = {
-              "cmp" = hm_cmp;
-              "cmp@ada" = homeConfig {
-                inherit pkgs;
-                options = { pkgs, lib, ... }: {
-                  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-                    "vscode"
-                    "discord"
-                    "obsidian"
-                    "cider"
-                  ];
-                  nixpkgs.config.permittedInsecurePackages = [
-                    "electron-25.9.0"
-                  ];
-                  programs = {
-                    vscode.enable = true;
-                    chromium.enable = true;
-                  };
-                  home.packages = with pkgs; [
-                    trayscale
-                    discord
-                    obsidian
-                    cider
-                    signal-desktop
-                    onlyoffice-bin_latest
-                    sqlitebrowser
-                    jrnl
-                  ];
-                  home.shellAliases = {
-                    "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
-                  };
+        (forAllSystems ({ pkgs, system }: {
+          homeConfigurations = {
+            "cmp" = homeConfig { inherit pkgs; };
+            "cmp@ada" = homeConfig {
+              inherit pkgs;
+              options = { pkgs, lib, ... }: {
+                nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+                  "vscode"
+                  "discord"
+                  "obsidian"
+                  "cider"
+                ];
+                nixpkgs.config.permittedInsecurePackages = [
+                  "electron-25.9.0"
+                ];
+                programs = {
+                  vscode.enable = true;
+                  chromium.enable = true;
+                };
+                home.packages = with pkgs; [
+                  trayscale
+                  discord
+                  obsidian
+                  cider
+                  signal-desktop
+                  onlyoffice-bin_latest
+                  sqlitebrowser
+                  jrnl
+                ];
+                home.shellAliases = {
+                  "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
                 };
               };
             };
-          }))
+          };
+        }))
         (forAllLinuxSystems ({ pkgs, system }: {
           installer-iso = self.nixosConfigurations.installer.config.formats.iso;
         }))
       ]);
 
       overlays = {
-        deploy-rs = deploy_rs_overlay;
-        hush = hush_overlay;
+        deploy-rs = (final: prev: {
+          deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system};
+        });
+        hush = (final: prev: {
+          hush = self.packages.${final.stdenv.system}.hush;
+        });
+      };
+
+      homeConfigurations = {
+        "deck@steamdeck" = homeConfig {
+          username = "deck";
+          pkgs = importPkgs "x86_64-linux";
+        };
       };
 
       nixosModules = (import ./lib/nixos/default.nix);
-      darwinModules = (import ./lib/darwin/default.nix);
-
-      homeConfigurations = {
-        "deck@steamdeck" = homeConfig { username = "deck"; pkgs = importPkgs "x86_64-linux"; };
-      };
 
       nixosConfigurations = {
         installer = (import ./lib/installer.nix) { inherit inputs; };
         builder = (import ./hosts/builder.nix) {
-          inherit inputs;
+          nixpkgs = inputs.nixpkgs;
           nixosModules = self.nixosModules;
-          overlays = with self.overlays; [ deploy-rs hush ];
         };
         ada = (import ./hosts/ada.nix) {
           inherit inputs;
           nixosModules = self.nixosModules;
-          overlays = with self.overlays; [ deploy-rs hush ];
         };
       };
+
+      darwinModules = (import ./lib/darwin/default.nix);
 
       darwinConfigurations = {
         lux = darwin.lib.darwinSystem {
@@ -179,7 +185,7 @@
         dotfiles = pkgs.mkShell {
           packages = (with pkgs; [
             cachix
-            nixVersions.nix_2_16
+            nixVersions.nix_2_18
             nixpkgs-fmt
             shfmt
             shellcheck
@@ -190,21 +196,25 @@
       });
 
       checks = forAllSystems ({ pkgs, system }: {
-        shell-functions = let script = ./home/shell_functions.sh; in pkgs.stdenvNoCC.mkDerivation {
-          name = "shell-functions-check";
-          dontBuild = true;
-          src = script;
-          nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
-          unpackPhase = ":";
-          checkPhase = ''
-            shfmt -d -s -i 2 -ci ${script}
-            alejandra -c .
-            shellcheck -x ${script}
-          '';
-          installPhase = ''
-            mkdir "$out"
-          '';
-        };
+        shell-functions =
+          let
+            script = ./home/shell_functions.sh;
+          in
+          pkgs.stdenvNoCC.mkDerivation {
+            name = "shell-functions-check";
+            dontBuild = true;
+            src = script;
+            nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
+            unpackPhase = ":";
+            checkPhase = ''
+              shfmt -d -s -i 2 -ci ${script}
+              alejandra -c .
+              shellcheck -x ${script}
+            '';
+            installPhase = ''
+              mkdir "$out"
+            '';
+          };
       });
     };
 }

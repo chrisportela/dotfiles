@@ -1,13 +1,14 @@
-{ inputs, nixosModules, overlays, system ? "aarch64-linux", ... }:
-inputs.nixpkgs.lib.nixosSystem {
+{ nixpkgs, nixosModules, system ? "aarch64-linux", ... }:
+nixpkgs.lib.nixosSystem {
   inherit system;
 
   specialArgs = {
-    inherit inputs overlays;
-    nixpkgs = inputs.nixpkgs;
+    inherit nixpkgs;
+    overlays = [];
   };
+
   modules = [
-    "${inputs.nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
+    "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
     nixosModules.common
     nixosModules.nixpkgs
     nixosModules.network

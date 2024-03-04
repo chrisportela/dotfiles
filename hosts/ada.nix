@@ -1,4 +1,4 @@
-{ inputs, nixosModules, overlays, ... }:
+{ inputs, nixosModules, overlays ? [ ], ... }:
 let
   hardwareConfig = { config, lib, pkgs, modulesPath, ... }: {
     imports =
@@ -89,11 +89,11 @@ let
   };
 in
 inputs.nixpkgs.lib.nixosSystem {
-  system = "aarch64-linux";
   specialArgs = {
     inherit inputs overlays;
     nixpkgs = inputs.nixpkgs;
   };
+
   modules = [
     inputs.vscode-server.nixosModules.default
     nixosModules.common
