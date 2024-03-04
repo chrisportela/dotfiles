@@ -67,13 +67,17 @@
       homeConfig = ({ pkgs
                     , home ? ./home/default.nix
                     , username ? "cmp"
+                    , allowUnfree ? [ ]
                     , options ? { }
                     }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
 
           modules = [
-            { home.username = username; }
+            ({ pkgs, lib, ... }: {
+              home.username = username;
+              nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) allowUnfree;
+            })
             home
             options
           ];
@@ -95,23 +99,32 @@
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
         (forAllSystems ({ pkgs, system }: {
           homeConfigurations = {
-            "cmp" = homeConfig { inherit pkgs; };
+            "cmp" = homeConfig {
+              inherit pkgs;
+
+              allowUnfree = [ "vault" ];
+            };
             "cmp@ada" = homeConfig {
               inherit pkgs;
+
+              allowUnfree = [
+                "vault"
+                "vscode"
+                "discord"
+                "obsidian"
+                "cider"
+              ];
+
               options = { pkgs, lib, ... }: {
-                nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-                  "vscode"
-                  "discord"
-                  "obsidian"
-                  "cider"
-                ];
-                nixpkgs.config.permittedInsecurePackages = [
-                  "electron-25.9.0"
-                ];
+                # nixpkgs.config.permittedInsecurePackages = [
+                #   "electron-25.9.0"
+                # ];
+
                 programs = {
                   vscode.enable = true;
                   chromium.enable = true;
                 };
+
                 home.packages = with pkgs; [
                   trayscale
                   discord
@@ -122,6 +135,7 @@
                   sqlitebrowser
                   jrnl
                 ];
+
                 home.shellAliases = {
                   "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
                 };

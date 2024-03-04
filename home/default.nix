@@ -1,17 +1,11 @@
 ({ pkgs, lib, config, ... }: with lib; {
   imports = [
     ./shell.nix
-    ./neovim.nix
     ./tmux.nix
   ];
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "terraform"
     "vault"
-    "vscode"
-    "discord"
-    "obsidian"
-    "cider"
   ];
 
   home = {
