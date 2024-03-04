@@ -5,7 +5,7 @@ nixosGenerate {
   modules = [
     nixpkgs_overlay
 
-    { lib, config, modulesPath, ... }: {
+    ({ lib, config, modulesPath, ... }: {
       imports = [
         "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
       ];
@@ -28,7 +28,7 @@ nixosGenerate {
         group = "nix";
         openssh.authorizedKeys.keys = (import ./sshKeys.nix).cmp;
       };
-    };
+    })
   ];
   format = "install-iso";
 }
