@@ -1,0 +1,1 @@
+{"formatting":{"command":"nixpkgs-fmt"},"options":{"enable":true,"target":{"args":[],"installable":".#legacyPackages.x86_64-linux.homeConfigurations.cmp.options"}}}
