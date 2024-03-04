@@ -116,10 +116,6 @@
               ];
 
               options = { pkgs, lib, ... }: {
-                # nixpkgs.config.permittedInsecurePackages = [
-                #   "electron-25.9.0"
-                # ];
-
                 programs = {
                   vscode.enable = true;
                   chromium.enable = true;
@@ -199,10 +195,10 @@
         dotfiles = pkgs.mkShell {
           packages = (with pkgs; [
             cachix
-            nixVersions.nix_2_18
+            nixd
             nixpkgs-fmt
-            shfmt
             shellcheck
+            shfmt
           ]);
         };
 
