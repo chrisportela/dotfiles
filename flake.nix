@@ -85,6 +85,8 @@
         inherit allSystems importPkgs forAllSystems forAllDarwinSystems forAllLinuxSystems;
       };
 
+      defaultPackage = forAllSystems ({ pkgs, system }: self.legacyPackages.${system}.default);
+
       packages = forAllSystems ({ pkgs, system }: rec {
         hush = pkgs.callPackage ./pkgs/hush-shell.nix { inherit inputs; };
       });
@@ -94,7 +96,7 @@
           let
             hm_cmp = (homeConfig { inherit pkgs; });
           in
-          rec {
+          {
             homeConfigurations = {
               "cmp" = hm_cmp;
               "cmp@ada" = homeConfig {
