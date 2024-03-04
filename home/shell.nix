@@ -1,4 +1,33 @@
 { lib, config, pkgs, ... }: {
+  home.shellAliases =
+    let
+      git = "${pkgs.git}/bin/git";
+      readlink = "${pkgs.coreutils}/bin/readlink";
+    in
+    {
+      "reload" = "[[ -o login ]] && exec $SHELL -l || exec $SHELL";
+      "realcd" = "cd $(${readlink} -f .)";
+
+      "g" = "${git} ";
+      "gs" = "${git} status ";
+      "gl" = "${git} log ";
+      "ga" = "${git} add ";
+      "gb" = "${git} branch";
+      "push" = "${git} push ";
+      "pusho" = "${git} push origin HEAD";
+      "fpush" = "${git} push --force-with-lease";
+      "pull" = "${git} pull --ff --tags --prune";
+      "fpull" = "${git} pull --force --ff --tags --prune";
+      # "grh" = "${git} reset --hard origin/HEAD";
+
+      # These are just nice helpers for whatever "terraform" is in the environment.
+      "t" = "terraform";
+      "tf" = "terraform";
+      "tip" = "terraform init && terraform plan -out plan.out";
+      "tp" = "terraform plan -out plan.out";
+      "tap" = "terraform apply plan.out";
+    };
+
   programs.fzf = {
     enable = lib.mkDefault true;
     enableZshIntegration = lib.mkDefault true;

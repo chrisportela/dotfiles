@@ -1,6 +1,4 @@
-({ pkgs, lib, config, ... }:
-with lib;
-{
+({ pkgs, lib, config, ... }: with lib; {
   imports = [
     ./shell.nix
     ./neovim.nix
@@ -10,7 +8,6 @@ with lib;
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
     "terraform"
     "vault"
-    "vault-1.15.4"
     "vscode"
     "discord"
     "obsidian"
@@ -30,32 +27,7 @@ with lib;
       nixpkgs-fmt
       git-annex
     ];
-
-    shellAliases = {
-      "reload" = "[[ -o login ]] && exec $SHELL -l || exec $SHELL";
-      "realcd" = "cd $(${pkgs.coreutils}/bin/readlink -f .)";
-
-      "g" = "${pkgs.git}/bin/git ";
-      "gs" = "${pkgs.git}/bin/git status ";
-      "gl" = "${pkgs.git}/bin/git log ";
-      "ga" = "${pkgs.git}/bin/git add ";
-      "gb" = "${pkgs.git}/bin/git branch";
-      "push" = "${pkgs.git}/bin/git push ";
-      "pusho" = "${pkgs.git}/bin/git push origin HEAD";
-      "fpush" = "${pkgs.git}/bin/git push --force-with-lease";
-      "pull" = "${pkgs.git}/bin/git pull --ff --tags --prune";
-      "fpull" = "${pkgs.git}/bin/git pull --force --ff --tags --prune";
-      # "grh" = "git reset --hard origin/HEAD";
-
-      # These are just nice helpers for whatever "terraform" is in the environment.
-      "t" = "terraform";
-      "tf" = "terraform";
-      "tip" = "terraform init && terraform plan -out plan.out";
-      "tp" = "terraform plan -out plan.out";
-      "tap" = "terraform apply plan.out";
-    };
   };
-
 
   programs = {
     home-manager.enable = true;
@@ -64,6 +36,18 @@ with lib;
       enable = true;
       enableZshIntegration = true;
       nix-direnv.enable = true;
+    };
+
+    neovim = {
+      enable = lib.mkDefault true;
+      viAlias = lib.mkDefault true;
+      vimAlias = lib.mkDefault true;
+      vimdiffAlias = lib.mkDefault true;
+      extraConfig = ''
+        set nocompatible
+        set nobackup
+      '';
+      plugins = with pkgs.vimPlugins; [ vim-nix ];
     };
 
     htop.enable = true;
@@ -81,7 +65,7 @@ with lib;
 
     gh = {
       enable = true;
-      # Note: copy to places you want gh settings set
+
       settings = {
         git_protocol = "https";
       };

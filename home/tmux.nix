@@ -1,14 +1,14 @@
 { pkgs, lib, ... }: {
   programs.tmux = {
     enable = true;
-    #shortcut = "a";
+    shortcut = "a";
     keyMode = "vi";
     baseIndex = 1;
-    #terminal = "xterm-256color";
     clock24 = true;
     newSession = true;
     secureSocket = false;
     prefix = "C-a";
+    # terminal = "xterm-256color";
     terminal = "screen-256color";
     escapeTime = 50;
     historyLimit = 30000;
