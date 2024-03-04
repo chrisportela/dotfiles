@@ -127,6 +127,8 @@ inputs.nixpkgs.lib.nixosSystem {
         };
       };
 
+      time.hardwareClockInLocalTime = true;
+
       nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
         "steam"
         "steam-original"
