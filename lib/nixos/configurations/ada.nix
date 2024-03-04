@@ -23,18 +23,24 @@ inputs.nixpkgs.lib.nixosSystem {
         "steam"
         "steam-original"
         "steam-run"
+        "nvidia-persistenced"
+        "nvidia-settings"
+        "nvidia-x11"
+        "1password"
+        "1password-cli"
+        "ookla-speedtest"
       ];
 
       security.pki.certificates = [
         ''
           Root Cafecito Cloud CA
           =======================
-          ${builtins.readFile ../lib/cafecitocloud-root_ca.crt}
+          ${builtins.readFile ../../cafecitocloud-root_ca.crt}
         ''
         ''
           YubiKey 4 Cafecito Cloud Intermediate CA
           =======================
-          ${builtins.readFile ../lib/cafecitocloud-yubikey4-intermediate_ca.crt}
+          ${builtins.readFile ../../cafecitocloud-yubikey4-intermediate_ca.crt}
         ''
       ];
 

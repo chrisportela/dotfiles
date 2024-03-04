@@ -41,7 +41,7 @@
           group = "cmp";
           extraGroups = [ "wheel" ];
           packages = [ ];
-          openssh.authorizedKeys.keys = (import ../sshKeys.nix).cmp;
+          openssh.authorizedKeys.keys = (import ../../sshKeys.nix).cmp;
         };
       };
     };

@@ -28,7 +28,7 @@ inputs.nixpkgs.lib.nixosSystem {
       users.users.nix = {
         isSystemUser = true;
         group = "nix";
-        openssh.authorizedKeys.keys = (import ./sshKeys.nix).cmp;
+        openssh.authorizedKeys.keys = (import ../../sshKeys.nix).cmp;
       };
     })
   ];
