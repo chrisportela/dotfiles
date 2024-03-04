@@ -160,15 +160,15 @@
         };
       };
 
-      nixosModules = (import ./lib/nixos/default.nix);
+      nixosModules = (import ./lib/nixos/modules/default.nix);
 
       nixosConfigurations = {
-        installer = (import ./lib/installer.nix) { inherit inputs; };
-        builder = (import ./hosts/builder.nix) {
+        installer = (import ./lib/nixos/configuations/installer.nix) { inherit inputs; };
+        builder = (import ./lib/nixos/configuations/builder.nix) {
           nixpkgs = inputs.nixpkgs;
           nixosModules = self.nixosModules;
         };
-        ada = (import ./hosts/ada.nix) {
+        ada = (import ./lib/nixos/configuations/ada.nix) {
           inherit inputs;
           nixosModules = self.nixosModules;
         };
