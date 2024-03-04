@@ -1,13 +1,13 @@
 # Provides opinionated secure defaults for SSH Config
-{ ... }: {
+{ lib, ... }: with lib; {
   imports = [ ];
 
   services.openssh = {
     enable = true;
 
     settings = {
-      PermitRootLogin = "no";
-      PasswordAuthentication = false;
+      PermitRootLogin = mkDefault "no";
+      PasswordAuthentication = mkDefault false;
       KexAlgorithms = [
         "curve25519-sha256"
         "curve25519-sha256@libssh.org"
@@ -22,6 +22,6 @@
       { type = "ecdsa"; bits = 256; path = "/etc/ssh/ssh_host_ecdsa_key"; }
     ];
 
-    ports = [ 2222 ];
+    ports = mkDefault [ 2222 ];
   };
 }
