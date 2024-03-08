@@ -67,7 +67,13 @@
       forAllSystemsShell = (systems: f: nixpkgs.lib.genAttrs systems (system: f {
         inherit system;
         pkgs = (import nixpkgs {
-          inherit system; overlays = [ rust rustToolchain hush deploy-rs ];
+          inherit system;
+          overlays = with self.overlays; [
+            rust
+            rustToolchain
+            hush
+            deploy-rs
+          ];
         });
       })) allSystems;
 
