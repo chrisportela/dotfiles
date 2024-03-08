@@ -34,6 +34,7 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    rust-overlay.url = "github:oxalica/rust-overlay"; # A helper for Rust + Nix
   };
 
   outputs = inputs @ { self, nixpkgs, darwin, home-manager, ... }:
@@ -51,7 +52,6 @@
 
       importPkgs = (system: import nixpkgs {
         inherit system;
-        overlays = [ ];
       });
 
       # Helper to provide system-specific attributes
@@ -64,168 +64,207 @@
       forAllLinuxSystems = forEachSystem linuxSystems;
       forAllDarwinSystems = forEachSystem darwinSystems;
 
-      homeConfig = ({ pkgs
-                    , home ? ./home/default.nix
-                    , username ? "cmp"
-                    , allowUnfree ? [ ]
-                    , options ? { }
-                    }:
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
+      forAllSystemsShell = (systems: f: nixpkgs.lib.genAttrs systems (system: f {
+        inherit system;
+        pkgs = (import nixpkgs {
+          inherit system; overlays = [ rust rustToolchain hush deploy-rs ]});
+        })) allSystems;
 
-          modules = [
-            ({ pkgs, lib, ... }: {
-              home.username = username;
-              nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) allowUnfree;
-            })
-            home
-            options
-          ];
-        });
-    in
-    {
-      lib = {
-        inherit allSystems importPkgs forAllSystems forAllDarwinSystems forAllLinuxSystems;
-      };
+        homeConfig = ({ pkgs
+                      , home ? ./home/default.nix
+                      , username ? "cmp"
+                      , allowUnfree ? [ ]
+                      , options ? { }
+                      }:
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
 
-      packages = forAllSystems ({ pkgs, system }: rec {
-        hush = pkgs.callPackage ./pkgs/hush-shell.nix {
-          src = inputs.hush;
+            modules = [
+              ({ pkgs, lib, ... }: {
+                home.username = username;
+                nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) allowUnfree;
+              })
+              home
+              options
+            ];
+          });
+        in
+        {
+        lib = {
+          inherit allSystems importPkgs forAllSystems forAllDarwinSystems forAllLinuxSystems;
         };
 
-        default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
-      });
+        packages = forAllSystems ({ pkgs, system }: rec {
+          hush = pkgs.callPackage ./pkgs/hush-shell.nix {
+            src = inputs.hush;
+          };
 
-      legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
-        (forAllSystems ({ pkgs, system }: {
-          homeConfigurations = {
-            "cmp" = homeConfig {
-              inherit pkgs;
+          default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
+        });
 
-              allowUnfree = [ "vault" ];
-            };
-            "cmp@ada" = homeConfig {
-              inherit pkgs;
+        legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
+          (forAllSystems ({ pkgs, system }: {
+            homeConfigurations = {
+              "cmp" = homeConfig {
+                inherit pkgs;
 
-              allowUnfree = [
-                "vault"
-                "vscode"
-                "discord"
-                "obsidian"
-                "cider"
-              ];
+                allowUnfree = [ "vault" ];
+              };
+              "cmp@ada" = homeConfig {
+                inherit pkgs;
 
-              options = { pkgs, lib, ... }: {
-                programs = {
-                  vscode.enable = true;
-                  chromium.enable = true;
-                };
-
-                home.packages = with pkgs; [
-                  trayscale
-                  discord
-                  obsidian
-                  cider
-                  signal-desktop
-                  onlyoffice-bin_latest
-                  sqlitebrowser
-                  jrnl
+                allowUnfree = [
+                  "vault"
+                  "vscode"
+                  "discord"
+                  "obsidian"
+                  "cider"
                 ];
 
-                home.shellAliases = {
-                  "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
+                options = { pkgs, lib, ... }: {
+                  programs = {
+                    vscode.enable = true;
+                    chromium.enable = true;
+                  };
+
+                  home.packages = with pkgs; [
+                    trayscale
+                    discord
+                    obsidian
+                    cider
+                    signal-desktop
+                    onlyoffice-bin_latest
+                    sqlitebrowser
+                    jrnl
+                  ];
+
+                  home.shellAliases = {
+                    "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
+                  };
                 };
               };
             };
+          }))
+          (forAllLinuxSystems ({ pkgs, system }: {
+            installer-iso = self.nixosConfigurations.installer.config.formats.iso;
+          }))
+        ]);
+
+        overlays = {
+          rust = (import rust-overlay);
+
+          # Provides a `rustToolchain` attribute for Nixpkgs that we can use to
+          # create a Rust environment
+          rustToolchain = (self: super: {
+            rustToolchain = super.rust-bin.stable.latest.default;
+          });
+
+          deploy-rs = (final: prev: {
+            deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system};
+          });
+          hush = (final: prev: {
+            hush = self.packages.${final.stdenv.system}.hush;
+          });
+        };
+
+        homeConfigurations = {
+          "deck@steamdeck" = homeConfig {
+            username = "deck";
+            pkgs = importPkgs "x86_64-linux";
           };
-        }))
-        (forAllLinuxSystems ({ pkgs, system }: {
-          installer-iso = self.nixosConfigurations.installer.config.formats.iso;
-        }))
-      ]);
-
-      overlays = {
-        deploy-rs = (final: prev: {
-          deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system};
-        });
-        hush = (final: prev: {
-          hush = self.packages.${final.stdenv.system}.hush;
-        });
-      };
-
-      homeConfigurations = {
-        "deck@steamdeck" = homeConfig {
-          username = "deck";
-          pkgs = importPkgs "x86_64-linux";
         };
-      };
 
-      nixosModules = (import ./lib/nixos/modules/default.nix);
+        nixosModules = (import ./lib/nixos/modules/default.nix);
 
-      nixosConfigurations = {
-        installer = (import ./lib/nixos/configurations/installer.nix) { inherit inputs; };
-        builder = (import ./lib/nixos/configurations/builder.nix) {
-          nixpkgs = inputs.nixpkgs;
-          nixosModules = self.nixosModules;
-        };
-        ada = (import ./lib/nixos/configurations/ada.nix) {
-          inherit inputs;
-          nixosModules = self.nixosModules;
-        };
-      };
-
-      darwinModules = (import ./lib/darwin/default.nix);
-
-      darwinConfigurations = {
-        lux = darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = {
-            inherit inputs;
-            overlays = with self.overlays; [ deploy-rs hush ];
+        nixosConfigurations = {
+          installer = (import ./lib/nixos/configurations/installer.nix) { inherit inputs; };
+          builder = (import ./lib/nixos/configurations/builder.nix) {
             nixpkgs = inputs.nixpkgs;
+            nixosModules = self.nixosModules;
           };
-          modules = with self.darwinModules; [
-            common
-            ./lib/darwin/configurations/mba.nix
-          ];
+          ada = (import ./lib/nixos/configurations/ada.nix) {
+            inherit inputs;
+            nixosModules = self.nixosModules;
+          };
         };
+
+        darwinModules = (import ./lib/darwin/default.nix);
+
+        darwinConfigurations = {
+          lux = darwin.lib.darwinSystem {
+            system = "aarch64-darwin";
+            specialArgs = {
+              inherit inputs;
+              overlays = with self.overlays; [ deploy-rs hush ];
+              nixpkgs = inputs.nixpkgs;
+            };
+            modules = with self.darwinModules; [
+              common
+              ./lib/darwin/configurations/mba.nix
+            ];
+          };
+        };
+
+        devShells = forAllSystemsShell ({ pkgs, system }: {
+          dotfiles = pkgs.mkShell {
+            packages = (with pkgs; [
+              cachix
+              nixd
+              nixpkgs-fmt
+              shellcheck
+              shfmt
+            ]);
+          };
+
+          dev = pkgs.mkShell {
+            RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+
+            nativeBuildInputs = with pkgs; [
+              pkg-config
+              openssl
+              stdenv.cc.cc.lib
+            ];
+
+            # shellHook = ''
+            #   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.stdenv.cc.cc.lib}/lib
+            # '';
+
+            # The Nix packages provided in the environment
+            packages = (with pkgs; [
+              rustToolchain
+              python311
+              nodejs_20
+            ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
+              # libiconv
+              # darwin.apple_sdk.frameworks.SystemConfiguration
+            ])
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
+          };
+
+          default = self.devShells.${system}.dotfiles;
+        });
+
+        checks = forAllSystems ({ pkgs, system }: {
+          shell-functions =
+            let
+              script = ./home/shell_functions.sh;
+            in
+            pkgs.stdenvNoCC.mkDerivation {
+              name = "shell-functions-check";
+              dontBuild = true;
+              src = script;
+              nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
+              unpackPhase = ":";
+              checkPhase = ''
+                shfmt -d -s -i 2 -ci ${script}
+                alejandra -c .
+                shellcheck -x ${script}
+              '';
+              installPhase = ''
+                mkdir "$out"
+              '';
+            };
+        });
       };
-
-      devShells = forAllSystems ({ pkgs, system }: {
-        dotfiles = pkgs.mkShell {
-          packages = (with pkgs; [
-            cachix
-            nixd
-            nixpkgs-fmt
-            shellcheck
-            shfmt
-          ]);
-        };
-
-        default = self.devShells.${system}.dotfiles;
-      });
-
-      checks = forAllSystems ({ pkgs, system }: {
-        shell-functions =
-          let
-            script = ./home/shell_functions.sh;
-          in
-          pkgs.stdenvNoCC.mkDerivation {
-            name = "shell-functions-check";
-            dontBuild = true;
-            src = script;
-            nativeBuildInputs = with pkgs; [ alejandra shellcheck shfmt ];
-            unpackPhase = ":";
-            checkPhase = ''
-              shfmt -d -s -i 2 -ci ${script}
-              alejandra -c .
-              shellcheck -x ${script}
-            '';
-            installPhase = ''
-              mkdir "$out"
-            '';
-          };
-      });
-    };
-}
+        }
 
