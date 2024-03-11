@@ -1,9 +1,9 @@
 {
-  description = "My Home Manager flake";
+  description = "Chris' scripts, dev shells, home-manager config, and nixOS configs";
 
   nixConfig = {
-    extra-substituters = [ "https://chrisportela.cachix.org" ];
-    extra-trusted-public-keys = [ "chrisportela.cachix.org-1:pynxY+k9+yz8noyGAYjfqkZMO5zkVauwcBwEoD3tkZk=" ];
+    extra-substituters = [ "https://chrisportela-dotfiles.cachix.org" ];
+    extra-trusted-public-keys = [ "chrisportela-dotfiles.cachix.org-1:e3UVWzLbmS6YLEUaY1BQt124GENPRF74YMgwV/6+Li4=" ];
   };
 
   inputs = {
@@ -57,7 +57,14 @@
       # Helper to provide system-specific attributes
       forEachSystem = systems: f: nixpkgs.lib.genAttrs systems (system: f {
         inherit system;
-        pkgs = (import nixpkgs { inherit system; });
+        pkgs = (import nixpkgs {
+          inherit system;
+          overlays = [ self.overlays.terraform ];
+
+          config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+            "terraform"
+          ];
+        });
       });
 
       forAllSystems = forEachSystem allSystems;
@@ -73,6 +80,10 @@
             rustToolchain
             hush
             deploy-rs
+            terraform
+          ];
+          config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+            "terraform"
           ];
         });
       })) allSystems;
@@ -105,6 +116,8 @@
         hush = pkgs.callPackage ./pkgs/hush-shell.nix {
           src = inputs.hush;
         };
+
+        terraform = pkgs.terraformFull;
 
         default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });
@@ -162,8 +175,8 @@
 
         # Provides a `rustToolchain` attribute for Nixpkgs that we can use to
         # create a Rust environment
-        rustToolchain = (self: super: {
-          rustToolchain = super.rust-bin.stable.latest.default;
+        rustToolchain = (final: prev: {
+          rustToolchain = prev.rust-bin.stable.latest.default;
         });
 
         deploy-rs = (final: prev: {
@@ -171,6 +184,14 @@
         });
         hush = (final: prev: {
           hush = self.packages.${final.stdenv.system}.hush;
+        });
+        terraform = (final: prev: {
+          terraformFull = final.terraform.withPlugins (p: [
+            p.cloudflare
+            p.aws
+            p.google
+            p.google-beta
+          ]);
         });
       };
 
@@ -245,6 +266,20 @@
             # libiconv
             # darwin.apple_sdk.frameworks.SystemConfiguration
           ])
+          ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
+        };
+
+        devops = pkgs.mkShell {
+          # The Nix packages provided in the environment
+          packages = (with pkgs; [
+            python311
+            nodejs_20
+            terraformer
+            terraforming
+            awscli2
+            google-cloud-sdk
+            terraformFull
+          ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ])
           ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
         };
 

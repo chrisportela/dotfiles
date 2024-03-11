@@ -4,7 +4,7 @@
 
   inherit src;
 
-  cargoSha256 = "sha256-0WYC4ScLNYE1jKEfWeYaBeY1Zl+gQa1Wl7xJK0CI8+I=";
+  cargoSha256 = "sha256-bm3VAzD3bSAtjyeG4PvMAmPW0N+QPqPHzcZAekKZy5o=";
 
   doCheck = false;
 
