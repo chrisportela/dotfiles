@@ -156,6 +156,7 @@
                   onlyoffice-bin_latest
                   sqlitebrowser
                   jrnl
+                  ollama
                 ];
 
                 home.shellAliases = {

@@ -11,7 +11,7 @@ inputs.nixpkgs.lib.nixosSystem {
   modules = [
     inputs.vscode-server.nixosModules.default
     nixosModules.common
-    # nixosModules.ddc  # Possible source of udev boot slowness
+    # nixosModules.ddc  # is, In-Fact, The Source of udev boot slowness
     nixosModules.dualboot
     nixosModules.nixpkgs
     nixosModules.openssh
@@ -26,6 +26,8 @@ inputs.nixpkgs.lib.nixosSystem {
         "nvidia-persistenced"
         "nvidia-settings"
         "nvidia-x11"
+        "cudatoolkit"
+        "cuda_cudart"
         "1password"
         "1password-cli"
         "ookla-speedtest"
@@ -75,12 +77,17 @@ inputs.nixpkgs.lib.nixosSystem {
       systemd.network.wait-online.enable = false;
 
       environment.systemPackages = with pkgs; [
+        btop
+        nvtop
         virt-manager
 
         # Hardware
         ddcutil
         ddcui
         lm_sensors
+        pciutils
+        glxinfo
+
 
         # Network
         inetutils
@@ -98,6 +105,12 @@ inputs.nixpkgs.lib.nixosSystem {
       services.tailscale = {
         enable = true;
         package = pkgs.tailscale;
+      };
+
+      services.ollama = {
+        enable = true;
+        acceleration = "cuda";
+        listenAddress = "127.0.0.1:11434";
       };
 
       services.resolved = {
@@ -124,7 +137,13 @@ inputs.nixpkgs.lib.nixosSystem {
 
         # Enable the KDE Plasma Desktop Environment.
         displayManager.sddm.enable = true;
-        displayManager.sddm.wayland.enable = false;
+        displayManager.sddm.enableHidpi = true;
+        displayManager.sddm.settings = {
+          General = {
+            GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
+          };
+        };
+        displayManager.sddm.wayland.enable = true;
         desktopManager.plasma5.enable = true;
         desktopManager.plasma5.useQtScaling = true;
       };

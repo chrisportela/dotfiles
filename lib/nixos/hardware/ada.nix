@@ -3,7 +3,11 @@
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" "i2c-dev" ];
+  boot.kernelModules = [
+    "kvm-intel"
+    "i2c-dev"
+    "nvidia-uvm" # For ollama to use GPU properly
+  ];
   boot.extraModulePackages = [ ];
   boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
   boot.zfs = {
@@ -29,7 +33,7 @@
       efiSupport = true;
       # efiInstallAsRemovable = true;
       devices = [ "nodev" ];
-      timeoutStyle = "hidden";
+      timeoutStyle = "countdown";
 
       extraEntries = ''
         menuentry 'Windows' --class windows --class os {
@@ -74,10 +78,10 @@
     modesetting.enable = true;
 
     # Nvidia power management. Experimental, and can cause sleep/suspend to fail.
-    powerManagement.enable = false;
+    powerManagement.enable = true;
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    #    powerManagement.finegrained = true;
+    powerManagement.finegrained = false;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -95,6 +99,13 @@
     # Possible fix for discord crashing?
     nvidiaPersistenced = true;
 
+    prime = {
+      sync.enable = false;
+      offload.enable = false;
+      nvidiaBusId = "PCI:1:0:0";
+      intelBusId = "PCI:0:2:0";
+    };
+
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
@@ -108,6 +119,6 @@
   networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  powerManagement.cpuFreqGovernor = lib.mkDefault "schedutil";
+  powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
