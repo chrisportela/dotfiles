@@ -4,7 +4,7 @@ nixpkgs.lib.nixosSystem {
 
   specialArgs = {
     inherit nixpkgs;
-    overlays = [];
+    overlays = [ ];
   };
 
   modules = [

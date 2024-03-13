@@ -24,7 +24,7 @@ inputs.nixpkgs.lib.nixosSystem {
 
       systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
 
-      users.groups.nix = {};
+      users.groups.nix = { };
       users.users.nix = {
         isSystemUser = true;
         group = "nix";
