@@ -184,16 +184,51 @@ inputs.nixpkgs.lib.nixosSystem {
 
       virtualisation = {
         docker = {
-          enable = false;
+          enable = true;
           enableNvidia = true;
           storageDriver = "zfs";
         };
+        oci-containers.backend = "docker";
         virtualbox.host = {
           enable = true;
         };
         libvirtd.enable = true;
       };
       programs.dconf.enable = true; # For libvirtd
+
+      # Ollama Web UI
+      virtualisation.oci-containers.containers.open-webui = {
+        autoStart = true;
+        image = "ghcr.io/open-webui/open-webui";
+        ports = [ "3000:8080" ];
+        # TODO figure out how to create the data directory declaratively
+        volumes = [ "${config.users.users.cmp.home}/open-webui:/app/backend/data" ];
+        extraOptions = [ "--network=host" "--add-host=host.containers.internal:host-gateway" ];
+        environment = {
+          OLLAMA_API_BASE_URL = "http://127.0.0.1:11434/api";
+          OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+        };
+      };
+
+      services.nginx = {
+        enable = true;
+
+        virtualHosts = {
+          "ada.gorgon-basilisk.ts.net" = {
+            forceSSL = false;
+
+            locations."/" = {
+              proxyPass = "http://127.0.0.1:8080";
+              recommendedProxySettings = true;
+            };
+
+            extraConfig = ''
+              access_log /var/log/nginx/ada-tailscale.access.log;
+              error_log /var/log/nginx/ada-tailscale.error.log;
+            '';
+          };
+        };
+      };
 
       programs.steam = {
         enable = true;
