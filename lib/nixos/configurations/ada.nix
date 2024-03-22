@@ -123,6 +123,12 @@ inputs.nixpkgs.lib.nixosSystem {
 
       time.timeZone = "America/New_York";
 
+      # boot.plymouth = {
+      #   enable = true;
+      #   # logo = "";
+      #   # theme = "bgrt";
+      # };
+
       services.xserver = {
         # Enable the X11 windowing system.
         enable = true;
