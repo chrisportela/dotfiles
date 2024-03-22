@@ -43,7 +43,7 @@
 
   programs.zsh = {
     enable = true;
-    enableAutosuggestions = lib.mkDefault false;
+    autosuggestion.enable = lib.mkDefault false;
     enableCompletion = lib.mkDefault false;
     autocd = lib.mkDefault true;
     # envExtra = ''. "$HOME/.cargo/env"'';
