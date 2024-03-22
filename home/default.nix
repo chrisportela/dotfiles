@@ -2,6 +2,7 @@
   imports = [
     ./shell.nix
     ./tmux.nix
+    ./modules/difftastic.nix
   ];
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
@@ -50,10 +51,7 @@
 
     bat.enable = true;
 
-    eza = {
-      enable = true;
-      enableAliases = true;
-    };
+    eza.enable = true;
 
     nushell.enable = true;
 
@@ -71,6 +69,7 @@
       userName = mkDefault "Chris Portela";
       userEmail = mkDefault "chris@chrisportela.com";
     };
+    difftastic.enable = true;
 
     bash.enable = true;
     readline = {
