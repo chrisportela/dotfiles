@@ -201,6 +201,7 @@
         "deck@steamdeck" = homeConfig {
           username = "deck";
           pkgs = importPkgs "x86_64-linux";
+          allowUnfree = [ "vault" ];
         };
       };
 
