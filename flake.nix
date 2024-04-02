@@ -145,6 +145,7 @@
                 programs = {
                   vscode.enable = true;
                   chromium.enable = true;
+                  mpv.enable = true;
                 };
 
                 home.packages = with pkgs; [
