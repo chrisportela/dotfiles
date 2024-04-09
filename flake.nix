@@ -148,6 +148,8 @@
                   mpv.enable = true;
                 };
 
+                services.ssh-agent.enable = true;
+
                 home.packages = with pkgs; [
                   trayscale
                   discord
