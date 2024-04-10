@@ -78,7 +78,7 @@ inputs.nixpkgs.lib.nixosSystem {
 
       environment.systemPackages = with pkgs; [
         btop
-        nvtop
+        nvtopPackages.full
         virt-manager
 
         # Hardware
@@ -109,7 +109,7 @@ inputs.nixpkgs.lib.nixosSystem {
 
       services.ollama = {
         enable = true;
-        acceleration = "cuda";
+        # acceleration = "cuda";
         listenAddress = "127.0.0.1:11434";
       };
 
@@ -142,16 +142,18 @@ inputs.nixpkgs.lib.nixosSystem {
         };
 
         # Enable the KDE Plasma Desktop Environment.
-        displayManager.sddm.enable = true;
-        displayManager.sddm.enableHidpi = true;
-        displayManager.sddm.settings = {
+        desktopManager.plasma5.enable = true;
+        desktopManager.plasma5.useQtScaling = true;
+      };
+      services.displayManager = {
+        sddm.enable = true;
+        sddm.enableHidpi = true;
+        sddm.settings = {
           General = {
             GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
           };
         };
-        displayManager.sddm.wayland.enable = true;
-        desktopManager.plasma5.enable = true;
-        desktopManager.plasma5.useQtScaling = true;
+        sddm.wayland.enable = true;
       };
       programs.xwayland.enable = true;
 
