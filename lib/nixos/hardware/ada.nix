@@ -29,11 +29,11 @@
 
     grub = {
       enable = true;
-      configurationLimit = 5;
+      configurationLimit = 10;
       efiSupport = true;
       # efiInstallAsRemovable = true;
       devices = [ "nodev" ];
-      timeoutStyle = "countdown";
+      # timeoutStyle = "countdown";
 
       extraEntries = ''
         menuentry 'Windows' --class windows --class os {
@@ -78,7 +78,7 @@
     modesetting.enable = true;
 
     # Nvidia power management. Experimental, and can cause sleep/suspend to fail.
-    powerManagement.enable = false;
+    powerManagement.enable = true;
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
     powerManagement.finegrained = false;
@@ -97,7 +97,7 @@
     nvidiaSettings = true;
 
     # Possible fix for discord crashing?
-    nvidiaPersistenced = false;
+    nvidiaPersistenced = true;
 
     prime = {
       sync.enable = false;

@@ -129,7 +129,7 @@ inputs.nixpkgs.lib.nixosSystem {
 
       services.ollama = {
         enable = true;
-        # acceleration = "cuda";
+        acceleration = "cuda";
         listenAddress = "127.0.0.1:11434";
       };
 
@@ -143,58 +143,78 @@ inputs.nixpkgs.lib.nixosSystem {
 
       time.timeZone = "America/New_York";
 
-      # boot.plymouth = {
-      #   enable = true;
-      #   # logo = "";
-      #   # theme = "bgrt";
-      # };
+      specialisation.desktop.configuration = {
+        services.xserver = {
+          # Enable the X11 windowing system.
+          enable = true;
 
-      services.xserver = {
-        # Enable the X11 windowing system.
-        enable = true;
+          dpi = 180;
 
-        dpi = 180;
-
-        # Configure keymap in X11
-        xkb = {
-          layout = "us";
-          variant = "";
-        };
-
-        # Enable the KDE Plasma Desktop Environment.
-        desktopManager.plasma5.enable = true;
-        desktopManager.plasma5.useQtScaling = true;
-      };
-      services.displayManager = {
-        sddm.enable = true;
-        sddm.enableHidpi = true;
-        sddm.settings = {
-          General = {
-            GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
+          # Configure keymap in X11
+          xkb = {
+            layout = "us";
+            variant = "";
           };
+
+          # Enable the KDE Plasma Desktop Environment.
+          desktopManager.plasma5.enable = true;
+          desktopManager.plasma5.useQtScaling = true;
         };
-        sddm.wayland.enable = true;
+        services.displayManager = {
+          sddm.enable = true;
+          sddm.enableHidpi = true;
+          sddm.settings = {
+            General = {
+              GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
+            };
+          };
+          sddm.wayland.enable = true;
+        };
+        programs.xwayland.enable = true;
+
+        # Enable CUPS to print documents.
+        services.printing.enable = true;
+
+        # Enable sound with pipewire.
+        sound.enable = true;
+        hardware.pulseaudio.enable = false;
+        security.rtkit.enable = true;
+        services.pipewire = {
+          enable = true;
+          alsa.enable = true;
+          alsa.support32Bit = true;
+          pulse.enable = true;
+          # If you want to use JACK applications, uncomment this
+          # jack.enable = true;
+
+          # use the example session manager (no others are packaged yet so this is enabled by default, no
+          # need to redefine it in your config for now)
+          # wireplumber.enable = true;
+        };
+
+        services.vscode-server.enable = false;
+
+        programs._1password.enable = true;
+        programs._1password-gui.enable = true;
+        programs._1password-gui.polkitPolicyOwners = [ "cmp" ];
+        security.pam.services.kwallet.enableKwallet = true;
+
+
+        programs.steam = {
+          enable = true;
+          remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
+          dedicatedServer.openFirewall = false; # Open ports in the firewall for Source Dedicated Server
+        };
+
+        environment.sessionVariables = {
+          STEAM_FORCE_DESKTOPUI_SCALING = "2";
+        };
       };
-      programs.xwayland.enable = true;
 
-      # Enable CUPS to print documents.
-      services.printing.enable = true;
-
-      # Enable sound with pipewire.
-      sound.enable = true;
-      hardware.pulseaudio.enable = false;
-      security.rtkit.enable = true;
-      services.pipewire = {
+      boot.plymouth = {
         enable = true;
-        alsa.enable = true;
-        alsa.support32Bit = true;
-        pulse.enable = true;
-        # If you want to use JACK applications, uncomment this
-        # jack.enable = true;
-
-        # use the example session manager (no others are packaged yet so this is enabled by default, no
-        # need to redefine it in your config for now)
-        # wireplumber.enable = true;
+        # logo = "";
+        # theme = "bgrt";
       };
 
       programs.neovim = {
@@ -203,12 +223,9 @@ inputs.nixpkgs.lib.nixosSystem {
         vimAlias = true;
       };
 
-      services.vscode-server.enable = true;
+      services.vscode-server.enable = lib.mkDefault true;
 
-      programs._1password.enable = true;
-      programs._1password-gui.enable = true;
-      programs._1password-gui.polkitPolicyOwners = [ "cmp" ];
-      security.pam.services.kwallet.enableKwallet = true;
+
 
       virtualisation = {
         docker = {
@@ -256,16 +273,6 @@ inputs.nixpkgs.lib.nixosSystem {
             '';
           };
         };
-      };
-
-      programs.steam = {
-        enable = true;
-        remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-        dedicatedServer.openFirewall = false; # Open ports in the firewall for Source Dedicated Server
-      };
-
-      environment.sessionVariables = {
-        STEAM_FORCE_DESKTOPUI_SCALING = "2";
       };
 
       users.users.cmp = {
