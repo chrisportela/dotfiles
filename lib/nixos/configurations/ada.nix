@@ -53,6 +53,16 @@ inputs.nixpkgs.lib.nixosSystem {
         "ookla-speedtest"
       ];
 
+      security.acme = {
+        acceptTerms = true;
+        defaults = {
+          dnsResolver = "liara.gorgon-basilisk.ts.net";
+          email = "chris@cafecito.cloud";
+          server = "https://ca.cafecito.cloud/acme/acme/directory";
+          webroot = "/var/lib/acme/acme-challenge";
+        };
+      };
+
       security.pki.certificates = [
         ''
           Root Cafecito Cloud CA
@@ -131,6 +141,9 @@ inputs.nixpkgs.lib.nixosSystem {
         enable = true;
         acceleration = "cuda";
         listenAddress = "127.0.0.1:11434";
+        environmentVariables = {
+          OLLAMA_ORIGINS = "https://ollama.ada.i.cafecito.cloud";
+        };
       };
 
       services.resolved = {
@@ -225,8 +238,6 @@ inputs.nixpkgs.lib.nixosSystem {
 
       services.vscode-server.enable = lib.mkDefault true;
 
-
-
       virtualisation = {
         docker = {
           enable = true;
@@ -234,12 +245,12 @@ inputs.nixpkgs.lib.nixosSystem {
           storageDriver = "zfs";
         };
         oci-containers.backend = "docker";
-        virtualbox.host = {
-          enable = true;
-        };
-        libvirtd.enable = true;
+        # virtualbox.host = {
+        #   enable = true;
+        # };
+        # libvirtd.enable = true;
       };
-      programs.dconf.enable = true; # For libvirtd
+      # programs.dconf.enable = true; # For libvirtd
 
       # Ollama Web UI
       virtualisation.oci-containers.containers.open-webui = {
@@ -248,12 +259,15 @@ inputs.nixpkgs.lib.nixosSystem {
         ports = [ "3000:8080" ];
         # TODO figure out how to create the data directory declaratively
         volumes = [ "${config.users.users.cmp.home}/open-webui:/app/backend/data" ];
-        extraOptions = [ "--network=host" "--add-host=host.containers.internal:host-gateway" ];
+        extraOptions = [ "--add-host=host.containers.internal:host-gateway" ];
         environment = {
-          OLLAMA_API_BASE_URL = "http://127.0.0.1:11434/api";
-          OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+          OLLAMA_API_BASE_URL = "http://host.containers.internal:11434/api";
+          OLLAMA_BASE_URL = "http://host.containers.internal:11434";
         };
       };
+
+
+      users.users.nginx.extraGroups = [ "acme" ];
 
       services.nginx = {
         enable = true;
@@ -263,13 +277,46 @@ inputs.nixpkgs.lib.nixosSystem {
             forceSSL = false;
 
             locations."/" = {
-              proxyPass = "http://127.0.0.1:8080";
+              proxyPass = "http://127.0.0.1:3000";
               recommendedProxySettings = true;
             };
 
             extraConfig = ''
               access_log /var/log/nginx/ada-tailscale.access.log;
               error_log /var/log/nginx/ada-tailscale.error.log;
+            '';
+          };
+
+          "ollama.ada.i.cafecito.cloud" = {
+            forceSSL = true;
+            enableACME = true;
+
+            locations."/" = {
+              proxyPass = "http://127.0.0.1:11434";
+              #recommendedProxySettings = true;
+              extraConfig = ''
+                proxy_set_header Host localhost:11434;
+              '';
+            };
+
+            extraConfig = ''
+              access_log /var/log/nginx/ollama-cafeito_cloud.access.log;
+              error_log /var/log/nginx/ollama-cafeito_cloud.error.log;
+            '';
+          };
+
+          "chat.ada.i.cafecito.cloud" = {
+            forceSSL = true;
+            enableACME = true;
+
+            locations."/" = {
+              proxyPass = "http://127.0.0.1:3000";
+              recommendedProxySettings = true;
+            };
+
+            extraConfig = ''
+              access_log /var/log/nginx/chat-cafeito_cloud.access.log;
+              error_log /var/log/nginx/chat-cafeito_cloud.error.log;
             '';
           };
         };
