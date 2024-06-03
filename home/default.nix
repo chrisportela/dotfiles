@@ -6,7 +6,7 @@
   ];
 
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "vault"
+    "vault-bin"
   ];
 
   home = {
@@ -18,9 +18,10 @@
       doggo
       du-dust
       ripgrep
-      vault
+      vault-bin
       nixpkgs-fmt
       git-annex
+      ntfy-sh
     ];
   };
 
