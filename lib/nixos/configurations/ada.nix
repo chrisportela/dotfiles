@@ -98,7 +98,7 @@ inputs.nixpkgs.lib.nixosSystem {
           enable = true;
           allowedTCPPorts = config.services.openssh.ports;
           allowedUDPPorts = [ config.services.tailscale.port ];
-          trustedInterfaces = [ "tailscale0" ];
+          trustedInterfaces = [ "tailscale0" "docker0" ];
         };
       };
 
@@ -131,6 +131,10 @@ inputs.nixpkgs.lib.nixosSystem {
         speedtest-cli
       ];
 
+      programs.git = {
+        enable = true;
+        lfs.enable = true;
+      };
 
       services.tailscale = {
         enable = true;
@@ -256,13 +260,12 @@ inputs.nixpkgs.lib.nixosSystem {
       virtualisation.oci-containers.containers.open-webui = {
         autoStart = true;
         image = "ghcr.io/open-webui/open-webui";
-        ports = [ "3000:8080" ];
         # TODO figure out how to create the data directory declaratively
         volumes = [ "${config.users.users.cmp.home}/open-webui:/app/backend/data" ];
-        extraOptions = [ "--add-host=host.containers.internal:host-gateway" ];
+        extraOptions = [ "--network=host" "--add-host=host.containers.internal:host-gateway" ];
         environment = {
-          OLLAMA_API_BASE_URL = "http://host.containers.internal:11434/api";
-          OLLAMA_BASE_URL = "http://host.containers.internal:11434";
+          OLLAMA_API_BASE_URL = "http://127.0.0.1:11434/api";
+          OLLAMA_BASE_URL = "http://127.0.0.1:11434";
         };
       };
 
@@ -273,20 +276,6 @@ inputs.nixpkgs.lib.nixosSystem {
         enable = true;
 
         virtualHosts = {
-          "ada.gorgon-basilisk.ts.net" = {
-            forceSSL = false;
-
-            locations."/" = {
-              proxyPass = "http://127.0.0.1:3000";
-              recommendedProxySettings = true;
-            };
-
-            extraConfig = ''
-              access_log /var/log/nginx/ada-tailscale.access.log;
-              error_log /var/log/nginx/ada-tailscale.error.log;
-            '';
-          };
-
           "ollama.ada.i.cafecito.cloud" = {
             forceSSL = true;
             enableACME = true;
@@ -310,7 +299,7 @@ inputs.nixpkgs.lib.nixosSystem {
             enableACME = true;
 
             locations."/" = {
-              proxyPass = "http://127.0.0.1:3000";
+              proxyPass = "http://127.0.0.1:8080";
               recommendedProxySettings = true;
             };
 

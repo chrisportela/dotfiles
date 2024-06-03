@@ -62,6 +62,13 @@
 
   swapDevices = [{ device = "/dev/disk/by-uuid/bcf75db2-0312-4d27-958e-bb608604caf4"; }];
 
+  zramSwap = {
+    enable = true;
+    priority = 5;
+    algorithm = "zstd";
+    memoryPercent = 50;
+  };
+
   # Enable OpenGL
   hardware.opengl = {
     enable = true;
