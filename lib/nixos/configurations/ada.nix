@@ -2,10 +2,10 @@
 let
   hardwareConfig = import ../hardware/ada.nix;
 in
-inputs.nixpkgs.lib.nixosSystem {
+inputs.nixos.lib.nixosSystem {
   specialArgs = {
     inherit inputs overlays;
-    nixpkgs = inputs.nixpkgs;
+    nixpkgs = inputs.nixos;
   };
 
   modules = [

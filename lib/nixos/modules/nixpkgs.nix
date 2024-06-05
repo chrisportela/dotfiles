@@ -1,7 +1,7 @@
 { lib, config, pkgs, nixpkgs, overlays ? [ ], ... }: with lib; {
   nix = {
     package = mkDefault pkgs.nixVersions.nix_2_18;
-    registry.nixpkgs.flake = nixpkgs;
+    # registry.nixpkgs.flake = nixpkgs;
 
     settings = {
       keep-outputs = mkDefault true;

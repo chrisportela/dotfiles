@@ -7,34 +7,26 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixos.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/release-24.05";
+    nixos-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-23.11-darwin";
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # inputs.nixpkgs.follows = "nixpkgs";
     };
     darwin = {
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
-    agenix = {
-      url = "github:ryantm/agenix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    hush = {
-      url = "github:hush-shell/hush";
-      flake = false;
-    };
+    agenix.url = "github:ryantm/agenix";
     deploy-rs.url = "github:serokell/deploy-rs";
-    vscode-server = {
-      url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    rust-overlay.url = "github:oxalica/rust-overlay"; # A helper for Rust + Nix
+    vscode-server.url = "github:nix-community/nixos-vscode-server";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+
+    # For installer target
+    nixos-generators.url = "github:nix-community/nixos-generators";
   };
 
   outputs = inputs @ { self, nixpkgs, darwin, home-manager, ... }:
@@ -78,7 +70,6 @@
           overlays = with self.overlays; [
             rust
             rustToolchain
-            hush
             deploy-rs
             terraform
           ];
@@ -113,13 +104,7 @@
       };
 
       packages = forAllSystems ({ pkgs, system }: rec {
-        hush = pkgs.callPackage ./pkgs/hush-shell.nix {
-          src = inputs.hush;
-        };
-
         terraform = pkgs.terraformFull;
-
-        ollama = pkgs.ollama.override { acceleration = "cuda"; };
 
         default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });
@@ -136,7 +121,7 @@
               inherit pkgs;
 
               allowUnfree = [
-                "vault"
+                "vault-bin"
                 "vscode"
                 "discord"
                 "obsidian"
@@ -165,49 +150,10 @@
                 ];
 
                 home.shellAliases = {
-                  "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
+                  # "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
                 };
-                nixpkgs = {
-                  config.packageOverrides = pkgs: rec {
-                    electron_28 = pkgs.electron_28.overrideAttrs
-                      (oldAttrs: rec {
 
-                        buildCommand =
-                          let
-                            electron-unwrapped = pkgs.electron_28.passthru.unwrapped.overrideAttrs (oldAttrs: rec {
-                              postPatch = builtins.replaceStrings [ "--exclude='src/third_party/blink/web_tests/*'" ] [ "--exclude='src/third_party/blink/web_tests/*' --exclude='src/content/test/data/*'" ] oldAttrs.postPatch;
-                            });
-                          in
-                          ''
-                            gappsWrapperArgsHook
-                            mkdir -p $out/bin
-                            makeWrapper "${electron-unwrapped}/libexec/electron/electron" "$out/bin/electron" \
-                              "''${gappsWrapperArgs[@]}" \
-                              --set CHROME_DEVEL_SANDBOX $out/libexec/electron/chrome-sandbox
-
-                            ln -s ${electron-unwrapped}/libexec $out/libexec
-                          '';
-                      });
-                    electron = pkgs.electron.overrideAttrs
-                      (oldAttrs: rec {
-                        buildCommand =
-                          let
-                            electron-unwrapped = pkgs.electron.passthru.unwrapped.overrideAttrs (oldAttrs: rec {
-                              postPatch = builtins.replaceStrings [ "--exclude='src/third_party/blink/web_tests/*'" ] [ "--exclude='src/third_party/blink/web_tests/*' --exclude='src/content/test/data/*'" ] oldAttrs.postPatch;
-                            });
-                          in
-                          ''
-                            gappsWrapperArgsHook
-                            mkdir -p $out/bin
-                            makeWrapper "${electron-unwrapped}/libexec/electron/electron" "$out/bin/electron" \
-                              "''${gappsWrapperArgs[@]}" \
-                              --set CHROME_DEVEL_SANDBOX $out/libexec/electron/chrome-sandbox
-
-                            ln -s ${electron-unwrapped}/libexec $out/libexec
-                          '';
-                      });
-                  };
-                };
+                nixpkgs = { };
               };
             };
           };
@@ -229,9 +175,7 @@
         deploy-rs = (final: prev: {
           deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system};
         });
-        hush = (final: prev: {
-          hush = self.packages.${final.stdenv.system}.hush;
-        });
+
         terraform = (final: prev: {
           terraformFull = final.terraform.withPlugins (p: [
             p.cloudflare
