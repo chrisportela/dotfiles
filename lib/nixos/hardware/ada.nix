@@ -7,6 +7,7 @@
     "kvm-intel"
     "i2c-dev"
     "nvidia-uvm" # For ollama to use GPU properly
+    "cpufreq_ondemand"
   ];
   boot.extraModulePackages = [ ];
   boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
@@ -125,7 +126,44 @@
   networking.interfaces.enp6s0.useDHCP = lib.mkDefault true;
   networking.interfaces.wlo1.useDHCP = lib.mkDefault true;
 
+  services.autosuspend = {
+    enable = false;
+    settings = {
+      enable = true;
+      interval = 30;
+      idle_time = 120;
+    };
+
+    checks = {
+      RemoteUsers = {
+        class = "Users";
+        name = ".*";
+        terminal = ".*";
+        host = "[0-9].*";
+      };
+
+      TmuxUsers = {
+        class = "Users";
+        name = ".*";
+        terminal = ".*";
+        host = "localhost";
+      };
+
+      LocalUsers = {
+        class = "Users";
+        name = ".*";
+        terminal = ".*";
+        host = "localhost";
+      };
+    };
+
+    wakeups = {
+      Systemd-Timer.match = "^(?!.*logrotate).*";
+    };
+  };
+  services.thermald.enable = true;
+
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+  powerManagement.cpuFreqGovernor = lib.mkDefault "ondemand";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }
