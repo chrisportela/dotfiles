@@ -3,7 +3,7 @@
     enable = true;
     shortcut = "a";
     keyMode = "vi";
-    baseIndex = 1;
+    baseIndex = 0;
     clock24 = true;
     newSession = true;
     secureSocket = false;

@@ -65,7 +65,7 @@
         enable = true;
         terminal = "screen-256color";
         clock24 = true;
-        baseIndex = 1;
+        baseIndex = 0;
         newSession = true;
         plugins = with pkgs.tmuxPlugins; [ sensible ];
       };
