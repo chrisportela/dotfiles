@@ -115,7 +115,7 @@
             "cmp" = homeConfig {
               inherit pkgs;
 
-              allowUnfree = [ "vault" ];
+              allowUnfree = [ "vault-bin" ];
             };
             "cmp@ada" = homeConfig {
               inherit pkgs;
@@ -190,7 +190,7 @@
         "deck@steamdeck" = homeConfig {
           username = "deck";
           pkgs = importPkgs "x86_64-linux";
-          allowUnfree = [ "vault" ];
+          allowUnfree = [ "vault-bin" ];
         };
       };
 
