@@ -21,8 +21,8 @@ let
 in
 {
   imports = [
-    ../lib/darwin/common.nix
-    ../lib/darwin/nixpkgs.nix
+    ../common.nix
+    ../nixpkgs.nix
   ];
 
   nix = {

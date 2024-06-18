@@ -11,7 +11,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/release-24.05";
     nixos-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-23.11-darwin";
+    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-24.05-darwin";
     home-manager = {
       url = "github:nix-community/home-manager";
       # inputs.nixpkgs.follows = "nixpkgs";
@@ -208,14 +208,17 @@
         };
       };
 
-      darwinModules = (import ./lib/darwin/default.nix);
+      darwinModules = {
+        common = ./lib/darwin/common.nix;
+        nixpkgs = ./lib/darwin/nixpkgs.nix;
+      };
 
       darwinConfigurations = {
         lux = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
           specialArgs = {
             inherit inputs;
-            overlays = with self.overlays; [ deploy-rs hush ];
+            overlays = with self.overlays; [ deploy-rs ];
             nixpkgs = inputs.nixpkgs;
           };
           modules = with self.darwinModules; [

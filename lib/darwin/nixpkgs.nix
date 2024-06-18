@@ -16,6 +16,8 @@
       ];
 
     };
+
+    linux-builder.enable = true;
   };
 
   nixpkgs = {
