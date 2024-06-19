@@ -35,6 +35,7 @@
       # efiInstallAsRemovable = true;
       devices = [ "nodev" ];
       # timeoutStyle = "countdown";
+      default = "saved"; # use last option booted
 
       extraEntries = ''
         menuentry 'Windows' --class windows --class os {
@@ -86,7 +87,7 @@
     modesetting.enable = true;
 
     # Nvidia power management. Experimental, and can cause sleep/suspend to fail.
-    powerManagement.enable = true;
+    powerManagement.enable = false;
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
     powerManagement.finegrained = false;
@@ -98,14 +99,14 @@
     # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus
     # Only available from driver 515.43.04+
     # Do not disable this unless your GPU is unsupported or if you have a good reason to.
-    open = true;
+    open = false;
 
     # Enable the Nvidia settings menu,
     # accessible via `nvidia-settings`.
     nvidiaSettings = true;
 
     # Possible fix for discord crashing?
-    nvidiaPersistenced = true;
+    nvidiaPersistenced = false;
 
     prime = {
       sync.enable = false;

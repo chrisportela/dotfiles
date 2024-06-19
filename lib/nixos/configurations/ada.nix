@@ -111,6 +111,9 @@ inputs.nixos.lib.nixosSystem {
         nvtopPackages.full
         virt-manager
 
+        # Important tools
+        playonlinux
+
         # Hardware
         ddcutil
         ddcui
@@ -161,9 +164,15 @@ inputs.nixos.lib.nixosSystem {
       time.timeZone = "America/New_York";
 
       specialisation.desktop.configuration = {
+
+        environment.systemPackages = with pkgs; [
+          (lutris.override {
+            extraLibraries = pkgs: [ ];
+          })
+        ];
         services.xserver = {
           # Enable the X11 windowing system.
-          enable = true;
+          # enable = true;
 
           dpi = 180;
 
@@ -174,9 +183,13 @@ inputs.nixos.lib.nixosSystem {
           };
 
           # Enable the KDE Plasma Desktop Environment.
-          desktopManager.plasma5.enable = true;
-          desktopManager.plasma5.useQtScaling = true;
+          # desktopManager.plasma5.enable = true;
+          # desktopManager.plasma5.useQtScaling = true;
         };
+
+        # plasma6
+        services.desktopManager.plasma6.enable = true;
+
         services.displayManager = {
           sddm.enable = true;
           sddm.enableHidpi = true;
@@ -221,10 +234,20 @@ inputs.nixos.lib.nixosSystem {
           enable = true;
           remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
           dedicatedServer.openFirewall = false; # Open ports in the firewall for Source Dedicated Server
+          gamescopeSession.enable = true;
         };
+
+        virtualisation = {
+          virtualbox.host = {
+            enable = true;
+          };
+          libvirtd.enable = true;
+        };
+        programs.dconf.enable = true; # For libvirtd
 
         environment.sessionVariables = {
           STEAM_FORCE_DESKTOPUI_SCALING = "2";
+          NIXOS_OZONE_WL = "1";
         };
       };
 
