@@ -153,6 +153,30 @@ inputs.nixos.lib.nixosSystem {
         };
       };
 
+      systemd.services.ollama-reload =
+        let
+          script = (pkgs.writeShellScriptBin "reload-ollama" ''
+            systemctl stop ollama
+            echo "Ollama service stopped"
+
+            echo "Reloading Nvidia kernel modules"
+            ${pkgs.kmod}/bin/rmmod nvidia_uvm && ${pkgs.kmod}/bin/modprobe nvidia_uvm
+
+            echo "Starting Ollama service..."
+            systemctl start ollama
+          '');
+        in
+        {
+          enable = true;
+          description = "Reloads NVidia kernel modules and restarts ollama so it can use GPU after suspend.";
+          after = ["suspend.target"];
+          wantedBy = ["suspend.target"];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${script}/bin/reload-ollama";
+          };
+        };
+
       services.resolved = {
         enable = true;
         fallbackDns = [
