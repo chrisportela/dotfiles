@@ -26,16 +26,8 @@ in
   ];
 
   nix = {
-    distributedBuilds = true;
-    buildMachines = [ nixLocalVM nixServer ];
     settings = {
       connect-timeout = "5";
-      extra-platforms = [ "x86_64-darwin" "aarch64-darwin" ];
-
-      trusted-substituters = [
-        "ssh-ng://cmp@${nixLocalVM.hostName}"
-        "ssh-ng://cmp@${nixServer.hostName}"
-      ];
     };
   };
 
