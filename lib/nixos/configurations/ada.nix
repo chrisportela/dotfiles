@@ -111,16 +111,13 @@ inputs.nixos.lib.nixosSystem {
         nvtopPackages.full
         virt-manager
 
-        # Important tools
-        playonlinux
-
         # Hardware
         ddcutil
         ddcui
         lm_sensors
         pciutils
         glxinfo
-
+        hdparm
 
         # Network
         inetutils
@@ -169,8 +166,8 @@ inputs.nixos.lib.nixosSystem {
         {
           enable = true;
           description = "Reloads NVidia kernel modules and restarts ollama so it can use GPU after suspend.";
-          after = ["suspend.target"];
-          wantedBy = ["suspend.target"];
+          after = [ "suspend.target" ];
+          wantedBy = [ "suspend.target" ];
           serviceConfig = {
             Type = "simple";
             ExecStart = "${script}/bin/reload-ollama";

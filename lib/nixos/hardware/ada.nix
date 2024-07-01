@@ -131,8 +131,8 @@
     enable = false;
     settings = {
       enable = true;
-      interval = 30;
-      idle_time = 120;
+      interval = 30; # seconds
+      idle_time = 120; # seconds
     };
 
     checks = {
