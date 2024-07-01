@@ -136,15 +136,16 @@
                 services.ssh-agent.enable = true;
 
                 home.packages = with pkgs; [
-                  trayscale
-                  discord
-                  obsidian
+                  beekeeper-studio
                   cider
-                  signal-desktop
-                  onlyoffice-bin_latest
-                  sqlitebrowser
+                  discord
                   jrnl
+                  obsidian
                   ollama
+                  onlyoffice-bin_latest
+                  signal-desktop
+                  sqlitebrowser
+                  trayscale
                 ];
 
                 home.shellAliases = {
