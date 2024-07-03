@@ -243,8 +243,6 @@ inputs.nixos.lib.nixosSystem {
           # wireplumber.enable = true;
         };
 
-        services.vscode-server.enable = false;
-
         programs._1password.enable = true;
         programs._1password-gui.enable = true;
         programs._1password-gui.polkitPolicyOwners = [ "cmp" ];
