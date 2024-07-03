@@ -28,6 +28,10 @@
   programs = {
     home-manager.enable = true;
 
+    fd.enable = true;
+    ripgrep.enable = true;
+    btop.enable = true;
+
     direnv = {
       enable = true;
       enableZshIntegration = true;
