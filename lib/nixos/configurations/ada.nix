@@ -63,6 +63,8 @@ inputs.nixos.lib.nixosSystem {
         };
       };
 
+      services.pcscd.enable = true;
+
       security.pki.certificates = [
         ''
           Root Cafecito Cloud CA
