@@ -149,6 +149,7 @@ inputs.nixos.lib.nixosSystem {
         listenAddress = "127.0.0.1:11434";
         environmentVariables = {
           OLLAMA_ORIGINS = "https://ollama.ada.i.cafecito.cloud";
+          OLLAMA_KEEP_ALIVE = "12h";
         };
       };
 
