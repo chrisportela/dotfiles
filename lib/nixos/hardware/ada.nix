@@ -12,11 +12,12 @@
   boot.extraModulePackages = [ ];
   boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
   boot.zfs = {
-    extraPools = [ "spool" ];
+    extraPools = [ "spool" "tank" ];
     requestEncryptionCredentials = [
       "spool"
       "spool/docker"
       "spool/home"
+      "tank/main"
     ];
     forceImportRoot = false;
   };
@@ -164,7 +165,7 @@
   };
   services.thermald.enable = true;
 
-  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  powerManagement.cpuFreqGovernor = lib.mkDefault "ondemand";
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  nixpkgs.hostPlatform = "x86_64-linux";
+  powerManagement.cpuFreqGovernor = "ondemand";
+  hardware.cpu.intel.updateMicrocode = config.hardware.enableRedistributableFirmware;
 }
