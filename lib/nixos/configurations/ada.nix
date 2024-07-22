@@ -287,6 +287,19 @@ inputs.nixos.lib.nixosSystem {
 
       services.vscode-server.enable = lib.mkDefault true;
 
+      services.zfs = {
+        trim = {
+          enable = true;
+        };
+
+        autoScrub = {
+          enable = true;
+          pools = [ "spool" "tank" ];
+          interval = "monthly";
+        };
+
+      };
+
       virtualisation = {
         docker = {
           enable = true;
