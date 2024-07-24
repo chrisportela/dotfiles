@@ -9,11 +9,12 @@ nixpkgs.lib.nixosSystem {
 
   modules = [
     "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
-    nixosModules.common
-    nixosModules.nixpkgs
-    nixosModules.network
-    nixosModules.openssh
+    ../modules/common.nix
+    ../modules/nixpkgs.nix
+    ../modules/network.nix
+    ../modules/openssh.nix
     {
+      chrisportela.common.enable = true;
       chrisportela.network = {
         enable = true;
         tailscale = false;
