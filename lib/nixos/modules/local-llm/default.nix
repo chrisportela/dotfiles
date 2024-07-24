@@ -8,7 +8,7 @@ with lib; {
   };
 
   config = mkIf cfg.enable {
-    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    allowedUnfree = [
       "cuda_cudart"
       "cuda-merged"
       "cuda_cuobjdump"

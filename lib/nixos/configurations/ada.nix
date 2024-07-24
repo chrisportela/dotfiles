@@ -1,10 +1,12 @@
-{ inputs, overlays ? [ ], ... }:
+{ inputs, overlays ? [ ], system ? "x86_64-linux", ... }:
 let
   nginx = { ... }: { };
 in
 inputs.nixos.lib.nixosSystem {
+  inherit system;
+
   specialArgs = {
-    inherit inputs;
+    inherit inputs system;
     nixpkgs = inputs.nixos;
   };
 
@@ -22,10 +24,15 @@ inputs.nixos.lib.nixosSystem {
 
     ({ pkgs, config, lib, ... }: {
 
-      nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+      allowedUnfree = [
         "1password"
         "1password-cli"
         "ookla-speedtest"
+
+        # Must include because gaming is only enabled in desktop mode
+        "nvidia-persistenced"
+        "nvidia-settings"
+        "nvidia-x11"
       ];
 
       cafecitocloud.enable = true;
@@ -35,7 +42,7 @@ inputs.nixos.lib.nixosSystem {
           enable = true;
           speedtest-utils = true;
         };
-        gaming.enble = false;
+        gaming.enable = lib.mkDefault false;
         local-llm.enable = true;
       };
 

@@ -34,8 +34,7 @@ in
 let
   cfg = config.services.nginx;
 in
-with lib;
-{
+with lib; {
   options = {
     services.nginx = {
       allowCloudflareProxyIPs = mkOption {

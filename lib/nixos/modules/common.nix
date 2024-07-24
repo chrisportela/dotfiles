@@ -5,15 +5,11 @@ let
 in
 {
   options.chrisportela.common = {
-    enable = lib.mkEnable "Common configuration";
-    enableDualbootSettings = lib.mkEnable "Dual Boot Settings";
+    enable = lib.mkEnableOption "Common configuration";
+    enableDualbootSettings = lib.mkEnableOption "Dual Boot Settings";
   };
 
   config = lib.mkIf cfg.enable {
-    imports = [
-      ./nixpkgs.nix
-    ];
-
     time.timeZone = lib.mkDefault "Etc/UTC";
     time.hardwareClockInLocalTime = lib.mkIf cfg.enableDualbootSettings true;
 
@@ -34,23 +30,23 @@ in
 
     environment.systemPackages = with pkgs; [ curl git ];
 
-    security.sudo.wheelNeedsPassword = mkDefault true;
+    security.sudo.wheelNeedsPassword = lib.mkDefault true;
 
-    # users = {
-    #   defaultUserShell = pkgs.zsh;
+    users = {
+      defaultUserShell = pkgs.zsh;
 
-    #   groups.cmp = { };
+      groups.cmp = { };
 
-    #   users = {
-    #     cmp = {
-    #       isNormalUser = true;
-    #       group = "cmp";
-    #       extraGroups = [ "wheel" ];
-    #       packages = [ ];
-    #       openssh.authorizedKeys.keys = sshKeys.users.cmp;
-    #     };
-    #   };
-    # };
+      users = {
+        cmp = {
+          isNormalUser = true;
+          group = "cmp";
+          extraGroups = [ "wheel" ];
+          packages = [ ];
+          openssh.authorizedKeys.keys = sshKeys.users.cmp;
+        };
+      };
+    };
 
 
     programs = {
