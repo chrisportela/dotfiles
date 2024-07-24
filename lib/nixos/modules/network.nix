@@ -7,8 +7,11 @@ with lib; {
     enable = mkEnableOption "network config";
 
     speedtest-utils = mkEnableOption "speedtest utilities";
-    tailscale = mkEnableOption "Tailscale";
-    mDNS = mkEnableOption "mDNS Publishing";
+    tailscale = {
+      enable = mkEnableOption "Tailscale";
+      ssh = mkEnableOption "Tailscale SSH Access";
+    };
+    mDNS = mkEnableOption "mDNS Publishing with avahi";
   };
 
   config = mkIf cfg.enable {
@@ -29,18 +32,24 @@ with lib; {
     networking.nftables.checkRuleset = lib.mkDefault true;
     networking.firewall = {
       enable = true;
-      allowedTCPPorts = optionals (config.services.openssh.enable) config.services.openssh.ports;
-      allowedUDPPorts = optionals (cfg.tailscale) [ config.services.tailscale.port ];
-      trustedInterfaces = optionals (cfg.tailscale) [ "tailscale0" ];
+      allowedTCPPorts = lib.optionals (config.services.openssh.enable)
+        config.services.openssh.ports;
+      allowedUDPPorts = lib.optionals (cfg.tailscale.enable) [
+        config.services.tailscale.port
+      ];
+      trustedInterfaces = lib.optionals (cfg.tailscale.enable) [
+        "tailscale0"
+      ];
     };
 
-    services.tailscale = mkIf cfg.tailscale {
+    services.tailscale = lib.mkIf cfg.tailscale.enable {
       enable = true;
       package = pkgs.tailscale;
+      extraUpFlags = lib.mkIf cfg.tailscale.ssh [ "--ssh" ];
     };
 
-    services.avahi = {
-      enable = false;
+    services.avahi = lib.mkIf cfg.mDNS {
+      enable = true;
       publish = {
         enable = true;
         addresses = true;
@@ -50,15 +59,10 @@ with lib; {
 
     services.resolved = {
       enable = true;
-      fallbackDns = [ "127.0.0.1" ];
-    };
-
-    services.unbound = {
-      enable = true;
-      resolveLocalQueries = true;
-      localControlSocketPath = "/run/unbound/unbount.ctl";
-      enableRootTrustAnchor = true;
-      settings.server.interface = [ "127.0.0.1" ];
+      fallbackDns = [
+        "1.1.1.1#853" # Encrypted Cloudflare DNS
+      ];
+      dnssec = "false";
     };
   };
 }
