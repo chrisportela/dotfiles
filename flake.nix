@@ -22,6 +22,7 @@
     deploy-rs.url = "github:serokell/deploy-rs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    nix-gaming.url = "github:fufexan/nix-gaming";
 
     # For installer target
     nixos-generators.url = "github:nix-community/nixos-generators";
