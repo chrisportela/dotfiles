@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, system, ... }:
 let
   cfg = config.chrisportela.gaming;
 in
@@ -9,16 +9,12 @@ with lib; {
   };
 
   config = mkIf cfg.enable {
-    import = [
-      inputs.nix-gaming.nixosModules.steamCompat
-    ];
-
     nix.settings = {
       substituters = [ "https://nix-gaming.cachix.org" ];
       trusted-public-keys = [ "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" ];
     };
 
-    nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
+    allowedUnfree = [
       "steam"
       "steam-original"
       "steam-run"
@@ -55,7 +51,7 @@ with lib; {
       gamescopeSession.enable = true;
       # gamescopeSession.args = ["--prefer-vk-device 8086:9bc4"];
       extraCompatPackages = [
-        inputs.nix-gaming.packages.${system}.proton-ge
+        pkgs.proton-ge-bin
         # TODO: https://github.com/iggut/home/blob/c79cf231f3fd24af94437a6824a0dfd416e083dd/system/programs/self-built/proton-ge.nix
       ];
     };
@@ -78,7 +74,6 @@ with lib; {
     #Enable Gamescope
     programs.gamescope = {
       enable = true;
-      package = pkgs.gamescope_git;
       capSysNice = true;
       # args = ["--prefer-vk-device 8086:9bc4"];
     };
