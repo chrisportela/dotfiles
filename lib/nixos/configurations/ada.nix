@@ -41,6 +41,10 @@ inputs.nixos.lib.nixosSystem {
         network = {
           enable = true;
           speedtest-utils = true;
+          tailscale = {
+            enable = true;
+            ssh = true;
+          };
         };
         gaming.enable = lib.mkDefault false;
         local-llm.enable = true;
