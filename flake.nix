@@ -196,7 +196,10 @@
       nixosModules = (import ./lib/nixos/modules/default.nix);
 
       nixosConfigurations = {
-        installer = (import ./lib/nixos/configurations/installer.nix) { inherit inputs; };
+        installer = (import ./lib/nixos/configurations/installer.nix) {
+          inherit inputs;
+          nixpkgs = inputs.nixpkgs;
+        };
         builder = (import ./lib/nixos/configurations/builder.nix) {
           nixpkgs = inputs.nixpkgs;
           nixosModules = self.nixosModules;

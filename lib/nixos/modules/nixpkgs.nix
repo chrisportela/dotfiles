@@ -9,7 +9,7 @@
     nixpkgs.config.allowUnfreePredicate = p: builtins.elem (lib.getName p) config.allowedUnfree;
     nix = {
       package = lib.mkDefault pkgs.nixVersions.latest;
-      registry.nixpkgs.flake = nixpkgs;
+      # registry.nixpkgs.flake = nixpkgs;
 
       settings = {
         keep-outputs = lib.mkDefault true;

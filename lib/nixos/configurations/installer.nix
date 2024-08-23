@@ -7,7 +7,8 @@ inputs.nixos.lib.nixosSystem {
 
   modules = [
     inputs.nixos-generators.nixosModules.all-formats
-    "${inputs.nixos}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+    # "${inputs.nixos}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+    "${inputs.nixos}/nixos/modules/installer/cd-dvd/installation-cd-graphical-gnome.nix"
     ../modules/nixpkgs.nix
     ({ pkgs, lib, ... }: {
 
