@@ -25,6 +25,11 @@ inputs.nixos.lib.nixosSystem {
 
       systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
 
+      environment.systemPackages = [
+        inputs.disko.packages.${system}.disko
+        inputs.disko.packages.${system}.disko-install
+      ];
+
       users.groups.nix = { };
       users.users.nix = {
         isSystemUser = true;
