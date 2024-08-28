@@ -18,6 +18,11 @@
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     agenix.url = "github:ryantm/agenix";
     deploy-rs.url = "github:serokell/deploy-rs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
@@ -205,6 +210,10 @@
           nixosModules = self.nixosModules;
         };
         ada = (import ./lib/nixos/configurations/ada.nix) {
+          inherit inputs;
+          nixosModules = self.nixosModules;
+        };
+        flamme = (import ./lib/nixos/configurations/flamme.nix) {
           inherit inputs;
           nixosModules = self.nixosModules;
         };
