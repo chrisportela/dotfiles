@@ -202,7 +202,7 @@
 
       nixosConfigurations = {
         installer = (import ./lib/nixos/configurations/installer.nix) {
-          inherit inputs;
+          inherit inputs self;
           nixpkgs = inputs.nixpkgs;
         };
         builder = (import ./lib/nixos/configurations/builder.nix) {

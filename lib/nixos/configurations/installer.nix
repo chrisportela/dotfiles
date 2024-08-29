@@ -1,6 +1,15 @@
 { inputs, system ? "x86_64-linux", hostName ? "installer", ... }:
 let
   sshKeys = import ../../sshKeys.nix;
+  dependencies = [
+    self.nixosConfigurations.flamme.config.system.build.toplevel
+    self.nixosConfigurations.flamme.config.system.build.diskoScript
+    self.nixosConfigurations.flamme.config.system.build.diskoScript.drvPath
+    self.nixosConfigurations.flamme.pkgs.stdenv.drvPath
+    (self.nixosConfigurations.flamme.pkgs.closureInfo { rootPaths = [ ]; }).drvPath
+  ] ++ builtins.map (i: i.outPath) (builtins.attrValues self.inputs);
+
+  closureInfo = pkgs.closureInfo { rootPaths = dependencies; };
 in
 inputs.nixos.lib.nixosSystem {
   inherit system;
@@ -28,7 +37,14 @@ inputs.nixos.lib.nixosSystem {
       environment.systemPackages = [
         inputs.disko.packages.${system}.disko
         inputs.disko.packages.${system}.disko-install
+        (pkgs.writeShellScriptBin "install-nixos-unattended" ''
+          set -eux
+          # Replace "/dev/disk/by-id/some-disk-id" with your actual disk ID
+          exec ${pkgs.disko}/bin/disko-install --flake "${self}#your-machine" --disk vdb "/dev/disk/by-id/some-disk-id"
+        '')
       ];
+
+      environment.etc."install-closure".source = "${closureInfo}/store-paths";
 
       users.groups.nix = { };
       users.users.nix = {
