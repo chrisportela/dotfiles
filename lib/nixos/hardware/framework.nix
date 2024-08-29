@@ -10,57 +10,40 @@
     ../disko/luks-ext4.nix
   ];
 
-  disko.devices.disk.root.device = "/dev/nvme0";
+  disko.devices.disk.root.device = "/dev/nvme0n1";
 
   # Need at least 6.9 to make suspend properly
   # Specifically this patch: https://github.com/torvalds/linux/commit/073237281a508ac80ec025872ad7de50cfb5a28a
   # boot.kernelPackages = lib.mkIf (lib.versionOlder pkgs.linux.version "6.9") (lib.mkDefault pkgs.linuxPackages_latest);
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usbhid" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  # boot.kernelModules = [
-  #   "kvm-intel"
-  #   "i2c-dev"
-  # ];
+  boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
-  boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
-  boot.zfs = {
-    extraPools = [ "zpool" ];
-    requestEncryptionCredentials = [ "zpool" ];
-    forceImportRoot = false;
-  };
+  boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" ];
+  # boot.zfs = {
+  #   extraPools = [ "zpool" ];
+  #   requestEncryptionCredentials = [ "zpool" ];
+  #   forceImportRoot = false;
+  # };
   # Because need latest kernel and it's not supported yet(?)
   # boot.zfs.package = pkgs.zfs_unstable;
 
   # Bootloader.
   boot.loader = {
-    efi = {
-      canTouchEfiVariables = true;
-      efiSysMountPoint = "/boot";
-    };
+    # efi = {
+    #   canTouchEfiVariables = true;
+    #   efiSysMountPoint = "/boot";
+    # };
 
     systemd-boot.enable = true;
   };
-
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-uuid/a0e68cd1-b6e7-4568-b2d9-f5253a34cb76";
-      fsType = "ext4";
-    };
-
-    "/boot" = {
-      device = "/dev/disk/by-uuid/E6BE-1E5C";
-      fsType = "vfat";
-    };
-  };
-
-  swapDevices = [{ device = "/dev/disk/by-uuid/bcf75db2-0312-4d27-958e-bb608604caf4"; }];
 
   zramSwap = {
     enable = true;
     priority = 5;
     algorithm = "zstd";
-    memoryPercent = 50;
+    memoryPercent = 25;
   };
 
   # Enable OpenGL
