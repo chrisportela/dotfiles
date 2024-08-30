@@ -114,13 +114,8 @@
 
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
         (forAllSystems ({ pkgs, system }: {
-          homeConfigurations = {
-            "cmp" = homeConfig {
-              inherit pkgs;
-
-              allowUnfree = [ "vault-bin" ];
-            };
-            "cmp@ada" = homeConfig {
+          homeConfigurations = let
+            adaConfig = homeConfig {
               inherit pkgs;
 
               allowUnfree = [
@@ -160,6 +155,14 @@
                 nixpkgs = { };
               };
             };
+          in {
+            "cmp" = homeConfig {
+              inherit pkgs;
+
+              allowUnfree = [ "vault-bin" ];
+            };
+            "cmp@flamme" = adaConfig;
+            "cmp@ada" = adaConfig;
           };
         }))
         (forAllLinuxSystems ({ pkgs, system }: {

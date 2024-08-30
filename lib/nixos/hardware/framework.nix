@@ -14,7 +14,7 @@
 
   # Need at least 6.9 to make suspend properly
   # Specifically this patch: https://github.com/torvalds/linux/commit/073237281a508ac80ec025872ad7de50cfb5a28a
-  # boot.kernelPackages = lib.mkIf (lib.versionOlder pkgs.linux.version "6.9") (lib.mkDefault pkgs.linuxPackages_latest);
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usbhid" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
@@ -37,6 +37,7 @@
     # };
 
     systemd-boot.enable = true;
+    systemd-boot.consoleMode = "max";
   };
 
   zramSwap = {
@@ -59,7 +60,7 @@
   };
 
   # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = [ "intel" ];
+  # services.xserver.videoDrivers = [ "intel" ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
@@ -71,8 +72,19 @@
 
   services.thermald.enable = true;
 
+  allowedUnfree = [
+    "ipu6-camera-bins-unstable"
+    "ipu6-camera-bins"
+    "ivsc-firmware-unstable"
+    "ivsc-firmware"
+  ];
+
+  hardware.ipu6.enable = false;
+  hardware.ipu6.platform = "ipu6epmtl";
+
   nixpkgs.hostPlatform = "x86_64-linux";
   powerManagement.cpuFreqGovernor = "powersave";
+  hardware.enableRedistributableFirmware = true;
   hardware.cpu.intel.updateMicrocode = config.hardware.enableRedistributableFirmware;
 }
 

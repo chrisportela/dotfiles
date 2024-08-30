@@ -57,8 +57,8 @@ inputs.nixos.lib.nixosSystem {
         useNetworkd = true;
         networkmanager.enable = true;
 
-        interfaces.enp6s0.useDHCP = true;
-        interfaces.wlo1.useDHCP = true;
+        # interfaces.enp6s0.useDHCP = true;
+        # interfaces.wlo1.useDHCP = true;
 
         nftables.enable = true;
         nftables.checkRuleset = true;
@@ -69,6 +69,10 @@ inputs.nixos.lib.nixosSystem {
           trustedInterfaces = [ "tailscale0" ];
         };
       };
+
+      # Prevent wait-online from stopping boot or switching config
+      boot.initrd.systemd.network.wait-online.enable = false;
+      systemd.network.wait-online.enable = false;
 
       environment.systemPackages = with pkgs; [
         btop
@@ -98,18 +102,21 @@ inputs.nixos.lib.nixosSystem {
         };
       };
 
+      services.xserver.enable = true;
+      services.xserver.desktopManager.gnome.enable = true;
+      services.xserver.displayManager.gdm.enable = true;
       # plasma6
-      services.desktopManager.plasma6.enable = true;
+      # services.desktopManager.plasma6.enable = true;
 
       services.displayManager = {
-        sddm.enable = true;
-        sddm.enableHidpi = true;
-        sddm.settings = {
-          General = {
-            GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=180";
-          };
-        };
-        sddm.wayland.enable = true;
+        sddm.enable = false;
+        # sddm.enableHidpi = true;
+        # sddm.settings = {
+        #   General = {
+        #     # GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=180";
+        #   };
+        # };
+        # sddm.wayland.enable = true;
       };
       programs.xwayland.enable = true;
 
@@ -131,7 +138,7 @@ inputs.nixos.lib.nixosSystem {
         enable = true;
         polkitPolicyOwners = [ "cmp" ];
       };
-      security.pam.services.kwallet.enableKwallet = true;
+      # security.pam.services.kwallet.enableKwallet = true;
 
       environment.sessionVariables = {
         NIXOS_OZONE_WL = "1";
@@ -143,19 +150,19 @@ inputs.nixos.lib.nixosSystem {
         # theme = "bgrt";
       };
 
-      services.zfs = {
-        trim = {
-          enable = true;
-          # interval = "daily";
-        };
+      # services.zfs = {
+      #   trim = {
+      #     enable = true;
+      #     # interval = "daily";
+      #   };
 
-        autoScrub = {
-          enable = true;
-          pools = [ "zpool" ];
-          interval = "monthly";
-        };
+      #   autoScrub = {
+      #     enable = true;
+      #     pools = [ "zpool" ];
+      #     interval = "monthly";
+      #   };
 
-      };
+      # };
 
       virtualisation = {
         # oci-containers.backend = "podman";
