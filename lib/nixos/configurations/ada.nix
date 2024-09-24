@@ -203,7 +203,7 @@ inputs.nixos.lib.nixosSystem {
       virtualisation = {
         docker = {
           enable = true;
-          enableNvidia = true;
+          # enableNvidia = true;# Deprecated
           storageDriver = "zfs";
         };
         # TODO: switch to podman
