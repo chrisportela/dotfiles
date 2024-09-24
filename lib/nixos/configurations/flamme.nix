@@ -164,6 +164,8 @@ inputs.nixos.lib.nixosSystem {
 
       # };
 
+      services.flatpak.enable = true;
+
       virtualisation = {
         # oci-containers.backend = "podman";
       };
