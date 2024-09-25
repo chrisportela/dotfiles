@@ -73,6 +73,8 @@
       delta.enable = true;
       userName = mkDefault "Chris Portela";
       userEmail = mkDefault "chris@chrisportela.com";
+      package = pkgs.gitFull;
+      extraConfig.credential.helper = "libsecret";
     };
     difftastic.enable = true;
 

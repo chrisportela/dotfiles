@@ -7,7 +7,6 @@
     "kvm-intel"
     "i2c-dev"
     "nvidia-uvm" # For ollama to use GPU properly
-    "cpufreq_ondemand"
   ];
   boot.extraModulePackages = [ ];
   boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
@@ -77,7 +76,13 @@
     enable = true;
     driSupport = true;
     driSupport32Bit = true;
+    extraPackages = with pkgs; [
+      # onevpl-intel-gpu
+    ];
   };
+
+  # https://nixos.wiki/wiki/Intel_Graphics#12th_Gen_(Alder_Lake)
+  #boot.kernelParams = [ "i915.force_probe=4680" ];
 
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = [ "nvidia" ];
@@ -168,6 +173,7 @@
   services.thermald.enable = true;
 
   nixpkgs.hostPlatform = "x86_64-linux";
-  powerManagement.cpuFreqGovernor = "ondemand";
+  powerManagement.cpuFreqGovernor = "performance";
+  hardware.enableRedistributableFirmware = true;
   hardware.cpu.intel.updateMicrocode = config.hardware.enableRedistributableFirmware;
 }

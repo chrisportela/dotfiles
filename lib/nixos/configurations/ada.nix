@@ -1,13 +1,13 @@
-{ inputs, overlays ? [ ], system ? "x86_64-linux", ... }:
+{ inputs, nixos ? inputs.nixos, overlays ? [ ], system ? "x86_64-linux", ... }:
 let
   nginx = { ... }: { };
 in
-inputs.nixos.lib.nixosSystem {
+nixos.lib.nixosSystem {
   inherit system;
 
   specialArgs = {
     inherit inputs system;
-    nixpkgs = inputs.nixos;
+    nixpkgs = nixos;
   };
 
   modules = [
@@ -28,6 +28,7 @@ inputs.nixos.lib.nixosSystem {
         "1password"
         "1password-cli"
         "ookla-speedtest"
+        "elasticsearch"
 
         # Must include because gaming is only enabled in desktop mode
         "nvidia-persistenced"
@@ -46,7 +47,7 @@ inputs.nixos.lib.nixosSystem {
             ssh = true;
           };
         };
-        gaming.enable = lib.mkDefault false;
+        gaming.enable = true;
         local-llm.enable = true;
       };
 
@@ -62,6 +63,7 @@ inputs.nixos.lib.nixosSystem {
         useDHCP = false;
         useNetworkd = true;
         networkmanager.enable = true;
+        # networkmanager.unmanaged = [ "tailscale0" "docker0" ];
 
         interfaces.enp6s0.useDHCP = true;
         interfaces.wlo1.useDHCP = true;
@@ -76,13 +78,31 @@ inputs.nixos.lib.nixosSystem {
         };
       };
 
+      systemd.services.tailscaled.after = ["NetworkManager-wait-online.service"];
+
       # Prevent wait-online from stopping boot or switching config
-      boot.initrd.systemd.network.wait-online.enable = false;
-      systemd.network.wait-online.enable = false;
+      boot.initrd.systemd.network.wait-online = {
+        enable = false;
+        anyInterface = true;
+        ignoredInterfaces = [ "tailscale0" ];
+      };
+      systemd.network.wait-online = {
+        enable = true;
+        anyInterface = true;
+        ignoredInterfaces = [ "tailscale0" ];
+      };
 
       environment.systemPackages = with pkgs; [
         btop
         nvtopPackages.full
+        psmisc
+
+        # Wine
+        wineWowPackages.waylandFull
+        wine
+        winetricks
+        protontricks
+        samba
 
         # Hardware
         lm_sensors
@@ -99,84 +119,68 @@ inputs.nixos.lib.nixosSystem {
 
       time.timeZone = lib.mkForce "America/New_York";
 
-      specialisation.desktop.configuration = {
-        chrisportela.gaming.enable = true;
+      services.xserver = {
+        # Enable the X11 windowing system.
+        # enable = true;
 
-        services.xserver = {
-          # Enable the X11 windowing system.
-          # enable = true;
+        dpi = 180;
 
-          dpi = 180;
-
-          # Configure keymap in X11
-          xkb = {
-            layout = "us";
-            variant = "";
-          };
-
-          # Enable the KDE Plasma Desktop Environment.
-          # desktopManager.plasma5.enable = true;
-          # desktopManager.plasma5.useQtScaling = true;
+        # Configure keymap in X11
+        xkb = {
+          layout = "us";
+          variant = "";
         };
 
-        # plasma6
-        services.desktopManager.plasma6.enable = true;
-
-        services.displayManager = {
-          sddm.enable = true;
-          sddm.enableHidpi = true;
-          sddm.settings = {
-            General = {
-              GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
-            };
-          };
-          sddm.wayland.enable = true;
-        };
-        programs.xwayland.enable = true;
-
-        services.printing.enable = false;
-
-        # Enable sound with pipewire.
-        sound.enable = true;
-        hardware.pulseaudio.enable = false;
-        security.rtkit.enable = true;
-        services.pipewire = {
-          enable = true;
-          alsa.enable = true;
-          alsa.support32Bit = true;
-          pulse.enable = true;
-        };
-
-        programs._1password.enable = true;
-        programs._1password-gui = {
-          enable = true;
-          polkitPolicyOwners = [ "cmp" ];
-        };
-        security.pam.services.kwallet.enableKwallet = true;
-
-        virtualisation = {
-          virtualbox.host.enable = true;
-          libvirtd.enable = true;
-        };
-        programs.dconf.enable = true; # For libvirtd
-
-        environment.sessionVariables = {
-          NIXOS_OZONE_WL = "1";
-        };
-
-        users.users.cmp = {
-          extraGroups = [
-            "libvirtd"
-          ];
-
-          packages = with pkgs; [
-            firefox
-            kate
-            virt-manager
-          ];
-        };
-
+        # Enable the KDE Plasma Desktop Environment.
+        # desktopManager.plasma5.enable = true;
+        # desktopManager.plasma5.useQtScaling = true;
       };
+
+      # plasma6
+      services.desktopManager.plasma6.enable = true;
+
+      services.displayManager = {
+        sddm.enable = true;
+        sddm.enableHidpi = true;
+        sddm.settings = {
+          General = {
+            GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
+          };
+        };
+        sddm.wayland.enable = true;
+      };
+      programs.xwayland.enable = true;
+
+      services.printing.enable = false;
+
+      # Enable sound with pipewire.
+      sound.enable = true;
+      hardware.pulseaudio.enable = false;
+      security.rtkit.enable = true;
+      services.pipewire = {
+        enable = true;
+        alsa.enable = true;
+        alsa.support32Bit = true;
+        pulse.enable = true;
+      };
+
+      programs._1password.enable = true;
+      programs._1password-gui = {
+        enable = true;
+        polkitPolicyOwners = [ "cmp" ];
+      };
+      security.pam.services.kwallet.enableKwallet = true;
+
+      virtualisation = {
+        virtualbox.host.enable = true;
+        libvirtd.enable = true;
+      };
+      programs.dconf.enable = true; # For libvirtd
+
+      environment.sessionVariables = {
+        NIXOS_OZONE_WL = "1";
+      };
+
 
       boot.plymouth = {
         enable = true;
@@ -210,6 +214,53 @@ inputs.nixos.lib.nixosSystem {
         oci-containers.backend = "docker";
       };
 
+      services.elasticsearch = {
+        enable = true;
+        listenAddress = "127.0.0.1";
+        port = 9200;
+        single_node = true;
+        extraConf = ''
+          xpack.security.enabled: true
+          xpack.security.authc.api_key.enabled: true
+        '';
+      };
+
+      # TODO ensure kibana folders are created
+      virtualisation.oci-containers.containers.kibana-test = {
+        autoStart = true;
+        image = "docker.elastic.co/kibana/kibana:7.17.24";
+        volumes = [
+          # "${config.users.users.cmp.home}/.config/kibana/:/usr/share/kibana/config/"
+          "${config.users.users.cmp.home}/.local/share/kibana:/usr/share/kibana/data"
+        ];
+        extraOptions = [ "--network=host" "--add-host=host.containers.internal:host-gateway" ];
+        environment = {
+          SERVER_NAME = "kibana-test.ada.i.cafecito.cloud";
+          # SERVER_BASEPATH = "";
+          ELASTICSEARCH_HOSTS = "http://127.0.0.1:9200";
+        };
+      };
+
+      services.nginx.virtualHosts = {
+        "kibana.ada.i.cafecito.cloud" = {
+          forceSSL = true;
+          enableACME = true;
+
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:5601";
+            recommendedProxySettings = true;
+            # extraConfig = ''
+            #   proxy_set_header Host localhost:11434;
+            # '';
+          };
+
+          extraConfig = ''
+            access_log /var/log/nginx/kiabana-cafeito_cloud.access.log;
+            error_log /var/log/nginx/kibana-cafeito_cloud.error.log;
+          '';
+        };
+      };
+
       services.nginx.enable = true;
       users.users.nginx.extraGroups = [ "acme" ];
 
@@ -222,7 +273,12 @@ inputs.nixos.lib.nixosSystem {
           "docker"
         ];
 
-        packages = with pkgs; [ ];
+        packages = with pkgs; [
+          firefox
+          kate
+          virt-manager
+
+        ];
       };
 
       system.stateVersion = "23.05";

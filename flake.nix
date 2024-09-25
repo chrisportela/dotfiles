@@ -216,6 +216,11 @@
           inherit inputs;
           nixosModules = self.nixosModules;
         };
+        ada-unstable = (import ./lib/nixos/configurations/ada.nix) {
+          inherit inputs;
+          nixos = inputs.nixos-unstable;
+          nixosModules = self.nixosModules;
+        };
         flamme = (import ./lib/nixos/configurations/flamme.nix) {
           inherit inputs;
           nixosModules = self.nixosModules;
