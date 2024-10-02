@@ -230,7 +230,7 @@ nixos.lib.nixosSystem {
         autoStart = true;
         image = "docker.elastic.co/kibana/kibana:7.17.24";
         volumes = [
-          # "${config.users.users.cmp.home}/.config/kibana/:/usr/share/kibana/config/"
+          "${config.users.users.cmp.home}/.config/kibana/:/usr/share/kibana/config/"
           "${config.users.users.cmp.home}/.local/share/kibana:/usr/share/kibana/data"
         ];
         extraOptions = [ "--network=host" "--add-host=host.containers.internal:host-gateway" ];
