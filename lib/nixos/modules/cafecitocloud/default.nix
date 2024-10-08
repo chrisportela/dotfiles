@@ -5,6 +5,11 @@ in
 with lib; {
   options.cafecitocloud = {
     enable = mkEnableOption "Cafecito Cloud config";
+    enableACME = mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable cafecito cloud ACME";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -16,7 +21,7 @@ with lib; {
       ''
     ];
 
-    security.acme = {
+    security.acme = mkIf cfg.enableACME {
       acceptTerms = true;
       defaults = {
         dnsResolver = "liara.gorgon-basilisk.ts.net";
