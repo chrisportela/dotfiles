@@ -57,7 +57,7 @@ with lib; {
         '');
       in
       {
-        enable = true;
+        enable = false;
         description = "Reloads NVidia kernel modules and restarts ollama so it can use GPU after suspend.";
         after = [ "suspend.target" ];
         wantedBy = [ "suspend.target" ];
