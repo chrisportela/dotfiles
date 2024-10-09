@@ -28,6 +28,8 @@ with lib; {
         email = "chris@cafecito.cloud";
         server = "https://ca.cafecito.cloud/acme/acme/directory";
         webroot = "/var/lib/acme/acme-challenge";
+        validMinDays = 5; # 14 certificate lifetime
+        renewInterval = "daily";
       };
     };
   };
