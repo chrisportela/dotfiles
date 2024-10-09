@@ -89,10 +89,6 @@
         fi
 
         source ${./shell_functions.sh}
-
-        notify() {
-          "${pkgs.notify-desktop}/bin/notify-desktop" -u critical "Command finished: $?" "!!" 1>/dev/null
-        }
       '';
     };
 
@@ -173,8 +169,7 @@
   }
   (lib.mkIf pkgs.stdenv.isDarwin {
     home.shellAliases = {
-      "flushdns" = "sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
-";
+      "flushdns" = "sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder";
     };
   })
 ]
