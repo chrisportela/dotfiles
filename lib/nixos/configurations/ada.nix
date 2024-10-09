@@ -36,7 +36,11 @@ nixos.lib.nixosSystem {
         "nvidia-x11"
       ];
 
-      cafecitocloud.enable = true;
+      cafecitocloud = {
+        enable = true;
+        enableACME = true;
+      };
+
       chrisportela = {
         common.enable = true;
         network = {
