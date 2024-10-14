@@ -22,6 +22,8 @@
       nixpkgs-fmt
       git-annex
       ntfy-sh
+      rclone
+      git-annex-remote-rclone
     ];
   };
 
@@ -74,7 +76,10 @@
       userName = mkDefault "Chris Portela";
       userEmail = mkDefault "chris@chrisportela.com";
       package = pkgs.gitFull;
-      extraConfig.credential.helper = "libsecret";
+      extraConfig = {
+        credential.helper = "libsecret";
+        # safe.directory = [ ];
+      };
     };
     difftastic.enable = true;
 
