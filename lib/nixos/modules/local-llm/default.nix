@@ -80,6 +80,37 @@ with lib; {
       };
     };
 
+    services.searx = {
+      enable = true;
+      redisCreateLocally = false;
+      settings = {
+        server.port = 8081;
+        server.bind_address = "0.0.0.0";
+        server.secret_key = "@SEARX_SECRET_KEY@";
+
+        # engines = lib.singleton {
+        #   name = "wolframalpha";
+        #   shortcut = "wa";
+        #   api_key = "@WOLFRAM_API_KEY@";
+        #   engine = "wolframalpha_api";
+        # };
+      };
+      uwsgiConfig = {
+        http = ":8081";
+      };
+      limiterSettings = {
+        # real_ip = {
+        #   x_for = 1;
+        #   ipv4_prefix = 32;
+        #   ipv6_prefix = 56;
+        # };
+        # botdetection.ip_lists.block_ip = [
+        #   # "93.184.216.34" # example.org
+        # ];
+      };
+
+    };
+
     services.nginx.virtualHosts = {
       "ollama.ada.i.cafecito.cloud" = {
         forceSSL = true;
