@@ -5,7 +5,7 @@ in
 with lib; {
   options.chrisportela.gaming = {
     enable = lib.mkEnableOption "Gaming config";
-#     nvidia = lib.mkEnableOption "Nvidia specific settings";
+    #     nvidia = lib.mkEnableOption "Nvidia specific settings";
   };
 
   config = mkIf cfg.enable {
@@ -18,20 +18,25 @@ with lib; {
       "steam"
       "steam-original"
       "steam-run"
-#       "nvidia-persistenced"
-#       "nvidia-settings"
-#       "nvidia-x11"
+      #       "nvidia-persistenced"
+      #       "nvidia-settings"
+      #       "nvidia-x11"
     ];
     # NVIDIA drivers
-#     services.xserver.videoDrivers = [ "nvidia" ];
+    #     services.xserver.videoDrivers = [ "nvidia" ];
     hardware.opengl.enable = true;
 
     # Extra OpenGL options
     hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
-    hardware.opengl.setLdLibraryPath = true;
     hardware.opengl.driSupport32Bit = true;
 
     environment.systemPackages = with pkgs; [
+      wineWowPackages.waylandFull
+      wine
+      winetricks
+      protontricks
+      samba
+
       (lutris.override {
         extraLibraries = pkgs: [ ];
       })

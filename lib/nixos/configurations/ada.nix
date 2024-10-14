@@ -82,7 +82,7 @@ nixos.lib.nixosSystem {
         };
       };
 
-      systemd.services.tailscaled.after = ["NetworkManager-wait-online.service"];
+      systemd.services.tailscaled.after = [ "NetworkManager-wait-online.service" ];
 
       # Prevent wait-online from stopping boot or switching config
       boot.initrd.systemd.network.wait-online = {
@@ -100,13 +100,9 @@ nixos.lib.nixosSystem {
         btop
         nvtopPackages.full
         psmisc
-
-        # Wine
-        wineWowPackages.waylandFull
-        wine
-        winetricks
-        protontricks
-        samba
+        rclone
+        git-annex-remote-rclone
+        quickemu
 
         # Hardware
         lm_sensors
@@ -177,7 +173,17 @@ nixos.lib.nixosSystem {
 
       virtualisation = {
         virtualbox.host.enable = true;
-        libvirtd.enable = true;
+        libvirtd = {
+          enable = true;
+          qemu = {
+            package = pkgs.qemu_kvm;
+            ovmf = {
+              enable = true;
+              packages = [ pkgs.OVMFFull.fd ];
+            };
+            swtpm.enable = true;
+          };
+        };
       };
       programs.dconf.enable = true; # For libvirtd
 
@@ -281,6 +287,7 @@ nixos.lib.nixosSystem {
           firefox
           kate
           virt-manager
+          rclone-browser
 
         ];
       };

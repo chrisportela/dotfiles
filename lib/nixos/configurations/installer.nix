@@ -12,30 +12,30 @@ inputs.nixos.lib.nixosSystem {
     ../modules/nixpkgs.nix
     ({ pkgs, lib, ... }: {
 
-        # nixpkgs.hostPlatform.system = system;
-        networking.hostName = hostName;
+      # nixpkgs.hostPlatform.system = system;
+      networking.hostName = hostName;
 
-        boot.loader.timeout = lib.mkOverride 10 10;
-        documentation.enable = lib.mkOverride 10 false;
-        documentation.nixos.enable = lib.mkOverride 10 false;
+      boot.loader.timeout = lib.mkOverride 10 10;
+      documentation.enable = lib.mkOverride 10 false;
+      documentation.nixos.enable = lib.mkOverride 10 false;
 
-        boot.initrd.systemd.enable = lib.mkForce false;
+      boot.initrd.systemd.enable = lib.mkForce false;
 
-        system.disableInstallerTools = lib.mkOverride 10 false;
+      system.disableInstallerTools = lib.mkOverride 10 false;
 
-        systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
+      systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
 
-        environment.systemPackages = [
-          inputs.disko.packages.${system}.disko
-          inputs.disko.packages.${system}.disko-install
-        ];
+      environment.systemPackages = [
+        inputs.disko.packages.${system}.disko
+        inputs.disko.packages.${system}.disko-install
+      ];
 
-        users.groups.nix = { };
-        users.users.nix = {
-          isSystemUser = true;
-          group = "nix";
-          openssh.authorizedKeys.keys = sshKeys.default;
-        };
-      })
+      users.groups.nix = { };
+      users.users.nix = {
+        isSystemUser = true;
+        group = "nix";
+        openssh.authorizedKeys.keys = sshKeys.default;
+      };
+    })
   ];
 }

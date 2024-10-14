@@ -115,55 +115,55 @@
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
         (forAllSystems ({ pkgs, system }: {
           homeConfigurations = let
-            adaConfig = homeConfig {
-              inherit pkgs;
+              adaConfig = homeConfig {
+                inherit pkgs;
 
-              allowUnfree = [
-                "vault-bin"
-                "vscode"
-                "discord"
-                "obsidian"
-                "cider"
-              ];
-
-              options = { pkgs, lib, ... }: {
-                programs = {
-                  vscode.enable = true;
-                  chromium.enable = true;
-                  mpv.enable = true;
-                };
-
-                services.ssh-agent.enable = true;
-
-                home.packages = with pkgs; [
-                  beekeeper-studio
-                  cider
-                  discord
-                  jrnl
-                  obsidian
-                  ollama
-                  onlyoffice-bin_latest
-                  signal-desktop
-                  sqlitebrowser
-                  trayscale
+                allowUnfree = [
+                  "vault-bin"
+                  "vscode"
+                  "discord"
+                  "obsidian"
+                  "cider"
                 ];
 
-                home.shellAliases = {
-                  # "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
+                options = { pkgs, lib, ... }: {
+                  programs = {
+                    vscode.enable = true;
+                    chromium.enable = true;
+                    mpv.enable = true;
+                  };
+
+                  services.ssh-agent.enable = true;
+
+                  home.packages = with pkgs; [
+                    beekeeper-studio
+                    cider
+                    discord
+                    jrnl
+                    obsidian
+                    ollama
+                    onlyoffice-bin_latest
+                    signal-desktop
+                    sqlitebrowser
+                    trayscale
+                  ];
+
+                  home.shellAliases = {
+                    # "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
+                  };
+
+                  nixpkgs = { };
                 };
-
-                nixpkgs = { };
               };
-            };
-          in {
-            "cmp" = homeConfig {
-              inherit pkgs;
+            in {
+              "cmp" = homeConfig {
+                inherit pkgs;
 
-              allowUnfree = [ "vault-bin" ];
+                allowUnfree = [ "vault-bin" ];
+              };
+              "cmp@flamme" = adaConfig;
+              "cmp@ada" = adaConfig;
             };
-            "cmp@flamme" = adaConfig;
-            "cmp@ada" = adaConfig;
-          };
         }))
         (forAllLinuxSystems ({ pkgs, system }: {
           installer-iso = self.nixosConfigurations.installer.config.formats.iso;
