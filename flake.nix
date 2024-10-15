@@ -120,20 +120,20 @@
       });
 
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
-        (forAllSystems ({ pkgs, system }: {
+        (forAllSystems ({ system, /* pkgs, */ ... }: {
           homeConfigurations =
             let
-              adaConfig = homeConfig {
-                # inherit pkgs;
-                home-manager = inputs.home-manager-unstable;
-                pkgs = (import inputs.nixpkgs-unstable {
-                  inherit system;
-                  overlays = [ self.overlays.terraform ];
+              pkgs = (import inputs.nixpkgs-unstable {
+                inherit system;
+                overlays = [ self.overlays.terraform ];
 
-                  config.allowUnfreePredicate = pkg: builtins.elem (inputs.nixpkgs-unstable.lib.getName pkg) [
-                    "terraform"
-                  ];
-                });
+                config.allowUnfreePredicate = pkg: builtins.elem (inputs.nixpkgs-unstable.lib.getName pkg) [
+                  "terraform"
+                ];
+              });
+              adaConfig = homeConfig {
+                inherit pkgs;
+                home-manager = inputs.home-manager-unstable;
 
                 allowUnfree = [
                   "vault-bin"
@@ -176,6 +176,7 @@
             {
               "cmp" = homeConfig {
                 inherit pkgs;
+                home-manager = inputs.home-manager-unstable;
 
                 allowUnfree = [ "vault-bin" ];
               };
