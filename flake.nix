@@ -10,10 +10,16 @@
     nixos.url = "github:nixos/nixpkgs/nixos-24.05";
     nixpkgs.url = "github:nixos/nixpkgs/release-24.05";
     nixos-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/master";
     nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-24.05-darwin";
-    home-manager.url = "github:nix-community/home-manager/release-24.05";
-    home-manager-master.url = "github:nix-community/home-manager/release-24.05";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-24.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    home-manager-unstable = {
+      url = "github:nix-community/home-manager/master";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     darwin = {
       url = "github:lnl7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
@@ -87,6 +93,7 @@
                     , username ? "cmp"
                     , allowUnfree ? [ ]
                     , options ? { }
+                    , home-manager ? inputs.home-manager
                     }:
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
@@ -114,9 +121,19 @@
 
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
         (forAllSystems ({ pkgs, system }: {
-          homeConfigurations = let
+          homeConfigurations =
+            let
               adaConfig = homeConfig {
-                inherit pkgs;
+                # inherit pkgs;
+                home-manager = inputs.home-manager-unstable;
+                pkgs = (import inputs.nixpkgs-unstable {
+                  inherit system;
+                  overlays = [ self.overlays.terraform ];
+
+                  config.allowUnfreePredicate = pkg: builtins.elem (inputs.nixpkgs-unstable.lib.getName pkg) [
+                    "terraform"
+                  ];
+                });
 
                 allowUnfree = [
                   "vault-bin"
@@ -155,7 +172,8 @@
                   nixpkgs = { };
                 };
               };
-            in {
+            in
+            {
               "cmp" = homeConfig {
                 inherit pkgs;
 
@@ -206,6 +224,7 @@
       nixosConfigurations = {
         installer = (import ./lib/nixos/configurations/installer.nix) {
           inherit inputs self;
+          nixos = inputs.nixos-unstable;
           nixpkgs = inputs.nixpkgs;
         };
         builder = (import ./lib/nixos/configurations/builder.nix) {
@@ -214,15 +233,12 @@
         };
         ada = (import ./lib/nixos/configurations/ada.nix) {
           inherit inputs;
-          nixosModules = self.nixosModules;
-        };
-        ada-unstable = (import ./lib/nixos/configurations/ada.nix) {
-          inherit inputs;
           nixos = inputs.nixos-unstable;
           nixosModules = self.nixosModules;
         };
         flamme = (import ./lib/nixos/configurations/flamme.nix) {
           inherit inputs;
+          nixos = inputs.nixos-unstable;
           nixosModules = self.nixosModules;
         };
       };
