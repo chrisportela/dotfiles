@@ -46,29 +46,8 @@ with lib; {
       };
     };
 
-    systemd.services.ollama-reload =
-      let
-        script = (pkgs.writeShellScriptBin "reload-ollama" ''
-          systemctl stop ollama
-          echo "Ollama service stopped"
-
-          echo "Reloading Nvidia kernel modules"
-          ${pkgs.kmod}/bin/rmmod nvidia_uvm && ${pkgs.kmod}/bin/modprobe nvidia_uvm
-
-          echo "Starting Ollama service..."
-          systemctl start ollama
-        '');
-      in
-      {
-        enable = false;
-        description = "Reloads NVidia kernel modules and restarts ollama so it can use GPU after suspend.";
-        after = [ "suspend.target" ];
-        wantedBy = [ "suspend.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${script}/bin/reload-ollama";
-        };
-      };
+    # Ensure going to sleep does not kill ollama connection to GPU
+    hardware.nvidia.powerManagement.enable = true;
 
     # Open Web UI
     virtualisation.oci-containers.containers.open-webui = {
@@ -94,7 +73,7 @@ with lib; {
 
         search = {
           safe_search = 0;
-          formats = ["html" "json"];
+          formats = [ "html" "json" ];
         };
 
         # engines = lib.singleton {
