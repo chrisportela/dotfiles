@@ -21,6 +21,7 @@ nixos.lib.nixosSystem {
     ../modules/cafecitocloud
     ../modules/gaming.nix
     ../modules/local-llm
+    ../modules/ftp.nix
 
     ({ pkgs, config, lib, ... }: {
 
@@ -50,6 +51,11 @@ nixos.lib.nixosSystem {
             enable = true;
             ssh = true;
           };
+        };
+        ftp = {
+          enable = true;
+          directory = "/home/cmp/tank/photo-dump";
+          domain = "ftp.ada.i.cafecito.cloud";
         };
         gaming.enable = true;
         local-llm.enable = true;
