@@ -44,6 +44,14 @@ inputs.nixos.lib.nixosSystem {
 
       services.pcscd.enable = true; # For configuring Yubikey
 
+      # tpm
+      security.tpm2.enable = true;
+      security.tpm2.pkcs11.enable = true; # expose /run/current-system/sw/lib/libtpm2_pkcs11.so
+      security.tpm2.tctiEnvironment.enable = true; # TPM2TOOLS_TCTI and TPM2_PKCS11_TCTI env variables
+      # users.users.cmp.extraGroups = [ "tss" ]; # tss group has access to TPM devices
+      # Enroll: sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0 /dev/nvme0n1p2
+      # pcrs=0+7 if secure booted
+
       # Enable networking
       networking = {
         hostName = "flamme";
@@ -174,6 +182,7 @@ inputs.nixos.lib.nixosSystem {
         extraGroups = [
           "networkmanager"
           "wheel"
+          "tss"
         ];
 
         packages = with pkgs; [

@@ -29,6 +29,8 @@
   # Because need latest kernel and it's not supported yet(?)
   # boot.zfs.package = pkgs.zfs_unstable;
 
+  boot.initrd.systemd.enable = true;
+
   # Bootloader.
   boot.loader = {
     # efi = {
