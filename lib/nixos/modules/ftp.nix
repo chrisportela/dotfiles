@@ -45,7 +45,7 @@ in
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
-      # home = cfg.directory;
+      home = cfg.directory;
       createHome = true;
     };
     users.groups.${cfg.group} = { };
