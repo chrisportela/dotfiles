@@ -1,12 +1,6 @@
 { lib, config, overlays, ... }: {
   imports = [ ../nixos/modules/nixpkgs.nix ];
 
-  # Pending https://github.com/NixOS/nixpkgs/issues/55674
-  options.allowedUnfree = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [ ];
-  };
-
   config = {
 
     nix = {

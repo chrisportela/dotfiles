@@ -15,6 +15,6 @@
     extraConfig = ''
       set-option -g allow-passthrough on;
     '';
-    plugins = with pkgs.tmuxPlugins; [ ];
+    # plugins = with pkgs.tmuxPlugins; [ ];
   };
 }

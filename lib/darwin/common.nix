@@ -21,7 +21,7 @@
 
       vim = {
         enable = mkDefault true;
-        enableSensible = mkDefault true;
+        enableSensible = mkDefault true; # Warning: uses 'VAM'
       };
 
       tmux = {
