@@ -1,23 +1,23 @@
-({ pkgs, lib, config, ... }: with lib; {
+({ pkgs, lib, config, ... }: {
   imports = [
+    ./modules/nixpkgs.nix
+    ./modules/difftastic.nix
     ./shell.nix
     ./tmux.nix
-    ./modules/difftastic.nix
   ];
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
-    "vault-bin"
-  ];
+  allowedUnfree = [ "vault-bin" ];
 
   home = {
     homeDirectory = (if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}");
-    stateVersion = mkDefault "22.11";
+    stateVersion = lib.mkDefault "22.11";
     packages = with pkgs; [
       curl
       dogdns
       doggo
       du-dust
       ripgrep
+      coder
       vault-bin
       nixpkgs-fmt
       git-annex
@@ -49,7 +49,7 @@
         set nocompatible
         set nobackup
       '';
-      plugins = with pkgs.vimPlugins; [ vim-nix ];
+      plugins = with pkgs.vimPlugins; [ fugitive surround vim-nix ];
     };
 
     htop.enable = true;
@@ -73,8 +73,8 @@
     git = {
       enable = true;
       delta.enable = true;
-      userName = mkDefault "Chris Portela";
-      userEmail = mkDefault "chris@chrisportela.com";
+      userName = lib.mkDefault "Chris Portela";
+      userEmail = lib.mkDefault "chris@chrisportela.com";
       package = pkgs.gitFull;
       extraConfig = {
         credential.helper = "libsecret";

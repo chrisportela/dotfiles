@@ -91,7 +91,7 @@
       homeConfig = ({ pkgs
                     , home ? ./home/default.nix
                     , username ? "cmp"
-                    , allowUnfree ? [ ]
+                    , allowedUnfree ? [ ]
                     , options ? { }
                     , home-manager ? inputs.home-manager
                     }:
@@ -99,9 +99,10 @@
           inherit pkgs;
 
           modules = [
+            ./home/modules/nixpkgs.nix
             ({ pkgs, lib, ... }: {
+              inherit allowedUnfree;
               home.username = username;
-              nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) allowUnfree;
             })
             home
             options
@@ -135,7 +136,7 @@
                 inherit pkgs;
                 home-manager = inputs.home-manager-unstable;
 
-                allowUnfree = [
+                allowedUnfree = [
                   "vault-bin"
                   "vscode"
                   "discord"
@@ -178,7 +179,7 @@
                 inherit pkgs;
                 home-manager = inputs.home-manager-unstable;
 
-                allowUnfree = [ "vault-bin" ];
+                allowedUnfree = [ "vault-bin" "terraform" ];
               };
               "cmp@flamme" = adaConfig;
               "cmp@ada" = adaConfig;
@@ -254,8 +255,8 @@
           system = "aarch64-darwin";
           specialArgs = {
             inherit inputs;
-            overlays = with self.overlays; [ deploy-rs ];
-            nixpkgs = inputs.nixpkgs;
+            overlays = with self.overlays; [ deploy-rs rust rustToolchain ];
+            nixpkgs = inputs.nixpkgs-darwin;
           };
           modules = with self.darwinModules; [
             common
@@ -265,6 +266,8 @@
       };
 
       devShells = forAllSystemsShell ({ pkgs, system }: {
+        default = self.devShells.${system}.dotfiles;
+
         dotfiles = pkgs.mkShell {
           packages = (with pkgs; [
             cachix
@@ -313,8 +316,6 @@
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ])
           ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
         };
-
-        default = self.devShells.${system}.dotfiles;
       });
 
       checks = forAllSystems ({ pkgs, system }: {
