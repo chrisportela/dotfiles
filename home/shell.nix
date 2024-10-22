@@ -45,13 +45,13 @@
     programs.zsh = {
       enable = true;
       autosuggestion.enable = lib.mkDefault false;
-      enableCompletion = lib.mkDefault false;
+      enableCompletion = lib.mkDefault true;
       autocd = lib.mkDefault true;
       # envExtra = ''. "$HOME/.cargo/env"'';
       history = {
         extended = true;
         share = true;
-        ignoreDups = false;
+        ignoreDups = true;
         ignoreSpace = true;
         expireDuplicatesFirst = true;
       };
@@ -81,7 +81,6 @@
 
         if [[ "$TERM_PROGRAM" = vscode ]]; then
           export EDITOR=code;
-          alias vim=code;
         fi
 
         if command -v pyenv 1>/dev/null 2>&1; then

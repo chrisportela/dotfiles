@@ -1,4 +1,4 @@
-{ lib, config, overlays, ... }: {
+{ lib, config, overlays ? [], ... }: {
   imports = [ ../nixos/modules/nixpkgs.nix ];
 
   config = {
