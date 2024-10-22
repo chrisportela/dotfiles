@@ -25,11 +25,7 @@ in
     ../nixpkgs.nix
   ];
 
-  nix = {
-    settings = {
-      connect-timeout = "5";
-    };
-  };
+  nix.settings.connect-timeout = "5";
 
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog

@@ -255,7 +255,7 @@
           specialArgs = {
             inherit inputs;
             overlays = with self.overlays; [ deploy-rs ];
-            nixpkgs = inputs.nixpkgs;
+            nixpkgs = inputs.nixpkgs-darwin;
           };
           modules = with self.darwinModules; [
             common
