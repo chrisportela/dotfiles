@@ -87,6 +87,10 @@
           eval "$(pyenv init -)"
         fi
 
+        if [[ -f "$HOME/.shellfishrc" ]]; then
+          source "$HOME/.shellfishrc
+        fi
+
         source ${./shell_functions.sh}
       '';
     };
