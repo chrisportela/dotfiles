@@ -312,6 +312,7 @@
             terraforming
             awscli2
             google-cloud-sdk
+            doctl
             terraformFull
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ])
           ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
