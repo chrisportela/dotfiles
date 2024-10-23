@@ -7,6 +7,7 @@
       nixpkgs-fmt
       curl
       git
+      ntfy-sh
     ];
 
     programs = {

@@ -4,6 +4,10 @@
     ../nixpkgs.nix
   ];
 
+  environment.systemPackages = with pkgs; [
+    wakeonlan
+  ];
+
   nix.settings.connect-timeout = "5";
 
   # Used for backwards compatibility, please read the changelog before changing.
