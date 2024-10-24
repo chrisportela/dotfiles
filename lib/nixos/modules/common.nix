@@ -5,8 +5,8 @@ let
 in
 {
   options.chrisportela.common = {
-    enable = lib.mkEnableOption "Common configuration";
-    enableDualbootSettings = lib.mkEnableOption "Dual Boot Settings";
+    enable = lib.mkEnableOption "Common configuration options";
+    enableDualbootSettings = lib.mkEnableOption "Dual-Boot related settings";
   };
 
   config = lib.mkIf cfg.enable {
