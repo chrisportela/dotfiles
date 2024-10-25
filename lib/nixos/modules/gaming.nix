@@ -18,6 +18,7 @@ with lib; {
       "steam"
       "steam-original"
       "steam-run"
+      "steam-unwrapped"
       #       "nvidia-persistenced"
       #       "nvidia-settings"
       #       "nvidia-x11"

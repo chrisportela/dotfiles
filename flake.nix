@@ -137,6 +137,7 @@
                 home-manager = inputs.home-manager-unstable;
 
                 allowedUnfree = [
+                  "terraform"
                   "vault-bin"
                   "vscode"
                   "discord"
