@@ -91,6 +91,18 @@
           source "$HOME/.shellfishrc
         fi
 
+        ${if pkgs.stdenv.isDarwin then ''
+        if [[ -f /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then
+          export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS/"
+          alias tailscale=Tailscale
+          alais ts=Tailscale
+        fi
+        '' else ''
+        if command -v tailscale 1>/dev/null 2>&1; then
+          alias ts=tailscale
+        fi
+        ''}
+
         source ${./shell_functions.sh}
       '';
     };
