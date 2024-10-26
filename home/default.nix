@@ -2,8 +2,8 @@
   imports = [
     ./modules/nixpkgs.nix
     ./modules/difftastic.nix
-    ./shell.nix
-    ./tmux.nix
+    ./modules/shell
+    ./modules/tmux
   ];
 
   allowedUnfree = [ "vault-bin" ];
@@ -138,12 +138,6 @@
       };
     };
     difftastic.enable = true;
-
-    bash.enable = true;
-    readline = {
-      enable = true;
-      extraConfig = (builtins.readFile ./inputrc);
-    };
 
     zoxide = {
       enable = true;

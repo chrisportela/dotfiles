@@ -93,9 +93,9 @@
 
         ${if pkgs.stdenv.isDarwin then ''
         if [[ -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]]; then
-          export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS/"
+          export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS"
           alias tailscale=Tailscale
-          alais ts=Tailscale
+          alias ts=Tailscale
         fi
         '' else ''
         if command -v tailscale 1>/dev/null 2>&1; then
@@ -105,6 +105,12 @@
 
         source ${./shell_functions.sh}
       '';
+    };
+
+    programs.bash.enable = true;
+    programs.readline = {
+      enable = true;
+      extraConfig = (builtins.readFile ./inputrc);
     };
 
     programs.starship = {
