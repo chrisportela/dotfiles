@@ -126,8 +126,17 @@
         inherit allSystems importPkgs forAllSystems forAllDarwinSystems forAllLinuxSystems;
       };
 
+      apps = forAllSystems ({ system, ... }: {
+        cachix-helper = {
+          type = "app";
+          program = "${self.packages.${system}.cachix-helper}/bin/cachix-helper";
+        };
+      });
+
       packages = forAllSystems ({ pkgs, pkgsUnstable, system }: rec {
         terraform = pkgsUnstable.terraformFull;
+
+        cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
 
         default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });
