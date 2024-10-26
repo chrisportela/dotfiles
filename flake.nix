@@ -199,7 +199,7 @@
               "cmp@ada" = adaConfig;
             };
         }))
-        (forAllLinuxSystems ({ pkgs, system }: {
+        (forAllLinuxSystems ({ pkgs, pkgsUnstable, system }: {
           installer-iso = self.nixosConfigurations.installer.config.formats.iso;
         }))
       ]);
