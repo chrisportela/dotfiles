@@ -56,37 +56,49 @@
       });
 
       # Helper to provide system-specific attributes
-      forEachSystem = systems: f: nixpkgs.lib.genAttrs systems (system: f {
-        inherit system;
-        pkgs = (import nixpkgs {
+      forEachSystem = { systems, overlays ? [ ], allowedUnfree ? [ ] }: f: nixpkgs.lib.genAttrs systems
+        (system:
+          let
+            nixpkgsOptions = {
+              inherit system;
+              overlays = nixpkgs.lib.unique ([ self.overlays.terraform ] ++ overlays);
+
+              config.allowUnfreePredicate = (pkg:
+                builtins.elem (nixpkgs.lib.getName pkg)
+                  nixpkgs.lib.unique
+                  ([ "terraform" ] ++ allowedUnfree));
+            };
+          in
+          f {
+            inherit system;
+            pkgs = (import nixpkgs nixpkgsOptions);
+            pkgsUnstable = (import inputs.nixpkgs-unstable nixpkgsOptions);
+          });
+
+      forAllSystems = forEachSystem { systems = allSystems; };
+      forAllLinuxSystems = forEachSystem { systems = linuxSystems; };
+      forAllDarwinSystems = forEachSystem { systems = darwinSystems; };
+
+      forAllSystemsShell = (systems: f: nixpkgs.lib.genAttrs systems (system:
+        let
+          nixpkgsOptions = {
+            inherit system;
+            overlays = with self.overlays; [
+              rust
+              rustToolchain
+              deploy-rs
+              terraform
+            ];
+            config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+              "terraform"
+            ];
+          };
+        in
+        f {
           inherit system;
-          overlays = [ self.overlays.terraform ];
-
-          config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
-            "terraform"
-          ];
-        });
-      });
-
-      forAllSystems = forEachSystem allSystems;
-      forAllLinuxSystems = forEachSystem linuxSystems;
-      forAllDarwinSystems = forEachSystem darwinSystems;
-
-      forAllSystemsShell = (systems: f: nixpkgs.lib.genAttrs systems (system: f {
-        inherit system;
-        pkgs = (import nixpkgs {
-          inherit system;
-          overlays = with self.overlays; [
-            rust
-            rustToolchain
-            deploy-rs
-            terraform
-          ];
-          config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
-            "terraform"
-          ];
-        });
-      })) allSystems;
+          pkgs = (import nixpkgs nixpkgsOptions);
+          pkgsUnstable = (import inputs.nixpkgs-unstable nixpkgsOptions);
+        })) allSystems;
 
       homeConfig = ({ pkgs
                     , home ? ./home/default.nix
@@ -114,26 +126,18 @@
         inherit allSystems importPkgs forAllSystems forAllDarwinSystems forAllLinuxSystems;
       };
 
-      packages = forAllSystems ({ pkgs, system }: rec {
-        terraform = pkgs.terraformFull;
+      packages = forAllSystems ({ pkgs, pkgsUnstable, system }: rec {
+        terraform = pkgsUnstable.terraformFull;
 
         default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
       });
 
       legacyPackages = ((nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
-        (forAllSystems ({ system, /* pkgs, */ ... }: {
+        (forAllSystems ({ system, pkgsUnstable, ... }: {
           homeConfigurations =
             let
-              pkgs = (import inputs.nixpkgs-unstable {
-                inherit system;
-                overlays = [ self.overlays.terraform ];
-
-                config.allowUnfreePredicate = pkg: builtins.elem (inputs.nixpkgs-unstable.lib.getName pkg) [
-                  "terraform"
-                ];
-              });
               adaConfig = homeConfig {
-                inherit pkgs;
+                pkgs = pkgsUnstable;
                 home-manager = inputs.home-manager-unstable;
 
                 allowedUnfree = [
@@ -177,7 +181,7 @@
             in
             {
               "cmp" = homeConfig {
-                inherit pkgs;
+                pkgs = pkgsUnstable;
                 home-manager = inputs.home-manager-unstable;
 
                 allowedUnfree = [ "vault-bin" "terraform" ];
@@ -266,7 +270,7 @@
         };
       };
 
-      devShells = forAllSystemsShell ({ pkgs, system }: {
+      devShells = forAllSystemsShell ({ pkgs, pkgsUnstable, system }: {
         default = self.devShells.${system}.dotfiles;
 
         dotfiles = pkgs.mkShell {
