@@ -7,5 +7,11 @@
 
   config = {
     nixpkgs.config.allowUnfreePredicate = lib.mkForce (p: builtins.elem (lib.getName p) config.allowedUnfree);
+
+    nix = {
+      # nixPath = null;
+      # keepOldNixPath = null;
+      # channels = null;
+    };
   };
 }

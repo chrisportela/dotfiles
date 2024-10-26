@@ -88,11 +88,11 @@
         fi
 
         if [[ -f "$HOME/.shellfishrc" ]]; then
-          source "$HOME/.shellfishrc
+          source "$HOME/.shellfishrc"
         fi
 
         ${if pkgs.stdenv.isDarwin then ''
-        if [[ -f /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then
+        if [[ -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]]; then
           export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS/"
           alias tailscale=Tailscale
           alais ts=Tailscale
