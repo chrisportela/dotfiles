@@ -134,7 +134,7 @@
       package = pkgs.gitFull;
       extraConfig = {
         credential.helper = if pkgs.stdenv.isLinux then "libsecret" else "osxkeychain";
-        # safe.directory = [ ];
+        safe.directory = [ ];
       };
     };
     difftastic.enable = true;
