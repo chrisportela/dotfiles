@@ -21,6 +21,7 @@
       vault-bin
       nixpkgs-fmt
       git-annex
+      gnupg
       ntfy-sh
       rclone
       git-annex-remote-rclone
