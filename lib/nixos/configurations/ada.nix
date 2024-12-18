@@ -198,6 +198,7 @@ nixos.lib.nixosSystem {
           };
         };
       };
+      programs.virt-manager.enable = true;
       programs.dconf.enable = true; # For libvirtd
 
       environment.sessionVariables = {
@@ -287,6 +288,7 @@ nixos.lib.nixosSystem {
       services.nginx.enable = true;
       users.users.nginx.extraGroups = [ "acme" ];
 
+      nix.settings.trusted-users = [ "root" "cmp" ];
       users.users.cmp = {
         extraGroups = [
           "networkmanager"
@@ -299,9 +301,9 @@ nixos.lib.nixosSystem {
         packages = with pkgs; [
           firefox
           kate
-          virt-manager
           rclone-browser
-
+          virt-viewer
+          cachix
         ];
       };
 

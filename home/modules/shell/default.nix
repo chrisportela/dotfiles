@@ -188,6 +188,11 @@
         };
     };
   }
+  (lib.mkIf pkgs.stdenv.isLinux {
+    home.shellAliases = {
+      "open" = "xdg-open";
+    };
+  })
   (lib.mkIf pkgs.stdenv.isDarwin {
     home.shellAliases = {
       "flushdns" = "sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder";
