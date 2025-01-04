@@ -116,7 +116,7 @@ nixos.lib.nixosSystem {
         psmisc
         rclone
         git-annex-remote-rclone
-        quickemu
+        #quickemu
 
         # Hardware
         lm_sensors
