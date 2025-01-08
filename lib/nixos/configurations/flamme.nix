@@ -6,7 +6,7 @@ inputs.nixos.lib.nixosSystem {
   inherit system;
 
   specialArgs = {
-    inherit inputs system;
+    inherit inputs system overlays;
     nixpkgs = inputs.nixos;
   };
 
