@@ -22,8 +22,15 @@
     uv
     ruff
 
-    # Go
+    # Go + vscode tooling
     go
+    gopls
+    gotests
+    gomodifytags
+    impl
+    goplay
+    dlv
+    golangci-lint
 
     # Node
     nodejs_20
