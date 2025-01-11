@@ -1,4 +1,12 @@
-{ pkgs }: pkgs.mkShell {
+{ pkgs }:
+let
+  gotools = pkgs.gotools.overrideAttrs (finalAttrs: previousAttrs: {
+    postInstall = previousAttrs.postInstall + ''
+      mv $out/bin/play $out/bin/goplay
+    '';
+  });
+in
+pkgs.mkShell {
   RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
 
   nativeBuildInputs = with pkgs; [
@@ -24,12 +32,12 @@
 
     # Go + vscode tooling
     go
+    gotools
     gopls
     gotests
     gomodifytags
     impl
-    goplay
-    dlv
+    delve
     golangci-lint
 
     # Node
