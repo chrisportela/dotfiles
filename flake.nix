@@ -282,55 +282,11 @@
       devShells = forAllSystemsShell ({ pkgs, pkgsUnstable, system }: {
         default = self.devShells.${system}.dotfiles;
 
-        dotfiles = pkgs.mkShell {
-          packages = (with pkgs; [
-            cachix
-            nixd
-            nixpkgs-fmt
-            shellcheck
-            shfmt
-          ]);
-        };
+        dotfiles = (import ./shells/dotfiles.nix) { inherit pkgs; };
 
-        dev = pkgs.mkShell {
-          RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+        dev = (import ./shells/dev.nix) { inherit pkgs; };
 
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-            openssl
-            stdenv.cc.cc.lib
-          ];
-
-          # shellHook = ''
-          #   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.stdenv.cc.cc.lib}/lib
-          # '';
-
-          # The Nix packages provided in the environment
-          packages = (with pkgs; [
-            rustToolchain
-            python311
-            nodejs_20
-          ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
-            # libiconv
-            # darwin.apple_sdk.frameworks.SystemConfiguration
-          ])
-          ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
-        };
-
-        devops = pkgs.mkShell {
-          # The Nix packages provided in the environment
-          packages = (with pkgs; [
-            python311
-            nodejs_20
-            terraformer
-            terraforming
-            awscli2
-            google-cloud-sdk
-            doctl
-            terraformFull
-          ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ ])
-          ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ ]);
-        };
+        devops = (import ./shells/devops.nix) { inherit pkgs; };
       });
 
       checks = forAllSystems ({ pkgs, system }: {
