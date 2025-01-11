@@ -17,7 +17,7 @@
     rustToolchain
 
     # Python
-    python314
+    python3
     poetry
     uv
     ruff
