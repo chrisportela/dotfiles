@@ -9,10 +9,25 @@
 
   # The Nix packages provided in the environment
   packages = (with pkgs; [
+    # Basics
+    gnumake
+    getopt
+
+    # Rust
     rustToolchain
-    python311
-    nodejs_20
+
+    # Python
+    python314
+    poetry
+    uv
+    ruff
+
+    # Go
     go
+
+    # Node
+    nodejs_20
+    pnpm
   ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
     # libiconv
     # darwin.apple_sdk.frameworks.SystemConfiguration

@@ -6,4 +6,4 @@
     shellcheck
     shfmt
   ]);
-};
+}
