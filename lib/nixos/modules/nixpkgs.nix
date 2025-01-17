@@ -1,4 +1,4 @@
-{ config, lib, pkgs, overlays ? [], ... }: {
+{ config, lib, pkgs, overlays ? [ ], ... }: {
   # Pending https://github.com/NixOS/nixpkgs/issues/55674
   options.allowedUnfree = lib.mkOption {
     type = lib.types.listOf lib.types.str;

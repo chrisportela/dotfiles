@@ -42,7 +42,8 @@ with lib; {
         OLLAMA_ORIGINS = "https://ollama.ada.i.cafecito.cloud";
         OLLAMA_KEEP_ALIVE = "12h";
         OLLAMA_NUM_PARALLEL = "4";
-        OLLAMA_MAX_LOADED_MODELS = "3";
+        OLLAMA_MAX_LOADED_MODELS = "5";
+        OLLAMA_MAX_QUEUE = "1";
       };
     };
 

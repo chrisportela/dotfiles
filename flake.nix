@@ -178,6 +178,8 @@
                     signal-desktop
                     sqlitebrowser
                     trayscale
+                    ansel
+                    darktable
                   ];
 
                   home.shellAliases = {

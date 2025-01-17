@@ -82,7 +82,15 @@ nixos.lib.nixosSystem {
         useNetworkd = true;
         networkmanager.enable = true;
         # networkmanager.unmanaged = [ "tailscale0" "docker0" ];
+        # networkmanager.unmanaged = [ "br0" "virbr0" ];
 
+        bridges = {
+          "br0" = {
+            #interfaces = [ "enp6s0" ];
+            interfaces = [ "wlo1" ];
+          };
+        };
+        interfaces.br0.useDHCP = true;
         interfaces.enp6s0.useDHCP = true;
         interfaces.wlo1.useDHCP = true;
 
@@ -129,6 +137,26 @@ nixos.lib.nixosSystem {
         nftables
         tcpdump
         traceroute
+
+        # KDE
+        kdePackages.plasma-thunderbolt
+        #kdePackages.yakuake
+        #kdePackages.xdg-desktop-portal-kde
+        #kdePackages.tokodon
+        #kdePackages.syntax-highlighting
+        #kdePackages.sweeper
+
+        kate
+        rclone-browser
+        cachix
+        virt-manager
+        virt-viewer
+        spice
+        spice-gtk
+        spice-protocol
+        win-virtio
+        win-spice
+
       ];
 
       time.timeZone = lib.mkForce "America/New_York";
@@ -177,6 +205,11 @@ nixos.lib.nixosSystem {
         pulse.enable = true;
       };
 
+      programs.firefox = {
+        enable = true;
+
+      };
+
       programs._1password.enable = true;
       programs._1password-gui = {
         enable = true;
@@ -198,8 +231,10 @@ nixos.lib.nixosSystem {
           };
         };
       };
+      services.spice-vdagentd.enable = true;
       programs.virt-manager.enable = true;
       programs.dconf.enable = true; # For libvirtd
+      boot.extraModprobeConfig = "options kvm_intel nested=1"; # Enable nested virt
 
       environment.sessionVariables = {
         NIXOS_OZONE_WL = "1";
@@ -299,11 +334,6 @@ nixos.lib.nixosSystem {
         ];
 
         packages = with pkgs; [
-          firefox
-          kate
-          rclone-browser
-          virt-viewer
-          cachix
         ];
       };
 

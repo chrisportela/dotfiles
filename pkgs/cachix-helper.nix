@@ -4,7 +4,8 @@ let
   cachixArgs = lib.concatStringsSep " " [ "--compression-level 9" "--compression-method zstd" "--jobs 4" ];
   hmConfig = "cmp";
   # shells = ["dotfiles", "dev", "devops"];
-in (pkgs.writeShellScriptBin "cachix-helper" ''
+in
+(pkgs.writeShellScriptBin "cachix-helper" ''
   set -eu
   echo "#### Building HM"
   if command -v tailscale 1>/dev/null 2>&1; then
@@ -31,7 +32,7 @@ in (pkgs.writeShellScriptBin "cachix-helper" ''
   cachix pin ${cachixRepo} shell-dev-${stdenv.system} result-shell-dev
 
   echo "#### Finished!"
-'') //{
+'') // {
 
   meta = with lib; {
     description = "A helper script for using Cachix";

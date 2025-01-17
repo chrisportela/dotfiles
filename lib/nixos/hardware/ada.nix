@@ -171,6 +171,10 @@
   };
   services.thermald.enable = true;
 
+  # Thunderbolt
+  # https://nixos.wiki/wiki/Thunderbolt#Enroll_Thunderbolt_devices
+  services.hardware.bolt.enable = true;
+
   nixpkgs.hostPlatform = "x86_64-linux";
   powerManagement.cpuFreqGovernor = "performance";
   hardware.enableRedistributableFirmware = true;
