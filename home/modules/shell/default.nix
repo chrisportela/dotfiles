@@ -1,4 +1,10 @@
-{ lib, config, pkgs, ... }: lib.mkMerge [
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+lib.mkMerge [
   {
     home.shellAliases =
       let
@@ -33,13 +39,19 @@
       enable = lib.mkDefault true;
       enableZshIntegration = lib.mkDefault true;
       defaultCommand = "fd --type f";
-      defaultOptions = [ "--height 40%" "--border" ];
+      defaultOptions = [
+        "--height 40%"
+        "--border"
+      ];
       fileWidgetCommand = "fd --type f";
       fileWidgetOptions = [ "--preview 'head {}'" ];
       changeDirWidgetCommand = "fd --type d";
       changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
       tmux.enableShellIntegration = lib.mkDefault true;
-      historyWidgetOptions = [ "--sort" "--exact" ];
+      historyWidgetOptions = [
+        "--sort"
+        "--exact"
+      ];
     };
 
     programs.zsh = {
@@ -91,17 +103,22 @@
           source "$HOME/.shellfishrc"
         fi
 
-        ${if pkgs.stdenv.isDarwin then ''
-        if [[ -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]]; then
-          export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS"
-          alias tailscale=Tailscale
-          alias ts=Tailscale
-        fi
-        '' else ''
-        if command -v tailscale 1>/dev/null 2>&1; then
-          alias ts=tailscale
-        fi
-        ''}
+        ${
+          if pkgs.stdenv.isDarwin then
+            ''
+              if [[ -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]]; then
+                export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS"
+                alias tailscale=Tailscale
+                alias ts=Tailscale
+              fi
+            ''
+          else
+            ''
+              if command -v tailscale 1>/dev/null 2>&1; then
+                alias ts=tailscale
+              fi
+            ''
+        }
 
         source ${./shell_functions.sh}
       '';

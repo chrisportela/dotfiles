@@ -1,4 +1,5 @@
-{ pkgs, src, ... }: pkgs.rustPlatform.buildRustPackage rec {
+{ pkgs, src, ... }:
+pkgs.rustPlatform.buildRustPackage rec {
   pname = "hush";
   version = "0.1.5a";
 

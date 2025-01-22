@@ -1,10 +1,12 @@
-{ lib, pkgs, ... }: with lib; {
+{ lib, pkgs, ... }:
+with lib;
+{
   imports = [ ];
 
   config = {
     environment.pathsToLink = [ "/share/nix-direnv" ];
     environment.systemPackages = with pkgs; [
-      nixpkgs-fmt
+      nixfmt-rfc-style
       curl
       git
       ntfy-sh

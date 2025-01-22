@@ -1,4 +1,11 @@
-{ config, lib, pkgs, modulesPath, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -16,11 +23,22 @@
   # Specifically this patch: https://github.com/torvalds/linux/commit/073237281a508ac80ec025872ad7de50cfb5a28a
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [
+    "xhci_pci"
+    "thunderbolt"
+    "nvme"
+    "usbhid"
+    "usb_storage"
+    "sd_mod"
+  ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
-  boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" ];
+  boot.supportedFilesystems = [
+    "ntfs"
+    "ext4"
+    "vfat"
+  ];
   # boot.zfs = {
   #   extraPools = [ "zpool" ];
   #   requestEncryptionCredentials = [ "zpool" ];
@@ -88,4 +106,3 @@
   hardware.enableRedistributableFirmware = true;
   hardware.cpu.intel.updateMicrocode = config.hardware.enableRedistributableFirmware;
 }
-

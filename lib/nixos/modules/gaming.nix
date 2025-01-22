@@ -1,8 +1,16 @@
-{ config, lib, pkgs, inputs, system, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  system,
+  ...
+}:
 let
   cfg = config.chrisportela.gaming;
 in
-with lib; {
+with lib;
+{
   options.chrisportela.gaming = {
     enable = lib.mkEnableOption "Gaming config";
     #     nvidia = lib.mkEnableOption "Nvidia specific settings";

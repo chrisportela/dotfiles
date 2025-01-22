@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -82,7 +87,11 @@ in
 
     # Open firewall ports for FTP and passive mode
     networking.firewall = {
-      allowedTCPPorts = [ cfg.port 50000 51000 ];
+      allowedTCPPorts = [
+        cfg.port
+        50000
+        51000
+      ];
     };
 
     # Ensure the photo dump directory exists and has correct permissions

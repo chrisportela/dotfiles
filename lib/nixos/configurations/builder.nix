@@ -1,4 +1,9 @@
-{ nixpkgs, nixosModules, system ? "aarch64-linux", ... }:
+{
+  nixpkgs,
+  nixosModules,
+  system ? "aarch64-linux",
+  ...
+}:
 nixpkgs.lib.nixosSystem {
   inherit system;
 

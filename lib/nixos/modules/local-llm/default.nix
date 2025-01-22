@@ -1,8 +1,14 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.chrisportela.local-llm;
 in
-with lib; {
+with lib;
+{
   options.chrisportela.local-llm = {
     enable = lib.mkEnableOption "Local Large-Language-Model config";
   };
@@ -57,7 +63,10 @@ with lib; {
         image = "ghcr.io/open-webui/open-webui";
         # TODO figure out how to create the data directory declaratively
         volumes = [ "${config.users.users.cmp.home}/open-webui:/app/backend/data" ];
-        extraOptions = [ "--network=host" "--add-host=host.containers.internal:host-gateway" ];
+        extraOptions = [
+          "--network=host"
+          "--add-host=host.containers.internal:host-gateway"
+        ];
         environment = {
           OLLAMA_API_BASE_URL = "http://127.0.0.1:11434/api";
           OLLAMA_BASE_URL = "http://127.0.0.1:11434";
@@ -76,7 +85,10 @@ with lib; {
 
         search = {
           safe_search = 0;
-          formats = [ "html" "json" ];
+          formats = [
+            "html"
+            "json"
+          ];
         };
 
         # engines = lib.singleton {

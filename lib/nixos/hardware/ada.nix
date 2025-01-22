@@ -1,7 +1,21 @@
-{ config, lib, pkgs, modulesPath, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
+{
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [
+    "xhci_pci"
+    "ahci"
+    "nvme"
+    "usbhid"
+    "usb_storage"
+    "sd_mod"
+  ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [
     "kvm-intel"
@@ -9,9 +23,17 @@
     "nvidia-uvm" # For ollama to use GPU properly
   ];
   boot.extraModulePackages = [ ];
-  boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" "zfs" ];
+  boot.supportedFilesystems = [
+    "ntfs"
+    "ext4"
+    "vfat"
+    "zfs"
+  ];
   boot.zfs = {
-    extraPools = [ "spool" "tank" ];
+    extraPools = [
+      "spool"
+      "tank"
+    ];
     requestEncryptionCredentials = [
       "spool"
       "spool/docker"
@@ -62,7 +84,7 @@
     };
   };
 
-  swapDevices = [{ device = "/dev/disk/by-uuid/bcf75db2-0312-4d27-958e-bb608604caf4"; }];
+  swapDevices = [ { device = "/dev/disk/by-uuid/bcf75db2-0312-4d27-958e-bb608604caf4"; } ];
 
   zramSwap = {
     enable = true;

@@ -1,8 +1,14 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.chrisportela.network;
 in
-with lib; {
+with lib;
+{
   options.chrisportela.network = {
     enable = mkEnableOption "network config";
 
@@ -15,25 +21,27 @@ with lib; {
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
-      inetutils
-      ipcalc
-      iperf3
-      nftables
-      tcpdump
-      traceroute
-    ] ++ optionals (cfg.speedtest-utils) [
-      fast-cli
-      ookla-speedtest
-      speedtest-cli
-    ];
+    environment.systemPackages =
+      with pkgs;
+      [
+        inetutils
+        ipcalc
+        iperf3
+        nftables
+        tcpdump
+        traceroute
+      ]
+      ++ optionals (cfg.speedtest-utils) [
+        fast-cli
+        ookla-speedtest
+        speedtest-cli
+      ];
 
     networking.nftables.enable = lib.mkDefault true;
     networking.nftables.checkRuleset = lib.mkDefault true;
     networking.firewall = {
       enable = true;
-      allowedTCPPorts = lib.optionals (config.services.openssh.enable)
-        config.services.openssh.ports;
+      allowedTCPPorts = lib.optionals (config.services.openssh.enable) config.services.openssh.ports;
       allowedUDPPorts = lib.optionals (cfg.tailscale.enable) [
         config.services.tailscale.port
       ];

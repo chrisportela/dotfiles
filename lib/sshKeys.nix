@@ -16,8 +16,14 @@ in
 
   # Default Keys for users
   users = {
-    cmp = [ mbaHomeSE windowsDesktop ];
-    builder = [ mbaHomeSE windowsDesktop ];
+    cmp = [
+      mbaHomeSE
+      windowsDesktop
+    ];
+    builder = [
+      mbaHomeSE
+      windowsDesktop
+    ];
   };
 
   default = [

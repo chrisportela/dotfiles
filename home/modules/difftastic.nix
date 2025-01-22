@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 with lib;
 let
   cfg = config.programs.difftastic;
@@ -25,7 +30,10 @@ in
       };
 
       background = mkOption {
-        type = types.enum [ "light" "dark" ];
+        type = types.enum [
+          "light"
+          "dark"
+        ];
         default = "light";
         example = "dark";
         description = ''
@@ -35,7 +43,11 @@ in
       };
 
       color = mkOption {
-        type = types.enum [ "always" "auto" "never" ];
+        type = types.enum [
+          "always"
+          "auto"
+          "never"
+        ];
         default = "auto";
         example = "always";
         description = ''
@@ -44,8 +56,11 @@ in
       };
 
       display = mkOption {
-        type =
-          types.enum [ "side-by-side" "side-by-side-show-both" "inline" ];
+        type = types.enum [
+          "side-by-side"
+          "side-by-side-show-both"
+          "inline"
+        ];
         default = "side-by-side";
         example = "inline";
         description = ''

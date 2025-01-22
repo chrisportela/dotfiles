@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   cfg = config.chrisportela.common;
   sshKeys = (import ../../sshKeys.nix);
@@ -28,7 +33,10 @@ in
       LC_TIME = "en_US.UTF-8";
     };
 
-    environment.systemPackages = with pkgs; [ curl git ];
+    environment.systemPackages = with pkgs; [
+      curl
+      git
+    ];
 
     security.sudo.wheelNeedsPassword = lib.mkDefault true;
 
@@ -47,7 +55,6 @@ in
         };
       };
     };
-
 
     programs = {
       zsh = {

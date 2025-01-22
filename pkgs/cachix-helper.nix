@@ -1,10 +1,20 @@
-{ pkgs, lib, stdenv, cachix, nix }:
+{
+  pkgs,
+  lib,
+  stdenv,
+  cachix,
+  nix,
+}:
 let
   cachixRepo = "chrisportela-dotfiles";
-  cachixArgs = lib.concatStringsSep " " [ "--compression-level 9" "--compression-method zstd" "--jobs 4" ];
+  cachixArgs = lib.concatStringsSep " " [
+    "--compression-level 9"
+    "--compression-method zstd"
+    "--jobs 4"
+  ];
   hmConfig = "cmp";
-  # shells = ["dotfiles", "dev", "devops"];
 in
+# shells = ["dotfiles", "dev", "devops"];
 (pkgs.writeShellScriptBin "cachix-helper" ''
   set -eu
   echo "#### Building HM"
@@ -32,7 +42,8 @@ in
   cachix pin ${cachixRepo} shell-dev-${stdenv.system} result-shell-dev
 
   echo "#### Finished!"
-'') // {
+'')
+// {
 
   meta = with lib; {
     description = "A helper script for using Cachix";
