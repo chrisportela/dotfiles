@@ -150,13 +150,10 @@
 
           modules = [
             ./home/modules/nixpkgs.nix
-            (
-              { pkgs, lib, ... }:
-              {
-                inherit allowedUnfree;
-                home.username = username;
-              }
-            )
+            {
+              inherit allowedUnfree;
+              home.username = username;
+            }
             home
             options
           ];
@@ -190,7 +187,7 @@
           pkgsUnstable,
           system,
         }:
-        rec {
+        {
           terraform = pkgsUnstable.terraformFull;
 
           cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
@@ -202,78 +199,39 @@
       legacyPackages = (
         (nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
           (forAllSystems (
-            { system, pkgsUnstable, ... }:
+            { pkgsUnstable, ... }:
             {
-              homeConfigurations =
-                let
-                  adaConfig = homeConfig {
-                    pkgs = pkgsUnstable;
-                    home-manager = inputs.home-manager-unstable;
+              homeConfigurations = {
+                "cmp" = homeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager-unstable;
 
-                    allowedUnfree = [
-                      "terraform"
-                      "vault-bin"
-                      "vscode"
-                      "discord"
-                      "obsidian"
-                      "cider"
-                    ];
-
-                    options =
-                      { pkgs, lib, ... }:
-                      {
-                        programs = {
-                          vscode.enable = true;
-                          chromium.enable = true;
-                          mpv.enable = true;
-                        };
-
-                        services.ssh-agent.enable = true;
-
-                        home.packages = with pkgs; [
-                          beekeeper-studio
-                          cider
-                          discord
-                          jrnl
-                          obsidian
-                          ollama
-                          onlyoffice-bin_latest
-                          signal-desktop
-                          sqlitebrowser
-                          trayscale
-                          ansel
-                          darktable
-                        ];
-
-                        home.shellAliases = {
-                          # "cb" = "${pkgs.nodePackages.clipboard-cli}/bin/clipboard";
-                        };
-
-                        nixpkgs = { };
-                      };
-                  };
-                in
-                {
-                  "cmp" = homeConfig {
-                    pkgs = pkgsUnstable;
-                    home-manager = inputs.home-manager-unstable;
-
-                    allowedUnfree = [
-                      "vault-bin"
-                      "terraform"
-                    ];
-                  };
-                  "cmp@flamme" = adaConfig;
-                  "cmp@ada" = adaConfig;
+                  allowedUnfree = [
+                    "vault-bin"
+                    "terraform"
+                  ];
                 };
+                "cmp@flamme" = homeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager-unstable;
+                  options.chrisportela = {
+                    desktop = true;
+                    enableExtraPackages = true;
+                  };
+                };
+                "cmp@ada" = homeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager-unstable;
+                  options.chrisportela = {
+                    desktop = true;
+                    enableExtraPackages = true;
+                  };
+                };
+              };
             }
           ))
           (forAllLinuxSystems (
-            {
-              pkgs,
-              pkgsUnstable,
-              system,
-            }:
+            { ... }:
             {
               installer-iso = self.nixosConfigurations.installer.config.formats.iso;
             }
@@ -315,6 +273,10 @@
           username = "deck";
           pkgs = importPkgs "x86_64-linux";
           allowedUnfree = [ "vault-bin" ];
+          options.chrisportela = {
+            desktop = false;
+            enableExtraPackages = false;
+          };
         };
       };
 
@@ -371,6 +333,7 @@
           pkgs,
           pkgsUnstable,
           system,
+          ...
         }:
         {
           default = self.devShells.${system}.dotfiles;
@@ -384,7 +347,7 @@
       );
 
       # for `nix fmt`
-      formatter = forAllSystems ({ pkgs, system, ... }: treefmtEval.${system}.config.build.wrapper);
+      formatter = forAllSystems ({ system, ... }: treefmtEval.${system}.config.build.wrapper);
 
       checks = forAllSystems (
         { pkgs, system, ... }:
