@@ -33,11 +33,14 @@ with lib;
     ];
     # NVIDIA drivers
     #     services.xserver.videoDrivers = [ "nvidia" ];
-    hardware.opengl.enable = true;
 
-    # Extra OpenGL options
-    hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
-    hardware.opengl.driSupport32Bit = true;
+    hardware.graphics = {
+      enable = true;
+
+      # Extra OpenGL options
+      extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
+      driSupport32Bit = true;
+    };
 
     environment.systemPackages = with pkgs; [
       wineWowPackages.waylandFull
