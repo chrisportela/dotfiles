@@ -14,8 +14,10 @@
     ./modules/tmux
   ];
 
-  allowedUnfree = [ "terraform"
-  "vault-bin" ];
+  allowedUnfree = [
+    "terraform"
+    "vault-bin"
+  ];
 
   home = {
     homeDirectory = (

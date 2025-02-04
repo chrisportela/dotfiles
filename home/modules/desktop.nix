@@ -1,6 +1,13 @@
-{config, lib, pkgs, ...}:
-let cfg = config.chrisportela;
-in {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.chrisportela;
+in
+{
   options.chrisportela = {
     desktop = lib.mkEnableOption "Desktop related apps and settings";
   };
