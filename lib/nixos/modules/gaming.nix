@@ -39,7 +39,7 @@ with lib;
 
       # Extra OpenGL options
       extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
-      driSupport32Bit = true;
+      # driSupport32Bit = true;
     };
 
     environment.systemPackages = with pkgs; [
