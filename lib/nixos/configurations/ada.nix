@@ -223,7 +223,6 @@ nixos.lib.nixosSystem {
 
         programs.firefox = {
           enable = true;
-
         };
 
         programs._1password.enable = true;
