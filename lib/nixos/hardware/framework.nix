@@ -72,8 +72,7 @@
     enable = true;
     #driSupport32Bit = true;
     extraPackages = with pkgs; [
-      # vpl-gpu-rt # for after 24.05
-      onevpl-intel-gpu # deprecate after 24.05
+      vpl-gpu-rt # for after 24.05
       # TODO: use unstable?
     ];
   };
