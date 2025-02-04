@@ -1,3 +1,27 @@
 {
-    "makefile.extensionOutputFolder": "./.vscode"
+    "makefile.extensionOutputFolder": "./.vscode",
+    "nix.enableLanguageServer": true,
+    "nix.serverPath": "nixd",
+    "nix.serverSettings": {
+      "nixd": {
+        "formatting": {
+          "command": ["nixfmt"],
+        },
+        "options": {
+          // By default, this entry will be read from `import <nixpkgs> { }`.
+          // You can write arbitrary Nix expressions here, to produce valid "options" declaration result.
+          // Tip: for flake-based configuration, utilize `builtins.getFlake`
+          "nixos": {
+            "expr": "(builtins.getFlake \"${workspaceFolder}\").nixosConfigurations.<name>.options",
+          },
+          "home-manager": {
+            "expr": "(builtins.getFlake \"${workspaceFolder}\").legacyPackages.x86_64-linux.homeConfigurations.cmp.options",
+          },
+          // Tip: use ${workspaceFolder} variable to define path
+          "nix-darwin": {
+            "expr": "(builtins.getFlake \"${workspaceFolder}\").darwinConfigurations.lux.options",
+          },
+        },
+      },
+    },
 }
