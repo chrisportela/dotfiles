@@ -90,6 +90,8 @@
 
   services.thermald.enable = true;
 
+  services.fwupd.enable = true;
+
   allowedUnfree = [
     "ipu6-camera-bins-unstable"
     "ipu6-camera-bins"
