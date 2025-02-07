@@ -6,7 +6,7 @@ Collection of scripts, utilities, home-manager, and NixOS configurations.
 
 - Requires a recent version of `Nix` (At least ~2.4, but probably 2.18+)
   - `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install`
-  - `sh <(curl -L https://nixos.org/nix/install) --daemon`
+  - (Or) `sh <(curl -L https://nixos.org/nix/install) --daemon`
 - **[macOS Users]** install `nix-darwin` [by reading these docs](https://github.com/LnL7/nix-darwin?tab=readme-ov-file#flakes).
 
 > [!info] Requires Flakes and nix commands enabled
