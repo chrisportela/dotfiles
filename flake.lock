@@ -50,16 +50,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1738277753,
-        "narHash": "sha256-iyFcCOk0mmDiv4ut9mBEuMxMZIym3++0qN1rQBg8FW0=",
+        "lastModified": 1737421067,
+        "narHash": "sha256-/hgw8fDKDpko0XqOw1e9tX8lS2Hqecg7W/JsONun6Qc=",
         "owner": "lnl7",
         "repo": "nix-darwin",
-        "rev": "49b807fa7c37568d7fbe2aeaafb9255c185412f9",
+        "rev": "cae8d1c4a3bd37be5887203fe3b0c3a860c53a07",
         "type": "github"
       },
       "original": {
         "owner": "lnl7",
-        "ref": "master",
+        "ref": "nix-darwin-24.11",
         "repo": "nix-darwin",
         "type": "github"
       }
@@ -201,7 +201,43 @@
         "type": "github"
       }
     },
+    "nix-rosetta-builder": {
+      "inputs": {
+        "nixos-generators": "nixos-generators",
+        "nixpkgs": [
+          "nixpkgs-darwin"
+        ]
+      },
+      "locked": {
+        "lastModified": 1735882651,
+        "narHash": "sha256-yx5cPFkzPL5O9UI6ErdQMk9AqoO0FINZfOz+vBLLYjU=",
+        "owner": "cpick",
+        "repo": "nix-rosetta-builder",
+        "rev": "b32bd2c1915481d79e3c9d1e222cbd3a9642c016",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cpick",
+        "repo": "nix-rosetta-builder",
+        "type": "github"
+      }
+    },
     "nixlib": {
+      "locked": {
+        "lastModified": 1733620091,
+        "narHash": "sha256-5WoMeCkaXqTZwwCNLRzyLxEJn8ISwjx4cNqLgqKwg9s=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "f4dc9a6c02e5e14d91d158522f69f6ab4194eb5b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
+    "nixlib_2": {
       "locked": {
         "lastModified": 1736643958,
         "narHash": "sha256-tmpqTSWVRJVhpvfSN9KXBvKEXplrwKnSZNAoNPf/S/s=",
@@ -235,6 +271,28 @@
     "nixos-generators": {
       "inputs": {
         "nixlib": "nixlib",
+        "nixpkgs": [
+          "nix-rosetta-builder",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1733706547,
+        "narHash": "sha256-BdFW7TMgES7q8I5FGX5hlz+0Xp4WyfAP3tHDwEupSWU=",
+        "owner": "nix-community",
+        "repo": "nixos-generators",
+        "rev": "f5a0197ccfef7388885fc9455e74d6dd39e0c5e8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixos-generators",
+        "type": "github"
+      }
+    },
+    "nixos-generators_2": {
+      "inputs": {
+        "nixlib": "nixlib_2",
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
@@ -433,8 +491,9 @@
         "disko": "disko",
         "home-manager": "home-manager_2",
         "home-manager-unstable": "home-manager-unstable",
+        "nix-rosetta-builder": "nix-rosetta-builder",
         "nixos": "nixos",
-        "nixos-generators": "nixos-generators",
+        "nixos-generators": "nixos-generators_2",
         "nixos-hardware": "nixos-hardware",
         "nixos-unstable": "nixos-unstable",
         "nixpkgs": "nixpkgs_4",

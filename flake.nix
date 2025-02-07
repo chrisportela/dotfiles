@@ -23,7 +23,11 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     darwin = {
-      url = "github:lnl7/nix-darwin/master";
+      url = "github:lnl7/nix-darwin/nix-darwin-24.11";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
+    nix-rosetta-builder = {
+      url = "github:cpick/nix-rosetta-builder";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     disko = {
@@ -324,6 +328,8 @@
           modules = with self.darwinModules; [
             common
             ./lib/darwin/configurations/mba.nix
+            # { nix.linux-builder.enable = true; }
+            inputs.nix-rosetta-builder.darwinModules.default
           ];
         };
       };
