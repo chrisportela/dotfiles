@@ -19,7 +19,6 @@ in
       "vscode"
       "discord"
       "obsidian"
-      "cider"
     ];
 
     chrisportela.enableExtraPackages = lib.mkDefault true;
@@ -34,7 +33,6 @@ in
 
     home.packages = with pkgs; [
       beekeeper-studio
-      cider
       discord
       jrnl
       obsidian
