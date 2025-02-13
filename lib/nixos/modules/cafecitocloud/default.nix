@@ -19,12 +19,8 @@ with lib;
   };
 
   config = mkIf cfg.enable {
-    security.pki.certificates = [
-      ''
-        Root Cafecito Cloud CA
-        =======================
-        ${builtins.readFile ./cafecitocloud-root_ca.crt}
-      ''
+    security.pki.certificateFiles = [
+      ./cafecitocloud-root_ca.crt
     ];
 
     security.acme = mkIf cfg.enableACME {
