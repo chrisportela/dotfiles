@@ -341,7 +341,10 @@ nixos.lib.nixosSystem {
           };
         };
 
-        services.nginx.enable = true;
+        services.nginx = {
+          enable = true;
+          clientMaxBodySize = "20m";
+        };
         users.users.nginx.extraGroups = [ "acme" ];
 
         nix.settings.trusted-users = [
