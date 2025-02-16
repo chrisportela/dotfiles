@@ -280,7 +280,10 @@ nixos.lib.nixosSystem {
 
         };
 
-        hardware.nvidia-container-toolkit.enable = true;
+        hardware.nvidia-container-toolkit = {
+          enable = true;
+          mount-nvidia-executables = true;
+        };
         virtualisation = {
           docker = {
             enable = true;

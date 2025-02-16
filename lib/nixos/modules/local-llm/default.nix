@@ -72,6 +72,12 @@ with lib;
           OLLAMA_BASE_URL = "http://127.0.0.1:11434";
         };
       };
+      kokoro = {
+        autoStart = true;
+        image = "ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2";
+        ports = [ "127.0.0.1:8880:8880" ];
+        extraOptions = [ "--device=nvidia.com/gpu=all" ];
+      };
     };
 
     services.searx = {
@@ -144,6 +150,7 @@ with lib;
         };
 
         extraConfig = ''
+          client_max_body_size 100M;
           access_log /var/log/nginx/chat-cafeito_cloud.access.log;
           error_log /var/log/nginx/chat-cafeito_cloud.error.log;
         '';
