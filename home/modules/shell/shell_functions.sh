@@ -267,3 +267,13 @@ switch-home () {
 
     home-manager switch -b backup --flake $dotfiles
 }
+
+which() {
+  local prog=$1
+  local which_path=$(command which "$prog")
+  if [ -L "$which_path" ]; then
+    echo "$which_path -> $(readlink -f "$which_path")"
+  else
+    echo "$which_path"
+  fi
+}
