@@ -141,6 +141,7 @@ nixos.lib.nixosSystem {
           rclone
           git-annex-remote-rclone
           #quickemu
+          reptyr
 
           # Hardware
           lm_sensors
