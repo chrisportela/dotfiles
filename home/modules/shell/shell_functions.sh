@@ -2,7 +2,7 @@
 
 notify() {
     local cmd="$*"
-    local start_time=$(date +%s%N)
+    local start_time=$(date '+%s%N')
 
     # Check for topic file and exit silently if it doesn't exist or is empty
     local topic=$(cat "$HOME"/.config/ntfy/scripts-topic 2> /dev/null | head -n1)
@@ -17,7 +17,7 @@ notify() {
     local exit_code=$?
 
     # Calculate the time taken
-    local end_time=$(date +%s%N)
+    local end_time=$(date '+%s%N')
     local duration=$(( (end_time - start_time) / 1000000 )) # duration in ms
 
     # Only send notification if duration exceeds 5000 ms (5 seconds)
@@ -53,7 +53,7 @@ notify() {
       if command -v ntfy &> /dev/null; then
           ntfy send --md -p $priority -T $tag --title "Finished command on ${HOSTNAME:-$HOST}" "$topic" "$message" &> /dev/null
       else
-          curl -d "$message" ntfy.cafecito.cloud/"$topic" &> /dev/null
+          curl -d "$message" https://ntfy.cafecito.cloud/"$topic" &> /dev/null
       fi
     fi
 
@@ -94,7 +94,7 @@ notify_finished() {
     if command -v ntfy &> /dev/null; then
         ntfy send -p "$priority" --md --title "Finished command on ${HOSTNAME:-$HOST}" $topic "$message" &> /dev/null
     else
-        curl -d "$message" ntfy.cafecito.cloud/"$topic" &> /dev/null
+        curl -d "$message" https://ntfy.cafecito.cloud/"$topic" &> /dev/null
     fi
 
     return $exit_code
