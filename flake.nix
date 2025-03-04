@@ -330,6 +330,13 @@
             ./lib/darwin/configurations/mba.nix
             # { nix.linux-builder.enable = true; }
             inputs.nix-rosetta-builder.darwinModules.default
+            {
+              nix-rosetta-builder = {
+                enable = true;
+                onDemand = true;
+                # onDemandLingerMinutes = 180;
+              };
+            }
           ];
         };
       };
