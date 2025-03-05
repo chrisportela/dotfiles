@@ -162,8 +162,8 @@ nixos.lib.nixosSystem {
           #kdePackages.tokodon
           #kdePackages.syntax-highlighting
           #kdePackages.sweeper
+          kdePackages.kate
 
-          kate
           rclone-browser
           cachix
           virt-manager
