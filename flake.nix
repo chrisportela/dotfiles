@@ -339,6 +339,32 @@
             }
           ];
         };
+        roxy = darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = {
+            inherit inputs;
+            overlays = with self.overlays; [
+              deploy-rs
+              rust
+              rustToolchain
+            ];
+            nixpkgs = inputs.nixpkgs-darwin;
+          };
+          modules = with self.darwinModules; [
+            common
+            ./lib/darwin/configurations/mba.nix
+            { ids.gids.nixbld = 350; }
+            # { nix.linux-builder.enable = true; }
+            inputs.nix-rosetta-builder.darwinModules.default
+            {
+              nix-rosetta-builder = {
+                enable = true;
+                onDemand = true;
+                # onDemandLingerMinutes = 180;
+              };
+            }
+          ];
+        };
       };
 
       devShells = forAllSystemsShell (
