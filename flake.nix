@@ -40,6 +40,10 @@
     deploy-rs.url = "github:serokell/deploy-rs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    android-nixpkgs = {
+      url = "github:tadfisher/android-nixpkgs/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # For installer target
     nixos-generators.url = "github:nix-community/nixos-generators";
@@ -124,6 +128,7 @@
                   pkg:
                   builtins.elem (nixpkgs.lib.getName pkg) [
                     "terraform"
+                    "android-studio-stable"
                   ];
               };
             in
@@ -382,6 +387,12 @@
           dev = (import ./shells/dev.nix) { inherit pkgs; };
 
           devops = (import ./shells/devops.nix) { inherit pkgs; };
+
+          # TODO: Broken android and incorrect XCode setup
+          # react-native = (import ./shells/react-native.nix) {
+          #   inherit pkgs;
+          #   android-nixpkgs = inputs.android-nixpkgs;
+          # };
         }
       );
 
