@@ -32,7 +32,7 @@ in
     services.ssh-agent.enable = true;
 
     home.packages = with pkgs; [
-      beekeeper-studio
+      #beekeeper-studio
       discord
       jrnl
       obsidian
