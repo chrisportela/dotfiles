@@ -8,11 +8,16 @@
   imports = [
     ../common.nix
     ../nixpkgs.nix
+    ../stats.nix
   ];
 
   environment.systemPackages = with pkgs; [
     wakeonlan
   ];
+
+  chrisportela = {
+    enableStatsApp = true;
+  };
 
   nix.settings.connect-timeout = "5";
 
