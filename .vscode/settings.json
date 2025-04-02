@@ -1,5 +1,4 @@
 {
-    "makefile.extensionOutputFolder": "./.vscode",
     "nix.enableLanguageServer": true,
     "nix.serverPath": "nixd",
     "nix.serverSettings": {
@@ -25,6 +24,9 @@
       },
     },
     "cSpell.words": [
-      "pkgs"
+      "chrisportela",
+      "nixpkgs",
+      "pkgs",
+      "wakeonlan"
     ],
 }
