@@ -1,6 +1,7 @@
 {
-  pkgs ? import <nixpkgs> { },
-  android-nixpkgs ? import <android-nixpkgs> { },
+  nixpkgs,
+  pkgs,
+  android-nixpkgs,
 }:
 
 let
@@ -22,8 +23,9 @@ let
       emulator
     ]
   );
+  # xcodeenv = import (nixpkgs + "/pkgs/development/mobile/xcodeenv") { inherit (pkgs) callPackage; };
 in
-pkgs.mkShell {
+pkgs.mkShellNoCC {
   buildInputs =
     with pkgs;
     [
@@ -41,6 +43,9 @@ pkgs.mkShell {
 
       # iOS dependencies (macOS only)
       cocoapods
+      # apple-sdk_15
+      # (xcodeenv.composeXcodeWrapper { versions = [ "16.2" ]; })
+      darwin.xcode_16_2
     ]
     ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ android-studio-stable ]);
 
@@ -62,9 +67,12 @@ pkgs.mkShell {
 
     # If on macOS, set Xcode-related paths
     if [[ "$(uname)" == "Darwin" ]]; then
-      export DEVELOPER_DIR=$(xcode-select -p)
-      # Ensure Xcode command line tools are used for iOS builds
-      export PATH="/usr/bin:$PATH"
+      # export PATH=$(echo $PATH | sd "${pkgs.xcbuild.xcrun}/bin" "")
+      # unset DEVELOPER_DIR
+      # unset SDKROOT
+      export DEVELOPER_DIR="${pkgs.darwin.xcode_16_2}/Contents/Developer"
+      # # Ensure Xcode command line tools are used for iOS builds
+      # export PATH="$DEVELOPER_DIR/Contents/Developer/usr/bin:$PATH"
     fi
 
     echo "React Native development environment ready!"

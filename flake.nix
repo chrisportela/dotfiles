@@ -129,6 +129,7 @@
                   builtins.elem (nixpkgs.lib.getName pkg) [
                     "terraform"
                     "android-studio-stable"
+                    "Xcode.app"
                   ];
               };
             in
@@ -389,10 +390,11 @@
           devops = (import ./shells/devops.nix) { inherit pkgs; };
 
           # TODO: Broken android and incorrect XCode setup
-          # react-native = (import ./shells/react-native.nix) {
-          #   inherit pkgs;
-          #   android-nixpkgs = inputs.android-nixpkgs;
-          # };
+          react-native = (import ./shells/react-native.nix) {
+            inherit nixpkgs;
+            pkgs = pkgsUnstable;
+            android-nixpkgs = inputs.android-nixpkgs;
+          };
         }
       );
 
