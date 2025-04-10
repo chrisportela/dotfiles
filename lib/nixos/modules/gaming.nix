@@ -95,6 +95,13 @@ with lib;
       # args = ["--prefer-vk-device 8086:9bc4"];
     };
 
+    services.sunshine = {
+      enable = true;
+      autoStart = true;
+      capSysAdmin = true;
+      openFirewall = true;
+    };
+
     environment.sessionVariables = {
       STEAM_FORCE_DESKTOPUI_SCALING = "2";
       NIXOS_OZONE_WL = "1";
