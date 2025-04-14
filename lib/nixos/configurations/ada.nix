@@ -226,6 +226,11 @@ nixos.lib.nixosSystem {
           enable = true;
         };
 
+        programs.localsend = {
+          enable = true;
+          openFirewall = true;
+        };
+
         programs._1password.enable = true;
         programs._1password-gui = {
           enable = true;
