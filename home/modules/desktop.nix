@@ -34,14 +34,14 @@ in
     home.packages = with pkgs; [
       #beekeeper-studio
       discord
-      jrnl
+      #jrnl
       obsidian
       ollama
       onlyoffice-bin_latest
-      signal-desktop
+      #signal-desktop
       sqlitebrowser
       trayscale
-      ansel
+      #ansel
       darktable
     ];
   };
