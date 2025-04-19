@@ -67,7 +67,7 @@ with lib;
     virtualisation.oci-containers.containers = {
       open-webui = {
         autoStart = true;
-        image = "ghcr.io/open-webui/open-webui:v0.5.18";
+        image = "ghcr.io/open-webui/open-webui:v0.6.5";
         # TODO figure out how to create the data directory declaratively
         volumes = [ "${config.users.users.cmp.home}/open-webui:/app/backend/data" ];
         extraOptions = [
