@@ -39,6 +39,13 @@ with lib;
       "libnpp"
     ];
 
+    environment.systemPackages = with pkgs; let
+      python3-hf = python3.withPackages(ps: with ps; [ huggingface-hub ] ++ huggingface-hub.optional-dependencies.hf_transfer);
+    in
+    [
+      python3-hf
+    ];
+
     services.ollama = {
       enable = true;
       acceleration = "cuda";
