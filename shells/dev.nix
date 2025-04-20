@@ -10,7 +10,7 @@ let
     }
   );
 in
-pkgs.mkShell {
+pkgs.mkShellNoCC {
   RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
 
   nativeBuildInputs = with pkgs; [
