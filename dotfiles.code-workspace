@@ -25,6 +25,9 @@
         "formatting": {
           "command": ["nixfmt"],
         },
+        "nixpkgs": {
+          "expr": "import (builtins.getFlake \"${workspaceFolder}\").inputs.nixpkgs {}",
+        },
         "options": {
           // By default, this entry will be read from `import <nixpkgs> { }`.
           // You can write arbitrary Nix expressions here, to produce valid "options" declaration result.
