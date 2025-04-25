@@ -203,7 +203,7 @@ nixos.lib.nixosSystem {
           sddm.enableHidpi = true;
           sddm.settings = {
             General = {
-              GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
+              # GreeterEnvironment = "QT_SCREEN_SCALE_FACTORS=2,QT_FONT_DPI=192";
             };
           };
           sddm.wayland.enable = true;
