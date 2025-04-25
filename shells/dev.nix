@@ -46,8 +46,9 @@ pkgs.mkShellNoCC {
       golangci-lint
 
       # Node
-      nodejs_20
+      nodejs_23
       pnpm
+      yarn
     ])
     ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (
       with pkgs;
