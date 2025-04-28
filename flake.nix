@@ -385,9 +385,19 @@
 
           dotfiles = (import ./shells/dotfiles.nix) { inherit pkgs; };
 
-          dev = (import ./shells/dev.nix) { inherit pkgs; };
+          dev = (import ./shells/dev.nix) {
+            # inherit pkgs;
+            pkgs = pkgs.extend (final: prev: {
+              nodejs = final.nodejs_23;
+              nodejs_23 = pkgsUnstable.nodejs_23;
+            });
+          };
 
-          devops = (import ./shells/devops.nix) { inherit pkgs; };
+          devops = (import ./shells/devops.nix) {
+            pkgs = pkgs.extend (final: prev: {
+              nodejs = pkgsUnstable.nodejs_20;
+            });
+           };
 
           # TODO: Broken android and incorrect XCode setup
           react-native = (import ./shells/react-native.nix) {
