@@ -3,8 +3,8 @@ pkgs.mkShellNoCC {
   # The Nix packages provided in the environment
   packages =
     (with pkgs; [
-      python311
-      nodejs_20
+      python3
+      nodejs
       terraformer
       terraforming
       awscli2
