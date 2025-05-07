@@ -56,7 +56,7 @@ with lib;
         OLLAMA_KEEP_ALIVE = "48h";
         OLLAMA_NUM_PARALLEL = "2";
         OLLAMA_MAX_LOADED_MODELS = "3";
-        OLLAMA_MAX_QUEUE = "1";
+        OLLAMA_MAX_QUEUE = "512";
       };
     };
 
