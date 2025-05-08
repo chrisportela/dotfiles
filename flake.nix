@@ -403,8 +403,8 @@
             # inherit pkgs;
             pkgs = pkgs.extend (
               final: prev: {
-                nodejs = final.nodejs_23;
-                nodejs_23 = pkgsUnstable.nodejs_23;
+                nodejs = final.nodejs_24;
+                nodejs_24 = pkgsUnstable.nodejs_24;
               }
             );
           };
