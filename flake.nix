@@ -92,7 +92,21 @@
           let
             nixpkgsOptions = {
               inherit system;
-              overlays = nixpkgs.lib.unique ([ self.overlays.terraform ] ++ overlays);
+              overlays = nixpkgs.lib.unique (
+                [
+                  (self: super: {
+                    haskellPackages = super.haskellPackages.override {
+                      overrides = hself: hsuper: {
+                        system-fileio = hsuper.system-fileio.overrideAttrs (_: {
+                          doCheck = false;
+                        });
+                      };
+                    };
+                  })
+                  self.overlays.terraform
+                ]
+                ++ overlays
+              );
 
               config.allowUnfreePredicate = (
                 pkg: builtins.elem (nixpkgs.lib.getName pkg) nixpkgs.lib.unique ([ "terraform" ] ++ allowedUnfree)
@@ -102,7 +116,7 @@
           f {
             inherit system;
             pkgs = (import nixpkgs nixpkgsOptions);
-            pkgsUnstable = (import inputs.nixpkgs-unstable nixpkgsOptions);
+            pkgsUnstable = (import nixpkgs-unstable nixpkgsOptions);
           }
         );
 
@@ -209,7 +223,7 @@
       legacyPackages = (
         (nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
           (forAllSystems (
-            { pkgsUnstable, ... }:
+            { pkgs, pkgsUnstable, ... }:
             {
               homeConfigurations = {
                 "cmp" = homeConfig {
@@ -387,17 +401,21 @@
 
           dev = (import ./shells/dev.nix) {
             # inherit pkgs;
-            pkgs = pkgs.extend (final: prev: {
-              nodejs = final.nodejs_23;
-              nodejs_23 = pkgsUnstable.nodejs_23;
-            });
+            pkgs = pkgs.extend (
+              final: prev: {
+                nodejs = final.nodejs_23;
+                nodejs_23 = pkgsUnstable.nodejs_23;
+              }
+            );
           };
 
           devops = (import ./shells/devops.nix) {
-            pkgs = pkgs.extend (final: prev: {
-              nodejs = pkgsUnstable.nodejs_20;
-            });
-           };
+            pkgs = pkgs.extend (
+              final: prev: {
+                nodejs = pkgsUnstable.nodejs_20;
+              }
+            );
+          };
 
           # TODO: Broken android and incorrect XCode setup
           react-native = (import ./shells/react-native.nix) {
