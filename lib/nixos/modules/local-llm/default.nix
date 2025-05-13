@@ -54,7 +54,7 @@ with lib;
       environmentVariables = {
         OLLAMA_ORIGINS = "https://ollama.ada.i.cafecito.cloud";
         OLLAMA_KEEP_ALIVE = "48h";
-        OLLAMA_NUM_PARALLEL = "2";
+        OLLAMA_NUM_PARALLEL = "1";
         OLLAMA_MAX_LOADED_MODELS = "3";
         OLLAMA_MAX_QUEUE = "512";
       };

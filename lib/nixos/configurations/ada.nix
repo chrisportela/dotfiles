@@ -66,7 +66,7 @@ nixos.lib.nixosSystem {
             };
           };
           ftp = {
-            enable = true;
+            enable = false;
             directory = "/mnt/tank/photo-dump";
             domain = "ftp.ada.i.cafecito.cloud";
           };
@@ -301,7 +301,7 @@ nixos.lib.nixosSystem {
         };
 
         services.elasticsearch = {
-          enable = true;
+          enable = false;
           listenAddress = "127.0.0.1";
           port = 9200;
           single_node = true;
@@ -313,7 +313,7 @@ nixos.lib.nixosSystem {
 
         # TODO ensure kibana folders are created
         virtualisation.oci-containers.containers.kibana-test = {
-          autoStart = true;
+          autoStart = false;
           image = "docker.elastic.co/kibana/kibana:7.17.24";
           volumes = [
             "${config.users.users.cmp.home}/.config/kibana/:/usr/share/kibana/config/"
