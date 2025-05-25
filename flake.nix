@@ -336,15 +336,32 @@
       darwinConfigurations = {
         lux = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
-          specialArgs = {
-            inherit inputs;
-            overlays = with self.overlays; [
-              deploy-rs
-              rust
-              rustToolchain
-            ];
-            nixpkgs = inputs.nixpkgs-darwin;
-          };
+          specialArgs =
+            let
+              nodeOverlay =
+                let
+                  unstable = inputs.nixpkgs-unstable.legacyPackages."aarch64-darwin";
+                in
+                (final: prev: {
+                  nodejs = unstable.nodejs;
+                  nodejs_latest = unstable.nodejs_latest;
+                  nodejs_20 = unstable.nodejs_20;
+                  nodejs_slim = unstable.nodejs_20;
+                  # buildNpmPackage = prev.buildNpmPackage.override {
+                  #   nodejs = unstable.nodejs;
+                  # };
+                });
+            in
+            {
+              inherit inputs;
+              overlays = with self.overlays; [
+                deploy-rs
+                rust
+                rustToolchain
+                nodeOverlay
+              ];
+              nixpkgs = inputs.nixpkgs-darwin.extend nodeOverlay;
+            };
           modules = with self.darwinModules; [
             common
             ./lib/darwin/configurations/mba.nix
@@ -368,7 +385,15 @@
               rust
               rustToolchain
             ];
-            nixpkgs = inputs.nixpkgs-darwin;
+            nixpkgs = inputs.nixpkgs-darwin.extend (
+              final: prev:
+              let
+                unstable = inputs.nixpkgs-unstable."aarch64-darwin".legacyPackages;
+              in
+              {
+                nodejs = unstable.nodejs;
+              }
+            );
           };
           modules = with self.darwinModules; [
             common
