@@ -46,7 +46,7 @@ pkgs.mkShellNoCC {
       golangci-lint
 
       # Node
-      nodejs_23
+      nodejs_24
       pnpm
       yarn
     ])

@@ -9,13 +9,13 @@
   };
 
   inputs = {
-    nixos.url = "github:nixos/nixpkgs/nixos-24.11";
-    nixpkgs.url = "github:nixos/nixpkgs/release-24.11";
+    nixos.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
     nixos-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/master";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-24.11-darwin";
+    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-25.05-darwin";
     home-manager = {
-      url = "github:nix-community/home-manager/release-24.11";
+      url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager-unstable = {
@@ -23,7 +23,7 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     darwin = {
-      url = "github:lnl7/nix-darwin/nix-darwin-24.11";
+      url = "github:lnl7/nix-darwin/nix-darwin-25.05";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     nix-rosetta-builder = {
@@ -336,32 +336,16 @@
       darwinConfigurations = {
         lux = darwin.lib.darwinSystem {
           system = "aarch64-darwin";
-          specialArgs =
-            let
-              nodeOverlay =
-                let
-                  unstable = inputs.nixpkgs-unstable.legacyPackages."aarch64-darwin";
-                in
-                (final: prev: {
-                  nodejs = unstable.nodejs;
-                  nodejs_latest = unstable.nodejs_latest;
-                  nodejs_20 = unstable.nodejs_20;
-                  nodejs_slim = unstable.nodejs_20;
-                  # buildNpmPackage = prev.buildNpmPackage.override {
-                  #   nodejs = unstable.nodejs;
-                  # };
-                });
-            in
-            {
-              inherit inputs;
-              overlays = with self.overlays; [
-                deploy-rs
-                rust
-                rustToolchain
-                nodeOverlay
-              ];
-              nixpkgs = inputs.nixpkgs-darwin.extend nodeOverlay;
-            };
+          specialArgs = {
+            inherit inputs;
+            overlays = with self.overlays; [
+              deploy-rs
+              rust
+              rustToolchain
+              nodeOverlay
+            ];
+            nixpkgs = inputs.nixpkgs-darwin;
+          };
           modules = with self.darwinModules; [
             common
             ./lib/darwin/configurations/mba.nix
@@ -435,11 +419,7 @@
           };
 
           devops = (import ./shells/devops.nix) {
-            pkgs = pkgs.extend (
-              final: prev: {
-                nodejs = pkgsUnstable.nodejs_20;
-              }
-            );
+            inherit pkgs;
           };
 
           # TODO: Broken android and incorrect XCode setup
