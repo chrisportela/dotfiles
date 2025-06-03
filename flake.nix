@@ -205,20 +205,32 @@
         }
       );
 
-      packages = forAllSystems (
-        {
-          pkgs,
-          pkgsUnstable,
-          system,
-        }:
-        {
-          terraform = pkgsUnstable.terraformFull;
+      packages =
+        forAllSystems (
+          {
+            pkgs,
+            pkgsUnstable,
+            system,
+          }:
+          {
+            terraform = pkgsUnstable.terraformFull;
 
-          cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
+            cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
 
-          default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
-        }
-      );
+            default = self.legacyPackages.${system}.homeConfigurations.cmp.activationPackage;
+          }
+        )
+        // {
+          aarch64-linux = {
+            pi = inputs.nixos-generators.nixosGenerate {
+              system = "aarch64-linux";
+              format = "sd-aarch64";
+              modules = [
+                ((import ./lib/nixos/hardware/rpi4.nix) { inherit (inputs) nixos-hardware; })
+              ];
+            };
+          };
+        };
 
       legacyPackages = (
         (nixpkgs.lib.foldl (a: b: nixpkgs.lib.recursiveUpdate a b) { }) [
