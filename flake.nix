@@ -225,9 +225,7 @@
             pi = inputs.nixos-generators.nixosGenerate {
               system = "aarch64-linux";
               format = "sd-aarch64";
-              modules = [
-                ((import ./lib/nixos/hardware/rpi4.nix) { inherit (inputs) nixos-hardware; })
-              ];
+              modules = [ ./lib/nixos/hardware/rpi4.nix ];
             };
           };
         };
