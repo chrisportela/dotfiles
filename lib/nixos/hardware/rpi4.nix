@@ -7,7 +7,7 @@
 {
   imports = [ ];
 
-  console.enable = false;
+  # console.enable = false;
   environment.systemPackages = with pkgs; [
     libraspberrypi
     raspberrypi-eeprom
@@ -22,6 +22,7 @@
     enable = true;
     displayManager.lightdm.enable = true;
     desktopManager.gnome.enable = true;
+    videoDrivers = [ "fbdev" ];
   };
 
   # Enable audio devices
@@ -29,6 +30,9 @@
     "snd_bcm2835.enable_hdmi=1"
     "snd_bcm2835.enable_headphones=1"
   ];
+
+  hardware.enableRedistributableFirmware = true;
+  # networking.wireless.enable = true;
 
   # Basic networking
   networking.networkmanager.enable = true;
@@ -41,6 +45,11 @@
     SUBSYSTEM=="gpio", KERNEL=="gpiochip*", ACTION=="add", RUN+="${pkgs.bash}/bin/bash -c 'chown root:gpio /sys/class/gpio/export /sys/class/gpio/unexport ; chmod 220 /sys/class/gpio/export /sys/class/gpio/unexport'"
     SUBSYSTEM=="gpio", KERNEL=="gpio*", ACTION=="add",RUN+="${pkgs.bash}/bin/bash -c 'chown root:gpio /sys%p/active_low /sys%p/direction /sys%p/edge /sys%p/value ; chmod 660 /sys%p/active_low /sys%p/direction /sys%p/edge /sys%p/value'"
   '';
+
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+  };
 
   # Add user to group
   users = {

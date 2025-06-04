@@ -393,6 +393,27 @@
                 # onDemandLingerMinutes = 180;
               };
             }
+            {
+              nixpkgs.overlays = [
+                (final: prev: {
+                  nodejs = inputs.nixpkgs-unstable.legacyPackages.aarch64-darwin.nodejs_20;
+                })
+              ];
+              nix = {
+                registry.nixpkgs.flake = inputs.nixpkgs-darwin;
+                registry.nixos.flake = inputs.nixos;
+                registry.nixos-unstable.flake = inputs.nixos-unstable;
+                registry.nixpkgs-unstable.flake = inputs.nixpkgs-unstable;
+
+                nixPath = [
+                  "nixpkgs=${inputs.nixpkgs-darwin}"
+                  "nixos=${inputs.nixos}"
+                  "nixpkgs-unstable=${inputs.nixpkgs-unstable}"
+                  "nixos-unstable=${inputs.nixos-unstable}"
+                  "/nix/var/nix/profiles/per-user/root/channels"
+                ];
+              };
+            }
           ];
         };
       };
