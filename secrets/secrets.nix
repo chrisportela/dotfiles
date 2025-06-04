@@ -1,6 +1,6 @@
 let
-  inherit (import ../lib/sshKeys.nix) cmp;
+  sshKeys = import ../lib/sshKeys.nix;
 in
 {
-  "example.age".publicKeys = [ cmp ];
+  "example.age".publicKeys = sshKeys.secrets ++ [];
 }
