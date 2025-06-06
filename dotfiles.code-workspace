@@ -26,7 +26,7 @@
           "command": ["nixfmt"],
         },
         "nixpkgs": {
-          "expr": "import (builtins.getFlake \"${workspaceFolder}\").inputs.nixpkgs {}",
+          "expr": "import (builtins.getFlake \"${workspaceFolder}\").inputs.nixpkgs-unstable {}",
         },
         "options": {
           // By default, this entry will be read from `import <nixpkgs> { }`.
