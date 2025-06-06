@@ -2,10 +2,42 @@
   pkgs,
   config,
   lib,
+  modulesPath,
   ...
 }:
 {
-  imports = [ ];
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+
+  boot = {
+    initrd.availableKernelModules = [ ];
+    initrd.kernelModules = [ ];
+    kernelModules = [ ];
+    extraModulePackages = [ ];
+    kernelParams = [
+      "snd_bcm2835.enable_hdmi=1"
+      "snd_bcm2835.enable_headphones=1"
+      "vm.swappiness=50"
+    ];
+
+    loader.grub.enable = false;
+    loader.generic-extlinux-compatible.enable = true;
+  };
+
+  swapDevices = [ ];
+  zramSwap = {
+    enable = true;
+    priority = 5;
+    algorithm = "zstd";
+    memoryPercent = 50;
+    # writebackDevice = "/dev/disk/by-label/zram-writeback";
+  };
+
+  networking = {
+    hostName = "nixos";
+    networkmanager.enable = true;
+    # Prevent host becoming unreachable on wifi after some time.
+    networkmanager.wifi.powersave = false;
+  };
 
   # console.enable = false;
   environment.systemPackages = with pkgs; [
@@ -22,22 +54,16 @@
     enable = true;
     displayManager.lightdm.enable = true;
     desktopManager.gnome.enable = true;
-    videoDrivers = [ "fbdev" ];
+    # desktopManager.xfce.enable = true;
+    desktopManager.xterm.enable = true;
+    # videoDrivers = [ "fbdev" ];
+    resolutions = [
+      {x = 1920; y = 1200; }
+      {x = 1280; y = 1000; }
+    ];
   };
 
-  # Enable audio devices
-  boot.kernelParams = [
-    "snd_bcm2835.enable_hdmi=1"
-    "snd_bcm2835.enable_headphones=1"
-  ];
-
   hardware.enableRedistributableFirmware = true;
-  # networking.wireless.enable = true;
-
-  # Basic networking
-  networking.networkmanager.enable = true;
-  # Prevent host becoming unreachable on wifi after some time.
-  networking.networkmanager.wifi.powersave = false;
 
   # Change permissions gpio devices (requires: gpio group)
   services.udev.extraRules = ''
@@ -51,15 +77,21 @@
     openFirewall = true;
   };
 
+  security.sudo.wheelNeedsPassword = false;
+
   # Add user to group
   users = {
+    groups.wheel = { };
     groups.gpio = { };
     groups.admin = { };
 
     users.admin = {
       isNormalUser = true;
       group = "admin";
-      extraGroups = [ "gpio" ];
+      extraGroups = [
+        "gpio"
+        "wheel"
+      ];
       initialPassword = "nimda"; # Need some kind of password to login
       openssh.authorizedKeys.keys = (import ../../sshKeys.nix).default;
     };
