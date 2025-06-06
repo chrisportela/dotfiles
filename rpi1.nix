@@ -33,6 +33,35 @@
       "hid_generic"
     ];
   };
+  boot.kernel.sysctl = {
+    "vm.swappiness" = 60;
+  };
+
+  zramSwap = {
+    enable = true;
+    priority = 5;
+    algorithm = "zstd";
+    memoryPercent = 50;
+  };
+
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+  };
+
+  security.sudo.wheelNeedsPassword = false;
+
+  # Add user to group
+  users = {
+    groups.wheel = { };
+
+    users.admin = {
+      isNormalUser = true;
+      group = "admin";
+      extraGroups = [ "wheel" ];
+      initialPassword = "nimda"; # Need some kind of password to login
+    };
+  };
 
   nixpkgs.overlays = [
     (
