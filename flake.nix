@@ -148,6 +148,21 @@
                   }
                 ];
               };
+              nixos = home-manager-unstable.lib.homeManagerConfiguration {
+                pkgs = pkgsUnstable;
+
+                modules = [
+                  ./home/modules/nixpkgs.nix
+                  ./home/default.nix
+                  {
+                    allowedUnfree = [
+                      "vault-bin"
+                      "terraform"
+                    ];
+                    home.username = "nixos";
+                  }
+                ];
+              };
             };
           };
 
