@@ -1,6 +1,5 @@
 {
   nixpkgs,
-  nixosModules,
   system ? "aarch64-linux",
   ...
 }:
@@ -22,7 +21,7 @@ nixpkgs.lib.nixosSystem {
       chrisportela.common.enable = true;
       chrisportela.network = {
         enable = true;
-        tailscale = false;
+        tailscale.enable = false;
         mDNS = false;
         speedtest-utils = false;
       };

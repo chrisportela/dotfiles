@@ -4,9 +4,6 @@
   system ? "x86_64-linux",
   ...
 }:
-let
-  nginx = { ... }: { };
-in
 inputs.nixos.lib.nixosSystem {
   inherit system;
 

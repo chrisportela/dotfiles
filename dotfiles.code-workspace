@@ -33,17 +33,18 @@
           // You can write arbitrary Nix expressions here, to produce valid "options" declaration result.
           // Tip: for flake-based configuration, utilize `builtins.getFlake`
           "nixos": {
-            "expr": "(builtins.getFlake \"${workspaceFolder}\").nixosConfigurations.<name>.options",
+            "expr": "(builtins.getFlake \"${workspaceFolder}\").nixosConfigurations.ada.options",
           },
           "home-manager": {
-            "expr": "(builtins.getFlake \"${workspaceFolder}\").legacyPackages.x86_64-linux.homeConfigurations.cmp.options",
+            "expr": "(builtins.getFlake \"${workspaceFolder}\").homeConfigurations.cmp.options",
           },
           // Tip: use ${workspaceFolder} variable to define path
           "nix-darwin": {
-            "expr": "(builtins.getFlake \"${workspaceFolder}\").darwinConfigurations.lux.options",
+            "expr": "(builtins.getFlake \"${workspaceFolder}\").darwinConfigurations.roxy.options",
           },
         },
       },
     },
+    "cSpell.diagnosticLevel": "Hint",
   }
 }
