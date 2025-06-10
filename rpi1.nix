@@ -1,4 +1,4 @@
-{ lib, modulesPath, ... }:
+{ lib, pkgs, modulesPath, ... }:
 {
   nixpkgs.hostPlatform = "armv6l-linux"; # vintage pi
   nixpkgs.buildPlatform = "aarch64-linux"; # cross-compile
@@ -10,6 +10,7 @@
   ];
 
   system.stateVersion = "25.05";
+  system.copySystemConfiguration = true;
 
   # trim down initrd modules
   boot.supportedFilesystems = lib.mkForce [
@@ -44,6 +45,16 @@
     memoryPercent = 50;
   };
 
+  networking = {
+    hostName = "nixos";
+    wireless.enable = true;
+    wireless.userControlled.enable = true;
+    #networkmanager.enable = false;
+    #networkmanager.plugins = lib.mkForce [];
+    # Prevent host becoming unreachable on wifi after some time.
+    #networkmanager.wifi.powersave = false;
+  };
+
   services.openssh = {
     enable = true;
     openFirewall = true;
@@ -51,14 +62,23 @@
 
   security.sudo.wheelNeedsPassword = false;
 
+  programs.zsh.enable = true;
+  programs.vim = {
+    enable = true;
+    defaultEditor = true;
+  };
+
+  environment.systemPackages = with pkgs; [ htop util-linux kmod usbutils iproute2 nftables curl wget browsh lynx ];
+
   # Add user to group
   users = {
+    groups.admin = { };
     groups.wheel = { };
 
     users.admin = {
       isNormalUser = true;
       group = "admin";
-      extraGroups = [ "wheel" ];
+      extraGroups = [ "wheel" "networkmanager" ];
       initialPassword = "nimda"; # Need some kind of password to login
     };
   };
