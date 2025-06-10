@@ -17,29 +17,33 @@ in
 # shells = ["dotfiles", "dev", "devops"];
 (pkgs.writeShellScriptBin "cachix-helper" ''
   set -eu
+  SYSTEM="${stdenv.system}"
+  if [ -n "''${1-}" ]; then
+    SYSTEM="$1"
+  fi
   echo "#### Building HM"
   if command -v tailscale 1>/dev/null 2>&1; then
     home-manager build --flake .#${hmConfig}
   else
-    nix build .#legacyPackages.${stdenv.system}.homeConfigurations.${hmConfig}.activationPackage
+    nix build .#legacyPackages.$SYSTEM.homeConfigurations.${hmConfig}.activationPackage
   fi
   rm result-hm-cmp || true
   mv result result-hm-cmp
   cachix push ${cachixArgs} ${cachixRepo} result-hm-cmp
-  cachix pin ${cachixRepo} home-manager-${stdenv.system} result-hm-cmp
+  cachix pin ${cachixRepo} home-manager-$SYSTEM result-hm-cmp
 
   echo "#### Building shells"
-  nix build --out-link result-shell-dotfiles .#devShells.${stdenv.system}.dotfiles
+  nix build --out-link result-shell-dotfiles .#devShells.$SYSTEM.dotfiles
   cachix push ${cachixArgs} ${cachixRepo} result-shell-dotfiles
-  cachix pin ${cachixRepo} shell-dotfiles-${stdenv.system} result-shell-dotfiles
+  cachix pin ${cachixRepo} shell-dotfiles-$SYSTEM result-shell-dotfiles
 
-  nix build --out-link result-shell-devops .#devShells.${stdenv.system}.devops
+  nix build --out-link result-shell-devops .#devShells.$SYSTEM.devops
   cachix push ${cachixArgs} ${cachixRepo} result-shell-devops
-  cachix pin ${cachixRepo} shell-devops-${stdenv.system} result-shell-devops
+  cachix pin ${cachixRepo} shell-devops-$SYSTEM result-shell-devops
 
-  nix build --out-link result-shell-dev .#devShells.${stdenv.system}.dev
+  nix build --out-link result-shell-dev .#devShells.$SYSTEM.dev
   cachix push ${cachixArgs} ${cachixRepo} result-shell-dev
-  cachix pin ${cachixRepo} shell-dev-${stdenv.system} result-shell-dev
+  cachix pin ${cachixRepo} shell-dev-$SYSTEM result-shell-dev
 
   echo "#### Finished!"
 '')
