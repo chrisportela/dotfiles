@@ -356,6 +356,7 @@ nixos.lib.nixosSystem {
         };
         users.users.nginx.extraGroups = [ "acme" ];
 
+        boot.binfmt.emulatedSystems = ["aarch64-linux" "armv6l-linux" ];
         nix.settings.trusted-users = [
           "root"
           "cmp"
