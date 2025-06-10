@@ -5,9 +5,6 @@
   system ? "x86_64-linux",
   ...
 }:
-let
-  nginx = { ... }: { };
-in
 nixos.lib.nixosSystem {
   inherit system;
 
@@ -367,9 +364,6 @@ nixos.lib.nixosSystem {
             "libvirtd"
             "ddc"
             "docker"
-          ];
-
-          packages = with pkgs; [
           ];
         };
 

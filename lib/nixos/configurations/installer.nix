@@ -2,6 +2,7 @@
   inputs,
   system ? "x86_64-linux",
   hostName ? "installer",
+  overlays ? [ ],
   ...
 }:
 let
@@ -9,6 +10,8 @@ let
 in
 inputs.nixos.lib.nixosSystem {
   inherit system;
+
+  specialArgs = { inherit system inputs overlays; };
 
   modules = [
     inputs.nixos-generators.nixosModules.all-formats

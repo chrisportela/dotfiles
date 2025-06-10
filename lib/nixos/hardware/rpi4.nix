@@ -58,8 +58,14 @@
     desktopManager.xterm.enable = true;
     # videoDrivers = [ "fbdev" ];
     resolutions = [
-      {x = 1920; y = 1200; }
-      {x = 1280; y = 1000; }
+      {
+        x = 1920;
+        y = 1200;
+      }
+      {
+        x = 1280;
+        y = 1000;
+      }
     ];
   };
 
