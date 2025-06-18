@@ -203,6 +203,8 @@
               react-native = pkgs.callPackage ./shells/react-native.nix { };
             }
           );
+          devShell = self.devShells.${system}.default;
+
           # for `nix fmt`
           formatter = treefmt-eval.config.build.wrapper;
 
