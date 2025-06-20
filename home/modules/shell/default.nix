@@ -141,6 +141,8 @@ lib.mkMerge [
       enableZshIntegration = true;
       settings = {
         add_newline = false;
+        scan_timeout = 30; #ms
+        command_timeout = 1200; #ms
         format = lib.concatStrings [
           "$env_var"
           "$hostname"
@@ -172,8 +174,10 @@ lib.mkMerge [
           "$character"
         ];
         cmd_duration = {
-          min_time = 10000;
+          min_time = 10 * 1000; # ms
           format = " took [$duration]($style)";
+          show_notifications = true;
+          min_time_to_notify = 45 * 1000; # ms
         };
         directory = {
           truncation_length = 5;
