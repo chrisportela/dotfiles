@@ -39,7 +39,7 @@ with lib;
       "libnpp"
     ];
 
-    nix.config = {
+    nixpkgs.config = {
       cudaSupport = true;
       cudaCapabilities = [
         "8.6"
