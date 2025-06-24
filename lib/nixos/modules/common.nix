@@ -36,6 +36,8 @@ in
     environment.systemPackages = with pkgs; [
       curl
       git
+      python3
+      uv
     ];
 
     security.sudo.wheelNeedsPassword = lib.mkDefault true;
