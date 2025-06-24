@@ -39,16 +39,25 @@ with lib;
       "libnpp"
     ];
 
-    environment.systemPackages =
-      with pkgs;
-      let
-        python3-hf = python3.withPackages (
+    nix.config = {
+      cudaSupport = true;
+      cudaCapabilities = [
+        "8.6"
+        "10.0"
+        "12.0"
+      ];
+      # cudaForwardCompat = false;
+    };
+
+    nixpkgs.overlays = [
+      (final: prev: {
+        python3 = prev.python3.withPackages (
           ps: with ps; [ huggingface-hub ] ++ huggingface-hub.optional-dependencies.hf_transfer
         );
-      in
-      [
-        python3-hf
-      ];
+      })
+    ];
+
+    environment.systemPackages = [ python3-hf ];
 
     services.ollama = {
       enable = true;
@@ -69,66 +78,12 @@ with lib;
 
     # Open Web UI
     virtualisation.oci-containers.containers = {
-      open-webui = {
-        autoStart = true;
-        image = "ghcr.io/open-webui/open-webui:v0.6.5";
-        # TODO figure out how to create the data directory declaratively
-        volumes = [ "${config.users.users.cmp.home}/open-webui:/app/backend/data" ];
-        extraOptions = [
-          "--network=host"
-          "--add-host=host.containers.internal:host-gateway"
-        ];
-        environment = {
-          OLLAMA_API_BASE_URL = "http://127.0.0.1:11434/api";
-          OLLAMA_BASE_URL = "http://127.0.0.1:11434";
-        };
-      };
       kokoro = {
         autoStart = true;
-        image = "ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.2";
+        image = "ghcr.io/remsky/kokoro-fastapi-gpu:v0.2.4";
         ports = [ "127.0.0.1:8880:8880" ];
         extraOptions = [ "--device=nvidia.com/gpu=all" ];
       };
-    };
-
-    services.searx = {
-      enable = true;
-      redisCreateLocally = false;
-      settings = {
-        server.port = 8081;
-        server.bind_address = "127.0.0.1";
-        server.secret_key = "@SEARX_SECRET_KEY@";
-        server.limiter = false;
-
-        search = {
-          safe_search = 0;
-          formats = [
-            "html"
-            "json"
-          ];
-        };
-
-        # engines = lib.singleton {
-        #   name = "wolframalpha";
-        #   shortcut = "wa";
-        #   api_key = "@WOLFRAM_API_KEY@";
-        #   engine = "wolframalpha_api";
-        # };
-      };
-      uwsgiConfig = {
-        http = ":8081";
-      };
-      limiterSettings = {
-        # real_ip = {
-        #   x_for = 1;
-        #   ipv4_prefix = 32;
-        #   ipv6_prefix = 56;
-        # };
-        # botdetection.ip_lists.block_ip = [
-        #   # "93.184.216.34" # example.org
-        # ];
-      };
-
     };
 
     services.nginx.virtualHosts = {
@@ -147,23 +102,6 @@ with lib;
         extraConfig = ''
           access_log /var/log/nginx/ollama-cafeito_cloud.access.log;
           error_log /var/log/nginx/ollama-cafeito_cloud.error.log;
-        '';
-      };
-
-      "chat.ada.i.cafecito.cloud" = {
-        forceSSL = true;
-        enableACME = true;
-
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:8080";
-          recommendedProxySettings = true;
-          proxyWebsockets = true;
-        };
-
-        extraConfig = ''
-          client_max_body_size 100M;
-          access_log /var/log/nginx/chat-cafeito_cloud.access.log;
-          error_log /var/log/nginx/chat-cafeito_cloud.error.log;
         '';
       };
     };
