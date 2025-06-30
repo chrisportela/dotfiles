@@ -36,6 +36,9 @@ with lib;
       "libcusolver"
       "libnvjitlink"
       "libcusparse"
+      "libcusparse_lt"
+      "libcufile"
+      "cudnn"
       "libnpp"
     ];
 
@@ -51,13 +54,42 @@ with lib;
 
     nixpkgs.overlays = [
       (final: prev: {
-        python3 = prev.python3.withPackages (
-          ps: with ps; [ huggingface-hub ] ++ huggingface-hub.optional-dependencies.hf_transfer
+        python3-hf = prev.python3.withPackages (
+          ps:
+          with ps;
+          [ huggingface-hub ]
+          ++ (
+            with huggingface-hub.optional-dependencies;
+            (hf_transfer ++ hf_xet ++ torch ++ cli ++ inference)
+          )
         );
       })
     ];
 
-    environment.systemPackages = [ python3-hf ];
+    environment.sessionVariables = {
+      CUDA_PATH = "${pkgs.cudatoolkit}";
+      LD_LIBRARY_PATH = [
+        "${pkgs.linuxPackages.nvidia_x11}/lib"
+        "${pkgs.cudaPackages.cuda_nvml_dev}/lib"
+        "${pkgs.ncurses5}/lib"
+      ];
+    };
+
+    services.xserver.videoDrivers = [ "nvidia" ];
+    hardware.nvidia.open = true;
+    hardware.nvidia-container-toolkit = {
+      enable = true;
+      mount-nvidia-executables = false;
+    };
+
+    programs.nix-ld.enable = true;
+
+    environment.systemPackages = [
+      pkgs.cudatoolkit
+      pkgs.cudatoolkit.lib
+      pkgs.cudaPackages.cuda_nvml_dev
+      pkgs.python3-hf
+    ];
 
     services.ollama = {
       enable = true;
