@@ -14,11 +14,6 @@
     ./modules/tmux
   ];
 
-  allowedUnfree = [
-    "terraform"
-    "vault-bin"
-  ];
-
   home = {
     homeDirectory = (
       if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}"
@@ -31,8 +26,6 @@
       du-dust
       ripgrep
 
-      coder
-      vault-bin
       nixfmt-rfc-style
       git-annex
       gnupg
