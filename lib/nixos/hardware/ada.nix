@@ -86,11 +86,15 @@
 
   swapDevices = [ { device = "/dev/disk/by-uuid/bcf75db2-0312-4d27-958e-bb608604caf4"; } ];
 
+  boot.kernel.sysctl = {
+    "vm.swappiness" = 80;
+  };
+
   zramSwap = {
     enable = true;
     priority = 5;
     algorithm = "zstd";
-    memoryPercent = 50;
+    memoryPercent = 100;
   };
 
   # Enable OpenGL
