@@ -130,6 +130,13 @@ lib.mkMerge [
 
     };
 
+    programs.ghostty = {
+      enable = true;
+      package = null;
+      enableBashIntegration = true;
+      enableZshIntegration = true;
+    };
+
     programs.bash.enable = true;
     programs.readline = {
       enable = true;
