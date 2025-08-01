@@ -103,6 +103,10 @@ lib.mkMerge [
               source "$HOME/.shellfishrc"
             fi
 
+            if [[ -d "$HOME/.npm-global" ]]; then
+              export PATH="$PATH:$HOME/.npm-global/bin"
+            fi
+
             ${
               if pkgs.stdenv.isDarwin then
                 ''
@@ -181,9 +185,9 @@ lib.mkMerge [
           "$character"
         ];
         cmd_duration = {
-          min_time = 10 * 1000; # ms
+          min_time = 40 * 1000; # ms
           format = " took [$duration]($style)";
-          show_notifications = true;
+          #show_notifications = true;
           min_time_to_notify = 45 * 1000; # ms
         };
         directory = {

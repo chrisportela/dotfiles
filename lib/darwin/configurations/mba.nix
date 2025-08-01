@@ -13,6 +13,11 @@
 
   environment.systemPackages = with pkgs; [
     wakeonlan
+    uv
+    python312
+    nodejs_24
+    nodePackages.yarn
+    nodePackages.pnpm
   ];
 
   chrisportela = {
