@@ -151,6 +151,8 @@ nixos.lib.nixosSystem {
           nftables
           tcpdump
           traceroute
+          wget
+          curl
 
           # KDE
           kdePackages.plasma-thunderbolt
