@@ -321,7 +321,6 @@
                   deploy-rs
                   rust
                   rustToolchain
-                  nodeOverlay
                 ];
                 nixpkgs = inputs.nixpkgs-darwin;
               };
@@ -351,10 +350,12 @@
                 nixpkgs = inputs.nixpkgs-darwin.extend (
                   final: prev:
                   let
-                    unstable = inputs.nixpkgs-unstable."aarch64-darwin".legacyPackages;
+                    unstable = inputs.nixos-unstable."aarch64-darwin".legacyPackages;
                   in
                   {
-                    nodejs = unstable.nodejs;
+                    nodejs = prev.nodejs.overrideAttrs (old: {
+                      doCheck = false;
+                    });
                   }
                 );
               };

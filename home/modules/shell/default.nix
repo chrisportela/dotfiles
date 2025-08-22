@@ -35,6 +35,8 @@ lib.mkMerge [
         "tap" = "terraform apply plan.out";
       };
 
+    programs.git.enable = true;
+
     programs.fzf = {
       enable = lib.mkDefault true;
       enableZshIntegration = lib.mkDefault true;
