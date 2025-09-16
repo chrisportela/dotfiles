@@ -10,6 +10,7 @@
     ./modules/difftastic.nix
     ./modules/experiment.nix
     ./modules/desktop.nix
+    ./modules/claude-code.nix
     ./modules/shell
     ./modules/tmux
   ];

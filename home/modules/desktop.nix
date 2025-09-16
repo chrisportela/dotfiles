@@ -19,6 +19,7 @@ in
       "vscode"
       "discord"
       "obsidian"
+      "claude-code"
     ];
 
     chrisportela.enableExtraPackages = lib.mkDefault true;
@@ -32,6 +33,7 @@ in
     services.ssh-agent.enable = true;
 
     home.packages = with pkgs; [
+      claude-code
       coder
       vault-bin
       #beekeeper-studio

@@ -243,6 +243,23 @@
         in
         {
           homeConfigurations = {
+            "cmp@roxy" = home-manager.lib.homeManagerConfiguration {
+              inherit pkgs;
+              modules = [
+                ./home/modules/nixpkgs.nix
+                ./home/default.nix
+                {
+                  allowedUnfree = [
+                    "vault-bin"
+                    "terraform"
+                  ];
+                  home.username = "cmp";
+                  chrisportela = {
+                    claude-code = true;
+                  };
+                }
+              ];
+            };
             "cmp@flamme" = simpleHomeConfig {
               pkgs = pkgsUnstable;
               home-manager = inputs.home-manager-unstable;
