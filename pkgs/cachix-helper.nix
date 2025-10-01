@@ -31,20 +31,20 @@ in
   rm result-hm-cmp || true
   mv result result-hm-cmp
   ${cachixBin} push ${cachixArgs} ${cachixRepo} result-hm-cmp
-  ${cachixBin} pin ${cachixRepo} home-manager-$SYSTEM result-hm-cmp
+  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 home-manager-$SYSTEM result-hm-cmp
 
   echo "#### Building shells"
   ${nixBin} build --out-link result-shell-dotfiles .#devShells.$SYSTEM.dotfiles
   ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-dotfiles
-  ${cachixBin} pin ${cachixRepo} shell-dotfiles-$SYSTEM result-shell-dotfiles
+  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-dotfiles-$SYSTEM result-shell-dotfiles
 
   ${nixBin} build --out-link result-shell-devops .#devShells.$SYSTEM.devops
   ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-devops
-  ${cachixBin} pin ${cachixRepo} shell-devops-$SYSTEM result-shell-devops
+  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-devops-$SYSTEM result-shell-devops
 
   ${nixBin} build --out-link result-shell-dev .#devShells.$SYSTEM.dev
   ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-dev
-  ${cachixBin} pin ${cachixRepo} shell-dev-$SYSTEM result-shell-dev
+  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-dev-$SYSTEM result-shell-dev
 
   echo "#### Finished!"
 '')
