@@ -24,6 +24,10 @@
     enableStatsApp = true;
   };
 
+  security.pki.certificateFiles = [
+    ../../nixos/modules/cafecitocloud/cafecitocloud-root_ca.crt
+  ];
+
   nix.settings.connect-timeout = "5";
 
   # Used for backwards compatibility, please read the changelog before changing.
