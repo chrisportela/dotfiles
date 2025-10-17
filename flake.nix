@@ -2,8 +2,12 @@
   description = "Chris' scripts, dev shells, home-manager config, and nixOS configs";
 
   nixConfig = {
-    extra-substituters = [ "https://chrisportela-dotfiles.cachix.org" ];
+    extra-substituters = [
+      "https://nix-community.cachix.org"
+      "https://chrisportela-dotfiles.cachix.org"
+    ];
     extra-trusted-public-keys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "chrisportela-dotfiles.cachix.org-1:e3UVWzLbmS6YLEUaY1BQt124GENPRF74YMgwV/6+Li4="
     ];
   };
@@ -13,7 +17,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
     nixos-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/master";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-25.05-darwin";
+    #nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-25.05-darwin";
+    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,7 +28,8 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     darwin = {
-      url = "github:lnl7/nix-darwin/nix-darwin-25.05";
+      url = "github:lnl7/nix-darwin";
+      #url = "github:lnl7/nix-darwin/nix-darwin-25.05";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     nix-rosetta-builder = {
