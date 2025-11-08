@@ -160,6 +160,8 @@ inputs.nixos.lib.nixosSystem {
           NIXOS_OZONE_WL = "1";
         };
 
+        services.logind.lidSwitchExternalPower = "ignore";
+
         boot.plymouth = {
           enable = true;
           # logo = "";
