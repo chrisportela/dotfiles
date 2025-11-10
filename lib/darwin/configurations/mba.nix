@@ -16,8 +16,8 @@
     uv
     python312
     nodejs_24
-    nodePackages.yarn
-    nodePackages.pnpm
+    yarn
+    pnpm
   ];
 
   chrisportela = {
