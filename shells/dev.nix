@@ -49,6 +49,10 @@ pkgs.mkShellNoCC {
       nodejs_24
       pnpm
       yarn
+
+      # Databases
+      sqlite
+      postgresql_16
     ])
     ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (
       with pkgs;
