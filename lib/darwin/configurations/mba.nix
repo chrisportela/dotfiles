@@ -18,6 +18,11 @@
     nodejs_24
     yarn
     pnpm
+    _1password-cli
+  ];
+
+  allowedUnfree = [
+    "_1password-cli"
   ];
 
   chrisportela = {
