@@ -22,7 +22,7 @@
   ];
 
   allowedUnfree = [
-    "_1password-cli"
+    "1password-cli"
   ];
 
   chrisportela = {

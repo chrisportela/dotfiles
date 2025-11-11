@@ -2,15 +2,16 @@
 {
   imports = [ ../nixos/modules/nixpkgs.nix ];
 
-  options.allowedUnfree = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    default = [ ];
-  };
+  # options.allowedUnfree = lib.mkOption {
+  #   type = lib.types.listOf lib.types.str;
+  #   default = [ ];
+  # };
 
   config = {
-    nixpkgs.config.allowUnfreePredicate = lib.mkForce (
-      p: builtins.elem (lib.getName p) config.allowedUnfree
-    );
+    ### Already inherited from `nixos/modules/nixpkgs.nix`
+    # nixpkgs.config.allowUnfreePredicate = lib.mkForce (
+    #   p: builtins.elem (lib.getName p) config.allowedUnfree
+    # );
 
     nix = {
       package = pkgs.nixVersions.nix_2_31;
