@@ -127,6 +127,8 @@
 
             cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
 
+            rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
+
             pi = inputs.nixos-generators.nixosGenerate {
               system = "aarch64-linux";
               format = "sd-aarch64";
