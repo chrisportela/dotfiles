@@ -307,6 +307,11 @@
               inherit inputs;
               nixos = inputs.nixos-unstable;
               nixosModules = self.nixosModules;
+              overlays = [
+                (final: prev: {
+                  rmlint = self.packages.x86_64-linux.rmlint;
+                })
+              ];
             };
             flamme = (import ./lib/nixos/configurations/flamme.nix) {
               inherit inputs;

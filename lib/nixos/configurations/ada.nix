@@ -139,11 +139,12 @@ nixos.lib.nixosSystem {
           git-annex-remote-rclone
           #quickemu
           reptyr
+          rmlint
 
           # Hardware
           lm_sensors
           pciutils
-          glxinfo
+          mesa-demos
           hdparm
 
           # Network
@@ -170,7 +171,7 @@ nixos.lib.nixosSystem {
           spice
           spice-gtk
           spice-protocol
-          win-virtio
+          virtio-win
           win-spice
 
         ];
@@ -243,10 +244,6 @@ nixos.lib.nixosSystem {
             enable = true;
             qemu = {
               package = pkgs.qemu_kvm;
-              ovmf = {
-                enable = true;
-                packages = [ pkgs.OVMFFull.fd ];
-              };
               swtpm.enable = true;
             };
           };

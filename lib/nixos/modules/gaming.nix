@@ -54,7 +54,7 @@ with lib;
       })
       goverlay
       mangohud
-      protonup
+      protonup-ng
       vulkan-tools
     ];
 

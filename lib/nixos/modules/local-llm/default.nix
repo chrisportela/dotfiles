@@ -44,11 +44,11 @@ with lib;
 
     nixpkgs.config = {
       cudaSupport = true;
-      cudaCapabilities = [
-        "8.6"
-        "10.0"
-        "12.0"
-      ];
+      # cudaCapabilities = [
+      #   "8.6"
+      #   "10.0"
+      #   "12.0"
+      # ];
       # cudaForwardCompat = false;
     };
 
