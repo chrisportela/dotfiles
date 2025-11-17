@@ -23,7 +23,7 @@
       curl
       dogdns
       doggo
-      du-dust
+      dust
       ripgrep
 
       nixfmt-rfc-style
