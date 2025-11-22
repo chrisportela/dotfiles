@@ -137,7 +137,7 @@ lib.mkMerge [
     };
 
     programs.ghostty = {
-      enable = true;
+      enable = lib.mkDefault false;
       package = null;
       enableBashIntegration = true;
       enableZshIntegration = true;
@@ -154,8 +154,8 @@ lib.mkMerge [
       enableZshIntegration = true;
       settings = {
         add_newline = false;
-        scan_timeout = 30; #ms
-        command_timeout = 1200; #ms
+        scan_timeout = 30; # ms
+        command_timeout = 1200; # ms
         format = lib.concatStrings [
           "$env_var"
           "$hostname"

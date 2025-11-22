@@ -59,8 +59,7 @@ with lib;
           with ps;
           [ huggingface-hub ]
           ++ (
-            with huggingface-hub.optional-dependencies;
-            (hf_transfer ++ hf_xet ++ torch ++ cli ++ inference)
+            with huggingface-hub.optional-dependencies; (hf_transfer ++ hf_xet ++ torch ++ cli ++ inference)
           )
         );
       })

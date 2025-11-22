@@ -1,4 +1,9 @@
-{ lib, pkgs, modulesPath, ... }:
+{
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 {
   nixpkgs.hostPlatform = "armv6l-linux"; # vintage pi
   nixpkgs.buildPlatform = "aarch64-linux"; # cross-compile
@@ -68,7 +73,18 @@
     defaultEditor = true;
   };
 
-  environment.systemPackages = with pkgs; [ htop util-linux kmod usbutils iproute2 nftables curl wget browsh lynx ];
+  environment.systemPackages = with pkgs; [
+    htop
+    util-linux
+    kmod
+    usbutils
+    iproute2
+    nftables
+    curl
+    wget
+    browsh
+    lynx
+  ];
 
   # Add user to group
   users = {
@@ -78,7 +94,10 @@
     users.admin = {
       isNormalUser = true;
       group = "admin";
-      extraGroups = [ "wheel" "networkmanager" ];
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+      ];
       initialPassword = "nimda"; # Need some kind of password to login
     };
   };

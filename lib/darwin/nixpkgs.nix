@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 {
   imports = [ ../nixos/modules/nixpkgs.nix ];
 

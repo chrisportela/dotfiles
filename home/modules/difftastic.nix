@@ -6,13 +6,13 @@
 }:
 with lib;
 let
-  cfg = config.programs.difftastic;
+  cfg = config.programs.custom-difftastic;
 in
 {
   meta.maintainers = [ ];
 
   options = {
-    programs.difftastic = {
+    programs.custom-difftastic = {
       enable = mkEnableOption "" // {
         description = ''
           Enable the {command}`difftastic` syntax highlighter.

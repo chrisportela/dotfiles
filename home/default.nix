@@ -80,16 +80,21 @@
 
     git = {
       enable = true;
-      delta.enable = true;
-      userName = lib.mkDefault "Chris Portela";
-      userEmail = lib.mkDefault "chris@chrisportela.com";
-      package = pkgs.gitFull;
-      extraConfig = {
+      settings = {
+        user = {
+          name = lib.mkDefault "Chris Portela";
+          email = lib.mkDefault "chris@chrisportela.com";
+        };
         credential.helper = if pkgs.stdenv.isLinux then "libsecret" else "osxkeychain";
         safe.directory = [ ];
       };
+      package = pkgs.gitFull;
     };
-    difftastic.enable = true;
+    delta = {
+      enable = true;
+      enableGitIntegration = true;
+    };
+    custom-difftastic.enable = true;
 
     zoxide = {
       enable = true;
