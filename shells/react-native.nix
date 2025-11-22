@@ -40,20 +40,34 @@ pkgs.mkShellNoCC {
       androidSdk
       gradle
 
+    ]
+    ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
       # iOS dependencies (macOS only)
       cocoapods
       # apple-sdk_15
       # (xcodeenv.composeXcodeWrapper { versions = [ "16.2" ]; })
       darwin.xcode_16_2
-    ]
-    ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ android-studio-stable ]);
+    ])
+    ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ android-studio-full ]);
 
   # TODO: Error building android - SDK not writable
   # TODO: Error building iOS with proper DEVELOPER_DIR var (mess of output)
   # TODO: Incorrect DEVELOPER_DIR, uses Nix toolchain.
 
   # Shell hook to configure environment variables
-  shellHook = ''
+  shellHook = let
+    xcodePaths = pkgs.lib.optionals pkgs.stdenv.isDarwin ''
+      # If on macOS, set Xcode-related paths
+      if [[ "$(uname)" == "Darwin" ]]; then
+        # export PATH=$(echo $PATH | sd "${pkgs.xcbuild.xcrun}/bin" "")
+        # unset DEVELOPER_DIR
+        # unset SDKROOT
+        export DEVELOPER_DIR="${pkgs.darwin.xcode_16_2}/Contents/Developer"
+        # # Ensure Xcode command line tools are used for iOS builds
+        # export PATH="$DEVELOPER_DIR/Contents/Developer/usr/bin:$PATH"
+      fi
+    '';
+    in ''
     # Android configuration
     # export ANDROID_HOME=${androidSdk}/libexec/android-sdk
     # export ANDROID_SDK_ROOT=$ANDROID_HOME
@@ -64,15 +78,8 @@ pkgs.mkShellNoCC {
     # Add node_modules/.bin to PATH
     export PATH="$PWD/node_modules/.bin:$PATH"
 
-    # If on macOS, set Xcode-related paths
-    if [[ "$(uname)" == "Darwin" ]]; then
-      # export PATH=$(echo $PATH | sd "${pkgs.xcbuild.xcrun}/bin" "")
-      # unset DEVELOPER_DIR
-      # unset SDKROOT
-      export DEVELOPER_DIR="${pkgs.darwin.xcode_16_2}/Contents/Developer"
-      # # Ensure Xcode command line tools are used for iOS builds
-      # export PATH="$DEVELOPER_DIR/Contents/Developer/usr/bin:$PATH"
-    fi
+    # Xcode Paths (only if darwin)
+    ${xcodePaths}
 
     echo "React Native development environment ready!"
   '';

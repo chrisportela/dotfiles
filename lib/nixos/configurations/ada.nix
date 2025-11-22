@@ -213,7 +213,7 @@ nixos.lib.nixosSystem {
         services.printing.enable = false;
 
         # Enable sound with pipewire.
-        hardware.pulseaudio.enable = false;
+        services.pulseaudio.enable = false;
         security.rtkit.enable = true;
         services.pipewire = {
           enable = true;
