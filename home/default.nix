@@ -9,6 +9,7 @@
     ./modules/nixpkgs.nix
     ./modules/difftastic.nix
     ./modules/experiment.nix
+    ./modules/coding-agents.nix
     ./modules/desktop.nix
     ./modules/shell
     ./modules/tmux

@@ -39,7 +39,7 @@ in
       #jrnl
       obsidian
       ollama
-      onlyoffice-bin_latest
+      onlyoffice-desktopeditors
       #signal-desktop
       sqlitebrowser
       trayscale

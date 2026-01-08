@@ -257,6 +257,7 @@
               options.chrisportela = {
                 desktop = true;
                 enableExtraPackages = true;
+                coding-agents.enable = true;
               };
             };
             "cmp@ada" = simpleHomeConfig {
@@ -265,6 +266,7 @@
               options.chrisportela = {
                 desktop = true;
                 enableExtraPackages = true;
+                coding-agents.enable = true;
               };
             };
 
@@ -275,6 +277,7 @@
               options.chrisportela = {
                 desktop = false;
                 enableExtraPackages = false;
+                coding-agents.enable = false;
               };
             };
           };
