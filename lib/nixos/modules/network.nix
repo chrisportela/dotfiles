@@ -32,7 +32,6 @@ with lib;
         traceroute
       ]
       ++ optionals (cfg.speedtest-utils) [
-        fast-cli
         ookla-speedtest
         speedtest-cli
       ];
