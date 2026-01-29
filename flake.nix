@@ -282,6 +282,14 @@
             };
           };
 
+          # Project templates: nix flake new <path> -t <flake>#<template>
+          templates = {
+            nextjs = {
+              description = "Next.js + pnpm with TypeScript, Prisma 7, Better Auth, Vitest, Playwright";
+              path = ./templates/nextjs;
+            };
+          };
+
           overlays = {
             rust = (import inputs.rust-overlay);
 

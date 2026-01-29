@@ -23,3 +23,26 @@ While you *can use it directly*, I recommend cloning so you can make changes.
    1. You might need the `-b backup` to let it move existing configs around so it can "take over" with a symlink.
 
 Part of the configuration has shell functions `switch-home`, `switch-nix`, and `switch-darwin` which expect the repo at `$HOME/src/dotfiles` and will apply whatever configuration is there.
+
+## Templates
+
+Project templates are registered in the flake. Use the standard Nix template flow:
+
+```bash
+# Create a new project from a template
+nix flake new my-app -t .#nextjs
+# or from GitHub
+nix flake new my-app -t github:chrisportela/dotfiles#nextjs
+```
+
+Then:
+
+```bash
+cd my-app
+direnv allow
+pnpm install
+pnpm db:migrate
+pnpm dev
+```
+
+List available templates: `nix flake show .` (look under `templates`).
