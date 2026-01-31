@@ -6,14 +6,21 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
         };
         prisma-engines = pkgs.prisma-engines_7;
-        pnpm = pkgs.pnpm_10;
+        _pnpm = pkgs.pnpm_10;
         nodejs = pkgs.nodejs_24;
 
         # Production build using pkgs.fetchPnpmDeps + pnpmConfigHook (NoCC stdenv).
@@ -23,29 +30,32 @@
           version = "0.1.0";
           src = pkgs.lib.cleanSourceWith {
             src = self;
-            filter = path: type:
-              let baseName = baseNameOf path;
-              in baseName != "node_modules"
+            filter =
+              path: type:
+              let
+                baseName = baseNameOf path;
+              in
+              baseName != "node_modules"
               && baseName != ".next"
               && baseName != ".git"
               && baseName != "result"
               && baseName != ".direnv"
-              && ! pkgs.lib.hasPrefix ".env" baseName
-              && ! pkgs.lib.hasPrefix "result" baseName;
+              && !pkgs.lib.hasPrefix ".env" baseName
+              && !pkgs.lib.hasPrefix "result" baseName;
           };
 
           nativeBuildInputs = with pkgs; [
             nodejs_24
-            pnpm
+            _pnpm
             pnpmConfigHook
             prisma-engines
           ];
 
           pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
-            pnpm = pnpm;
-            fetcherVersion = 1;
-            hash = "sha256-c6vsJ0DtVca810RwZtfx7UZqh3anHP4Inw9vnwKajZA=";
+            pnpm = _pnpm;
+            fetcherVersion = 3;
+            hash = "sha256-l/AlVmKOKuaDNqeHNXfEXUTJPYzdkwNEkpyoUb+XZMI=";
           };
 
           PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
@@ -105,7 +115,7 @@
           buildInputs = with pkgs; [
             # Node.js and pnpm
             nodejs_24
-            pnpm
+            _pnpm
             nodePackages.typescript
             nodePackages.typescript-language-server
 
