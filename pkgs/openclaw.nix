@@ -92,8 +92,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     mainProgram = "openclaw";
     maintainers = with lib.maintainers; [ chrisportela ];
     platforms = with lib.platforms; linux ++ darwin;
-    # knownVulnerabilities = [
-    #   "Project uses LLMs to parse untrusted content, making it vulnerable to prompt injection, while having full access to system by default."
-    # ];
+    knownVulnerabilities = [
+      "Project uses LLMs to parse untrusted content, making it vulnerable to prompt injection, while having full access to system by default."
+    ];
   };
 })
