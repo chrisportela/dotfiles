@@ -129,6 +129,8 @@
 
             rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
 
+            openclaw = pkgs.callPackage ./pkgs/openclaw.nix { };
+
             pi = inputs.nixos-generators.nixosGenerate {
               system = "aarch64-linux";
               format = "sd-aarch64";
