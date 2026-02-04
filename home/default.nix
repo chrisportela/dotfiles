@@ -34,6 +34,7 @@
       rclone
       git-annex-remote-rclone
       nixd
+      setup-envrc
     ];
   };
 

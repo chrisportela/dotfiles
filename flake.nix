@@ -77,6 +77,7 @@
             rustToolchain
             deploy-rs
             terraform
+            setup-envrc
           ];
           unfreePredicate = (
             pkg:
@@ -130,6 +131,8 @@
             rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
 
             openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix { };
+
+            setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
             pi = inputs.nixos-generators.nixosGenerate {
               system = "aarch64-linux";
@@ -303,6 +306,8 @@
             deploy-rs = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system}; });
 
             terraform = (final: prev: { terraformFull = self.packages.${final.stdenv.system}.terraform; });
+
+            setup-envrc = (final: prev: { setup-envrc = self.packages.${final.stdenv.system}.setup-envrc; });
           };
 
           nixosModules = (import ./lib/nixos/modules/default.nix);
