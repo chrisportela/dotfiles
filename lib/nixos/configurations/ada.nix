@@ -26,6 +26,7 @@ nixos.lib.nixosSystem {
     ../modules/gaming.nix
     ../modules/local-llm
     ../modules/ftp.nix
+    inputs.microvm.nixosModules.host
 
     (
       {

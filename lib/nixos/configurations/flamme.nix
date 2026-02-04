@@ -21,6 +21,7 @@ inputs.nixos.lib.nixosSystem {
     ../modules/openssh.nix
     ../modules/cafecitocloud
     ../modules/gaming.nix
+    inputs.microvm.nixosModules.host
 
     (
       {

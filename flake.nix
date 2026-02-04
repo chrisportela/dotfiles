@@ -51,6 +51,10 @@
       url = "github:tadfisher/android-nixpkgs/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    microvm = {
+      url = "github:microvm-nix/microvm.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # For installer target
     nixos-generators.url = "github:nix-community/nixos-generators";
@@ -66,6 +70,7 @@
       home-manager-unstable,
       treefmt-nix,
       flake-utils,
+      microvm,
       ...
     }:
     let
