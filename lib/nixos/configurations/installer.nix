@@ -40,10 +40,7 @@ inputs.nixos.lib.nixosSystem {
           inputs.disko.packages.${system}.disko-install
         ];
 
-        users.groups.nix = { };
-        users.users.nix = {
-          isSystemUser = true;
-          group = "nix";
+        users.users.nixos = {
           openssh.authorizedKeys.keys = sshKeys.default;
         };
       }
