@@ -27,7 +27,7 @@
           type = "gpt";
           partitions = {
             luks = {
-              size = "95%";
+              end = "-150G";
               content = {
                 type = "luks";
                 name = "crypt-ssd0";
@@ -51,7 +51,7 @@
           type = "gpt";
           partitions = {
             luks = {
-              size = "95%";
+              end = "-150G";
               content = {
                 type = "luks";
                 name = "crypt-ssd1";
@@ -75,7 +75,7 @@
           type = "gpt";
           partitions = {
             luks = {
-              size = "95%";
+              end = "-150G";
               content = {
                 type = "luks";
                 name = "crypt-ssd2";
@@ -99,7 +99,7 @@
           type = "gpt";
           partitions = {
             luks = {
-              size = "95%";
+              end = "-150G";
               content = {
                 type = "luks";
                 name = "crypt-ssd3";
@@ -123,7 +123,7 @@
           type = "gpt";
           partitions = {
             luks = {
-              size = "95%";
+              end = "-400G";
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd0";
@@ -147,7 +147,7 @@
           type = "gpt";
           partitions = {
             luks = {
-              size = "100%";
+              end = "-400G";
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd1";
