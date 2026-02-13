@@ -146,7 +146,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -171,7 +171,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -204,7 +204,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -237,7 +237,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -303,7 +303,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -328,7 +328,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -353,7 +353,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -378,7 +378,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -403,7 +403,7 @@ let
                   content = {
                     type = "filesystem";
                     format = "zfs";
-                    pool = "zroot";
+                    pool = "tank";
                   };
                 };
               };
@@ -536,6 +536,7 @@ let
               ];
               cache = [
                 "evo-ssd0"
+                "evo-ssd1"
               ];
               log = [
                 {
