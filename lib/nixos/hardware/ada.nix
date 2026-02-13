@@ -35,17 +35,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "95%";
-                name = "crypt-ssd0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-ssd0";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -58,17 +60,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "95%";
-                name = "crypt-ssd1";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-ssd1";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -81,17 +85,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "95%";
-                name = "crypt-ssd2";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-ssd2";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -104,17 +110,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "95%";
-                name = "crypt-ssd3";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-ssd3";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -127,17 +135,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "95%";
-                name = "crypt-evo-ssd0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-evo-ssd0";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -150,17 +160,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-evo-ssd1";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-evo-ssd1";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -181,17 +193,19 @@ let
                 };
               };
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-intel-ssd0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-intel-ssd0";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -212,17 +226,19 @@ let
                 };
               };
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-intel-ssd1";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-intel-ssd1";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -243,17 +259,19 @@ let
                 };
               };
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-intel-ssd2";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-intel-ssd2";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -274,17 +292,19 @@ let
                 };
               };
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-intel-ssd3";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-intel-ssd3";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -297,17 +317,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-hdd-wd8tb-0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-hdd-wd8tb-0";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -320,17 +342,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-hdd-wd8tb-1";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-hdd-wd8tb-1";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -343,17 +367,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-hdd-wd8tb-2";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-hdd-wd8tb-2";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -366,17 +392,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-hdd-wd8tb-3";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "zroot";
+                  type = "luks";
+                  name = "crypt-hdd-wd8tb-3";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "zroot";
+                  };
                 };
               };
             };
@@ -389,17 +417,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-hdd-wd14tb-0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "hpool0";
+                  type = "luks";
+                  name = "crypt-hdd-wd14tb-0";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "hpool0";
+                  };
                 };
               };
             };
@@ -412,17 +442,19 @@ let
             type = "gpt";
             partitions = {
               luks = {
-                type = "luks";
                 size = "100%";
-                name = "crypt-hdd-mdd12tb-0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
-                  type = "filesystem";
-                  format = "zfs";
-                  pool = "hpool1";
+                  type = "luks";
+                  name = "crypt-hdd-mdd12tb-0";
+                  settings = {
+                    allowDiscards = true;
+                  };
+                  # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                  content = {
+                    type = "filesystem";
+                    format = "zfs";
+                    pool = "hpool1";
+                  };
                 };
               };
             };
