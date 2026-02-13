@@ -647,10 +647,6 @@ in
       configurationLimit = 30;
       editor = false;
     };
-    generationsDir = {
-      enable = true;
-      copyKernels = true;
-    };
 
     # grub = {
     #   enable = true;
