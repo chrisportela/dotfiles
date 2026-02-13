@@ -41,7 +41,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -64,7 +63,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -87,7 +85,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -110,7 +107,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -133,7 +129,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -156,7 +151,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -187,7 +181,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -218,7 +211,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -249,7 +241,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -280,7 +271,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -303,7 +293,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -326,7 +315,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -349,7 +337,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -372,7 +359,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -395,7 +381,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
@@ -418,7 +403,6 @@ let
                   allowDiscards = true;
                 };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                extraOpenArgs = [ ];
                 content = {
                   type = "filesystem";
                   format = "zfs";
