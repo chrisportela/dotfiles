@@ -445,7 +445,7 @@
             type = "topology";
             vdev = [
               {
-                type = "draid1";
+                mode = "draid1";
                 members = [
                   "ssd0"
                   "ssd1"
@@ -501,7 +501,7 @@
             type = "topology";
             vdev = [
               {
-                type = "draid1";
+                mode = "draid1";
                 members = [
                   "hdd-wd8tb-0"
                   "hdd-wd8tb-1"
@@ -516,7 +516,7 @@
             ];
             log = [
               {
-                type = "mirror";
+                mode = "mirror";
                 members = [
                   "intel-ssd0"
                   "intel-ssd1"
@@ -525,7 +525,7 @@
             ];
             special = [
               {
-                type = "mirror";
+                mode = "mirror";
                 members = [
                   "intel-ssd2"
                   "intel-ssd3"
