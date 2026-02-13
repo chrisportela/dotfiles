@@ -35,9 +35,28 @@ inputs.nixos.lib.nixosSystem {
 
         systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
 
-        environment.systemPackages = [
+        environment.systemPackages = with pkgs;[
           inputs.disko.packages.${system}.disko
           inputs.disko.packages.${system}.disko-install
+          btop
+          htop
+          nvtopPackages.full
+          psmisc
+          rclone
+          reptyr
+          rmlint
+          lm_sensors
+          pciutils
+          inetutils
+          nftables
+          tcpdump
+          traceroute
+          wget
+          curl
+          hdparm
+          smartmontools
+          f3
+          e2fsprogs
         ];
 
         users.users.nixos = {
