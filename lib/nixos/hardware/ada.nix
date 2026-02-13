@@ -35,6 +35,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "95%";
                 name = "crypt-ssd0";
                 settings = {
@@ -57,6 +58,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "95%";
                 name = "crypt-ssd1";
                 settings = {
@@ -79,6 +81,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "95%";
                 name = "crypt-ssd2";
                 settings = {
@@ -101,6 +104,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "95%";
                 name = "crypt-ssd3";
                 settings = {
@@ -123,6 +127,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "95%";
                 name = "crypt-evo-ssd0";
                 settings = {
@@ -145,6 +150,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-evo-ssd1";
                 settings = {
@@ -175,6 +181,7 @@ let
                 };
               };
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-intel-ssd0";
                 settings = {
@@ -205,6 +212,7 @@ let
                 };
               };
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-intel-ssd1";
                 settings = {
@@ -235,6 +243,7 @@ let
                 };
               };
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-intel-ssd2";
                 settings = {
@@ -265,6 +274,7 @@ let
                 };
               };
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-intel-ssd3";
                 settings = {
@@ -287,6 +297,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-hdd-wd8tb-0";
                 settings = {
@@ -309,6 +320,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-hdd-wd8tb-1";
                 settings = {
@@ -331,6 +343,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-hdd-wd8tb-2";
                 settings = {
@@ -353,6 +366,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-hdd-wd8tb-3";
                 settings = {
@@ -375,6 +389,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-hdd-wd14tb-0";
                 settings = {
@@ -397,6 +412,7 @@ let
             type = "gpt";
             partitions = {
               luks = {
+                type = "luks";
                 size = "100%";
                 name = "crypt-hdd-mdd12tb-0";
                 settings = {
