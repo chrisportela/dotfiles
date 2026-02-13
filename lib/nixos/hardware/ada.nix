@@ -674,29 +674,15 @@ in
 
   time.hardwareClockInLocalTime = true;
 
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-uuid/a0e68cd1-b6e7-4568-b2d9-f5253a34cb76";
-      fsType = "ext4";
-    };
-
-    "/boot" = {
-      device = "/dev/disk/by-uuid/E6BE-1E5C";
-      fsType = "vfat";
-    };
-  };
-
-  swapDevices = [ { device = "/dev/disk/by-uuid/bcf75db2-0312-4d27-958e-bb608604caf4"; } ];
-
   boot.kernel.sysctl = {
-    "vm.swappiness" = 80;
+    "vm.swappiness" = 133;
   };
 
   zramSwap = {
     enable = true;
     priority = 5;
     algorithm = "zstd";
-    memoryPercent = 100;
+    memoryPercent = 50;
   };
 
   # Enable OpenGL
