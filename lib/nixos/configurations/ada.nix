@@ -14,6 +14,7 @@ nixos.lib.nixosSystem {
   };
 
   modules = [
+    inputs.disko.nixosModules.disko
     inputs.vscode-server.nixosModules.default
     ../hardware/ada.nix
 

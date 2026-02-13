@@ -37,7 +37,7 @@
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     disko = {
-      url = "github:nix-community/disko";
+      url = "github:nix-community/disko/latest";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
