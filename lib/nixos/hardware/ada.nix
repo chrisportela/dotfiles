@@ -92,8 +92,7 @@ let
                   };
                   # passwordFile = "/tmp/secret.key"; # Interactive prompt
                   content = {
-                    type = "filesystem";
-                    format = "zfs";
+                    type = "zfs";
                     pool = "zroot";
                   };
                 };
@@ -117,8 +116,7 @@ let
                   };
                   # passwordFile = "/tmp/secret.key"; # Interactive prompt
                   content = {
-                    type = "filesystem";
-                    format = "zfs";
+                    type = "zfs";
                     pool = "zroot";
                   };
                 };
@@ -166,8 +164,7 @@ let
                   };
                   # passwordFile = "/tmp/secret.key"; # Interactive prompt
                   content = {
-                    type = "filesystem";
-                    format = "zfs";
+                    type = "zfs";
                     pool = "tank";
                   };
                 };
@@ -231,8 +228,7 @@ let
                   };
                   # passwordFile = "/tmp/secret.key"; # Interactive prompt
                   content = {
-                    type = "filesystem";
-                    format = "zfs";
+                    type = "zfs";
                     pool = "tank";
                   };
                 };
