@@ -445,7 +445,7 @@
             type = "topology";
             vdev = [
               {
-                mode = "draid1";
+                mode = "raidz1";
                 members = [
                   "ssd0"
                   "ssd1"
@@ -501,7 +501,7 @@
             type = "topology";
             vdev = [
               {
-                mode = "draid1";
+                mode = "raidz1";
                 members = [
                   "hdd-wd8tb-0"
                   "hdd-wd8tb-1"
