@@ -21,7 +21,36 @@ inputs.nixos.lib.nixosSystem {
     (
       { pkgs, lib, ... }:
       {
-        nixpkgs.config.allowUnfreePredicate = _: true;
+        # allowedUnfree = [
+        #   "nvidia-persistenced"
+        #   "nvidia-settings"
+        #   "nvidia-x11"
+        #   "cuda_cudart"
+        #   "cuda-merged"
+        #   "cuda_cuobjdump"
+        #   "cuda_gdb"
+        #   "cuda_nvcc"
+        #   "cuda_nvdisasm"
+        #   "cuda_nvprune"
+        #   "cuda_cccl"
+        #   "cuda_cupti"
+        #   "cuda_cuxxfilt"
+        #   "cuda_nvml_dev"
+        #   "cuda_nvrtc"
+        #   "cuda_nvtx"
+        #   "cuda_profiler_api"
+        #   "cuda_sanitizer_api"
+        #   "libcublas"
+        #   "libcufft"
+        #   "libcurand"
+        #   "libcusolver"
+        #   "libnvjitlink"
+        #   "libcusparse"
+        #   "libcusparse_lt"
+        #   "libcufile"
+        #   "cudnn"
+        #   "libnpp"
+        # ];
 
         # nixpkgs.hostPlatform.system = system;
         networking.hostName = hostName;
@@ -52,7 +81,7 @@ inputs.nixos.lib.nixosSystem {
           inputs.disko.packages.${system}.disko-install
           btop
           htop
-          nvtopPackages.full
+          # nvtopPackages.full
           psmisc
           rclone
           reptyr
