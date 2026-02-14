@@ -170,6 +170,7 @@
                       "terraform"
                     ];
                     home.username = "nixos";
+                    chrisportela.coding-agents.enable = true;
                   }
                 ];
               };
