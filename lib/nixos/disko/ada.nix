@@ -447,10 +447,10 @@
               {
                 mode = "raidz1";
                 members = [
-                  "ssd0"
-                  "ssd1"
-                  "ssd2"
-                  "ssd3"
+                  "crypt-ssd0"
+                  "crypt-ssd1"
+                  "crypt-ssd2"
+                  "crypt-ssd3"
                 ];
               }
             ];
@@ -503,23 +503,23 @@
               {
                 mode = "raidz1";
                 members = [
-                  "hdd-wd8tb-0"
-                  "hdd-wd8tb-1"
-                  "hdd-wd8tb-2"
-                  "hdd-wd8tb-3"
+                  "crypt-hdd-wd8tb-0"
+                  "crypt-hdd-wd8tb-1"
+                  "crypt-hdd-wd8tb-2"
+                  "crypt-hdd-wd8tb-3"
                 ];
               }
             ];
             cache = [
-              "evo-ssd0"
-              "evo-ssd1"
+              "crypt-evo-ssd0"
+              "crypt-evo-ssd1"
             ];
             log = [
               {
                 mode = "mirror";
                 members = [
-                  "intel-ssd0"
-                  "intel-ssd1"
+                  "crypt-intel-ssd0"
+                  "crypt-intel-ssd1"
                 ];
               }
             ];
@@ -527,8 +527,8 @@
               {
                 mode = "mirror";
                 members = [
-                  "intel-ssd2"
-                  "intel-ssd3"
+                  "crypt-intel-ssd2"
+                  "crypt-intel-ssd3"
                 ];
               }
             ];
