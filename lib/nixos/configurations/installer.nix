@@ -21,6 +21,7 @@ inputs.nixos.lib.nixosSystem {
     (
       { pkgs, lib, ... }:
       {
+        nixpkgs.config.allowUnfreePredicate = _: true;
 
         # nixpkgs.hostPlatform.system = system;
         networking.hostName = hostName;
