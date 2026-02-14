@@ -449,10 +449,10 @@
               {
                 mode = "raidz1";
                 members = [
-                  "ssd0"
-                  "ssd1"
-                  "ssd2"
-                  "ssd3"
+                  "/dev/mapper/crypt-ssd0"
+                  "/dev/mapper/crypt-ssd1"
+                  "/dev/mapper/crypt-ssd2"
+                  "/dev/mapper/crypt-ssd3"
                 ];
               }
             ];
