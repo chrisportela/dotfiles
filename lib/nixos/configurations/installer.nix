@@ -35,6 +35,17 @@ inputs.nixos.lib.nixosSystem {
 
         systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];
 
+        boot.kernel.sysctl = {
+          "vm.swappiness" = 133;
+        };
+
+        zramSwap = {
+          enable = true;
+          priority = 5;
+          algorithm = "zstd";
+          memoryPercent = 50;
+        };
+
         environment.systemPackages = with pkgs;[
           inputs.disko.packages.${system}.disko
           inputs.disko.packages.${system}.disko-install
