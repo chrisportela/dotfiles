@@ -116,6 +116,7 @@
           };
         };
       };
+      /*
       evo-ssd0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-Samsung_SSD_860_EVO_4TB_S5JBNE0MA00760D";
@@ -436,6 +437,7 @@
           };
         };
       };
+      */
     };
     zpool = {
       zroot = {
@@ -494,6 +496,7 @@
           };
         };
       };
+      /*
       tank = {
         type = "zpool";
         mode = {
@@ -589,6 +592,7 @@
           };
         };
       };
+      */
     };
   };
 }
