@@ -449,10 +449,10 @@
               {
                 mode = "raidz1";
                 members = [
-                  "disk-crypt-ssd0-zfs"
-                  "disk-crypt-ssd1-zfs"
-                  "disk-crypt-ssd2-zfs"
-                  "disk-crypt-ssd3-zfs"
+                  "ssd0"
+                  "ssd1"
+                  "ssd2"
+                  "ssd3"
                 ];
               }
             ];
