@@ -278,8 +278,7 @@ nixos.lib.nixosSystem {
             enable = true;
             pools = [
               "zroot"
-              # "spool"
-              # "tank"
+              "tank"
             ];
             interval = "monthly";
           };

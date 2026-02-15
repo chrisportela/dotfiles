@@ -116,7 +116,6 @@
           };
         };
       };
-      /*
       evo-ssd0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-Samsung_SSD_860_EVO_4TB_S5JBNE0MA00760D";
@@ -389,6 +388,7 @@
           };
         };
       };
+      /*
       hdd-wd14tb-0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-WDC_WD141KFGX-68FH9N0_9RHGPXZL";
@@ -496,7 +496,6 @@
           };
         };
       };
-      /*
       tank = {
         type = "zpool";
         mode = {
@@ -506,23 +505,23 @@
               {
                 mode = "raidz1";
                 members = [
-                  "crypt-hdd-wd8tb-0"
-                  "crypt-hdd-wd8tb-1"
-                  "crypt-hdd-wd8tb-2"
-                  "crypt-hdd-wd8tb-3"
+                  "/dev/mapper/crypt-hdd-wd8tb-0"
+                  "/dev/mapper/crypt-hdd-wd8tb-1"
+                  "/dev/mapper/crypt-hdd-wd8tb-2"
+                  "/dev/mapper/crypt-hdd-wd8tb-3"
                 ];
               }
             ];
             cache = [
-              "crypt-evo-ssd0"
-              "crypt-evo-ssd1"
+              "/dev/mapper/crypt-evo-ssd0"
+              "/dev/mapper/crypt-evo-ssd1"
             ];
             log = [
               {
                 mode = "mirror";
                 members = [
-                  "crypt-intel-ssd0"
-                  "crypt-intel-ssd1"
+                  "/dev/mapper/crypt-intel-ssd0"
+                  "/dev/mapper/crypt-intel-ssd1"
                 ];
               }
             ];
@@ -530,8 +529,8 @@
               {
                 mode = "mirror";
                 members = [
-                  "crypt-intel-ssd2"
-                  "crypt-intel-ssd3"
+                  "/dev/mapper/crypt-intel-ssd2"
+                  "/dev/mapper/crypt-intel-ssd3"
                 ];
               }
             ];
@@ -554,6 +553,7 @@
           };
         };
       };
+      /*
       hpool0 = {
         type = "zpool";
         rootFsOptions = {
