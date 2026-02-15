@@ -116,6 +116,7 @@
           };
         };
       };
+      /*
       evo-ssd0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-Samsung_SSD_860_EVO_4TB_S5JBNE0MA00760D";
@@ -388,7 +389,6 @@
           };
         };
       };
-      /*
       hdd-wd14tb-0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-WDC_WD141KFGX-68FH9N0_9RHGPXZL";
@@ -496,6 +496,7 @@
           };
         };
       };
+      /*
       tank = {
         type = "zpool";
         mode = {
@@ -553,7 +554,6 @@
           };
         };
       };
-      /*
       hpool0 = {
         type = "zpool";
         rootFsOptions = {
