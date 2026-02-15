@@ -28,16 +28,10 @@
   boot.extraModulePackages = [ ];
   boot.zfs = {
     extraPools = [
-      "spool"
-      "tank"
+      # "spool"
+      # "tank"
     ];
-    requestEncryptionCredentials = [
-      "spool"
-      "spool/docker"
-      "spool/home"
-      "tank/main"
-    ];
-    forceImportRoot = false;
+    forceImportRoot = true;
   };
 
   # Bootloader.

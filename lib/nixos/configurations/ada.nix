@@ -72,6 +72,8 @@ nixos.lib.nixosSystem {
           local-llm.enable = true;
         };
 
+        security.sudo.wheelNeedsPassword = false;
+
         # tpm
         security.tpm2.enable = true;
         security.tpm2.pkcs11.enable = true; # expose /run/current-system/sw/lib/libtpm2_pkcs11.so
@@ -269,14 +271,15 @@ nixos.lib.nixosSystem {
         services.zfs = {
           trim = {
             enable = true;
-            # interval = "daily";
+            interval = "daily";
           };
 
           autoScrub = {
             enable = true;
             pools = [
-              "spool"
-              "tank"
+              "zroot"
+              # "spool"
+              # "tank"
             ];
             interval = "monthly";
           };
@@ -371,7 +374,7 @@ nixos.lib.nixosSystem {
           ];
         };
 
-        system.stateVersion = "23.05";
+        system.stateVersion = "25.05";
       }
     )
   ];
