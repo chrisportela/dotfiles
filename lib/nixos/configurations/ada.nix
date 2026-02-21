@@ -26,7 +26,6 @@ nixos.lib.nixosSystem {
     ../modules/gaming.nix
     ../modules/local-llm
     ../modules/ftp.nix
-    inputs.microvm.nixosModules.host
 
     (
       {
@@ -177,7 +176,7 @@ nixos.lib.nixosSystem {
           spice-protocol
           virtio-win
           win-spice
-
+          inputs.disko.packages.${system}.disko
         ];
 
         time.timeZone = lib.mkForce "America/New_York";

@@ -116,7 +116,6 @@
           };
         };
       };
-      /*
       evo-ssd0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-Samsung_SSD_860_EVO_4TB_S5JBNE0MA00760D";
@@ -128,6 +127,7 @@
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd0";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -152,6 +152,7 @@
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd1";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -184,6 +185,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd0";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -216,6 +218,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd1";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -248,6 +251,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd2";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -280,6 +284,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd3";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -304,6 +309,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-0";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -328,6 +334,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-1";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -352,6 +359,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-2";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -376,6 +384,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-3";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -389,6 +398,7 @@
           };
         };
       };
+      /*
       hdd-wd14tb-0 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-WDC_WD141KFGX-68FH9N0_9RHGPXZL";
@@ -400,6 +410,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd14tb-0";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -424,6 +435,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-mdd12tb-0";
+                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -496,7 +508,6 @@
           };
         };
       };
-      /*
       tank = {
         type = "zpool";
         mode = {
@@ -554,6 +565,7 @@
           };
         };
       };
+      /*
       hpool0 = {
         type = "zpool";
         rootFsOptions = {
