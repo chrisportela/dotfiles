@@ -11,10 +11,12 @@
     ../disko/ada.nix
   ];
 
+  boot.initrd.systemd.enable = true;
   boot.initrd.availableKernelModules = [
     "xhci_pci"
     "ahci"
     "nvme"
+    "mpt3sas" # for WD drives
     "usbhid"
     "usb_storage"
     "sd_mod"
@@ -43,7 +45,7 @@
     systemd-boot = {
       enable = true;
       configurationLimit = 30;
-      editor = false;
+      editor = true;
     };
 
     # grub = {

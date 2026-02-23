@@ -123,15 +123,15 @@
           type = "gpt";
           partitions = {
             luks = {
+              start = "0";
               end = "-400G";
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd0";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -148,15 +148,15 @@
           type = "gpt";
           partitions = {
             luks = {
+              start = "0";
               end = "-400G";
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd1";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -185,11 +185,10 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd0";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -218,11 +217,10 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd1";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -251,14 +249,13 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd2";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
-                  pool = "zroot";
+                  pool = "tank";
                 };
               };
             };
@@ -284,11 +281,10 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd3";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -309,11 +305,10 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-0";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -334,11 +329,10 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-1";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -359,11 +353,10 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-2";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -384,11 +377,10 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-3";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
                   pool = "tank";
@@ -410,7 +402,6 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd14tb-0";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
@@ -435,7 +426,6 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-mdd12tb-0";
-                initrdUnlock = false;
                 settings = {
                   allowDiscards = true;
                 };
