@@ -136,7 +136,6 @@
             rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
 
             openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix { };
-            setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
