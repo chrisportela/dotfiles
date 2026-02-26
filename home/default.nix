@@ -33,6 +33,7 @@
       rclone
       git-annex-remote-rclone
       nixd
+      klog-time-tracker
       setup-envrc
     ];
   };
@@ -88,6 +89,7 @@
         };
         credential.helper = if pkgs.stdenv.isLinux then "libsecret" else "osxkeychain";
         safe.directory = [ ];
+        init.defaultBranch = "main";
       };
       package = pkgs.gitFull;
     };
