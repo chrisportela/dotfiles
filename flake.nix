@@ -83,6 +83,7 @@
             deploy-rs
             terraform
             setup-envrc
+            opencode-cursor
           ];
           unfreePredicate = (
             pkg:
@@ -149,6 +150,8 @@
             rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
 
             openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix { };
+
+            opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor.nix { };
 
             claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
 
@@ -328,6 +331,8 @@
             terraform = (final: prev: { terraformFull = self.packages.${final.stdenv.system}.terraform; });
 
             setup-envrc = (final: prev: { setup-envrc = self.packages.${final.stdenv.system}.setup-envrc; });
+
+            opencode-cursor = (final: prev: { opencode-cursor = self.packages.${final.stdenv.system}.opencode-cursor; });
           };
 
           nixosModules = (import ./lib/nixos/modules/default.nix);
