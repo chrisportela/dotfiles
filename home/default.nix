@@ -22,7 +22,6 @@
     stateVersion = lib.mkDefault "22.11";
     packages = with pkgs; [
       curl
-      dogdns
       doggo
       dust
       ripgrep

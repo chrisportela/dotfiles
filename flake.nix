@@ -89,13 +89,23 @@
             builtins.elem (nixpkgs.lib.getName pkg) [
               "terraform"
               "vault-bin"
+              "claude-code"
             ]
           );
+          nixosUnstablePkgs = import inputs.nixos-unstable {
+            inherit system;
+            config.allowUnfreePredicate = unfreePredicate;
+          };
         in
         rec {
           pkgsUnstable = import nixpkgs-unstable {
-            inherit system overlays;
+            inherit system;
             config.allowUnfreePredicate = unfreePredicate;
+            overlays = overlays ++ [
+              (final: prev: {
+                claude-code = self.packages.${system}.claude-code;
+              })
+            ];
           };
           pkgs = import nixpkgs {
             inherit system;
@@ -103,6 +113,9 @@
             overlays = overlays ++ [
               (final: prev: {
                 pkgsUnstable = pkgsUnstable;
+              })
+              (final: prev: {
+                claude-code = self.packages.${system}.claude-code;
               })
             ];
           };
@@ -136,6 +149,8 @@
             rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
 
             openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix { };
+
+            claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
 
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
@@ -335,6 +350,7 @@
                 (final: prev: {
                   rmlint = self.packages.x86_64-linux.rmlint;
                 })
+
               ];
             };
             flamme = (import ./lib/nixos/configurations/flamme.nix) {
