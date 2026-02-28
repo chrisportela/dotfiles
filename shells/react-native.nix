@@ -8,7 +8,7 @@ let
   jdk = pkgs.zulu17;
 
   # Use nodejs from nixpkgs
-  nodejs = pkgs.nodejs_22;
+  nodejs = pkgs.nodejs_24;
 
   _android-nixpkgs = pkgs.callPackage android-nixpkgs { };
 
@@ -16,9 +16,9 @@ let
   androidSdk = _android-nixpkgs.sdk (
     sdkPkgs: with sdkPkgs; [
       cmdline-tools-latest
-      build-tools-34-0-0
+      build-tools-35-0-0
       platform-tools
-      platforms-android-34
+      platforms-android-35
       emulator
     ]
   );
@@ -35,20 +35,26 @@ pkgs.mkShellNoCC {
       # For file watching
       watchman
 
+      # iOS development
+      ios-deploy
+
       # Android development
       jdk
       androidSdk
       gradle
 
+      # Ruby / Bundler for Gemfile and CocoaPods (iOS)
+      ruby_3_3
+      bundler
     ]
     ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (
-      with pkgs;
+      with pkgs.pkgsUnstable;
       [
         # iOS dependencies (macOS only)
         cocoapods
         # apple-sdk_15
         # (xcodeenv.composeXcodeWrapper { versions = [ "16.2" ]; })
-        darwin.xcode_16_2
+        darwin.xcode_26_2_Apple_silicon
       ]
     )
     ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [ android-studio-full ]);
@@ -66,7 +72,7 @@ pkgs.mkShellNoCC {
           # export PATH=$(echo $PATH | sd "${pkgs.xcbuild.xcrun}/bin" "")
           # unset DEVELOPER_DIR
           # unset SDKROOT
-          export DEVELOPER_DIR="${pkgs.darwin.xcode_16_2}/Contents/Developer"
+          export DEVELOPER_DIR="${pkgs.pkgsUnstable.darwin.xcode_26_2_Apple_silicon}/Contents/Developer"
           # # Ensure Xcode command line tools are used for iOS builds
           # export PATH="$DEVELOPER_DIR/Contents/Developer/usr/bin:$PATH"
         fi

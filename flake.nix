@@ -205,26 +205,41 @@
 
           devShells = (
             let
+              overlays = with self.overlays; [
+                rust
+                rustToolchain
+                deploy-rs
+                terraform
+                (final: prev: {
+                  android-nixpkgs = inputs.android-nixpkgs;
+                })
+              ];
+              allowUnfreePredicate = (
+                pkg:
+                builtins.elem (nixpkgs.lib.getName pkg) [
+                  "terraform"
+                  "android-studio-stable"
+                  "Xcode.app"
+                  "xcode"
+                ]
+              );
+              pkgsUnstable = import nixpkgs-unstable {
+                inherit system;
+                overlays = overlays;
+                config = {
+                  inherit allowUnfreePredicate;
+                };
+              };
               pkgs = import nixpkgs {
                 inherit system;
-                overlays = with self.overlays; [
-                  rust
-                  rustToolchain
-                  deploy-rs
-                  terraform
+                overlays = overlays ++ [
                   (final: prev: {
-                    pkgsUnstable = inputs.nixpkgs-unstable.legacyPackages.${system};
-                    android-nixpkgs = inputs.android-nixpkgs;
+                    pkgsUnstable = pkgsUnstable;
                   })
                 ];
-                config.allowUnfreePredicate = (
-                  pkg:
-                  builtins.elem (nixpkgs.lib.getName pkg) [
-                    "terraform"
-                    "android-studio-stable"
-                    "Xcode.app"
-                  ]
-                );
+                config = {
+                  inherit allowUnfreePredicate;
+                };
               };
             in
             rec {
@@ -298,6 +313,13 @@
                 coding-agents.enable = true;
               };
             };
+            "cmp@roxy" = simpleHomeConfig {
+              pkgs = pkgsUnstable;
+              home-manager = inputs.home-manager-unstable;
+              options.chrisportela = {
+                coding-agents.enable = true;
+              };
+            };
 
             "deck@steamdeck" = simpleHomeConfig {
               inherit pkgs;
@@ -316,6 +338,10 @@
             nextjs = {
               description = "Next.js + pnpm with TypeScript, Prisma 7, Better Auth, Vitest, Playwright";
               path = ./templates/nextjs;
+            };
+            react-native = {
+              description = "React Native (bare) + pnpm with TypeScript, React Navigation, Jest";
+              path = ./templates/react-native;
             };
           };
 

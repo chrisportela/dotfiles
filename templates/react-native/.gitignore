@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Build / Metro
+/build
+/android/app/build
+/ios/build
+*.jsbundle
+.metro-health-check*
+
+# Testing
+/coverage
+
+# Misc
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env*.local
+
+# Nix
+result
+result-*
+.direnv/
+.direnv
+nix-shell-*
+
+# Writable Android SDK (created by shell hook)
+.android-sdk/
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Android
+*.apk
+*.aab
+*.hprof
+local.properties
+
+# iOS
+*.xcuserstate
+*.xcworkspace
+Pods/
+.bundle/
