@@ -1,0 +1,18 @@
+sudo disko-install --flake .#ada --write-efi-boot-entries \
+--disk boot-usb /dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0371324100002895-0:0 \
+--disk ssd0 /dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NC0RA01059T \
+--disk ssd1 /dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA31156F \
+--disk ssd2 /dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA31162E \
+--disk ssd3 /dev/disk/by-id/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0TA31231X \
+--disk evo-ssd0 /dev/disk/by-id/ata-Samsung_SSD_860_EVO_4TB_S5JBNE0MA00760D \
+--disk evo-ssd1 /dev/disk/by-id/ata-Samsung_SSD_860_EVO_4TB_S5JBNE0MA00764H \
+--disk intel-ssd0 /dev/disk/by-id/nvme-INTEL_SSDPEK1A118GA_PHOC1502007M118B \
+--disk intel-ssd1 /dev/disk/by-id/nvme-INTEL_SSDPEK1A118GA_PHOC150200RA118B \
+--disk intel-ssd2 /dev/disk/by-id/nvme-INTEL_SSDPEK1A118GA_PHOC202100QM118B \
+--disk intel-ssd3 /dev/disk/by-id/nvme-INTEL_SSDPEK1A118GA_PHOC2021017E118B \
+--disk hdd-wd8tb-0 /dev/disk/by-id/ata-WDC_WD80EFZX-68UW8N0_R6GH5RAY \
+--disk hdd-wd8tb-1 /dev/disk/by-id/ata-WDC_WD80EFZX-68UW8N0_R6GH8NTY \
+--disk hdd-wd8tb-2 /dev/disk/by-id/ata-WDC_WD80EFZX-68UW8N0_R6GHEM3Y \
+--disk hdd-wd8tb-3 /dev/disk/by-id/ata-WDC_WD80EFZX-68UW8N0_R6GHJ9XY \
+--disk hdd-wd14tb-0 /dev/disk/by-id/ata-WDC_WD141KFGX-68FH9N0_9RHGPXZL \
+--disk hdd-mdd12tb-0 /dev/disk/by-id/ata-HUH721212ALE601_AAJBZVEH

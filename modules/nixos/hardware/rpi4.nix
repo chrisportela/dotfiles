@@ -1,23 +1,11 @@
 {
+  pkgs,
   config,
   lib,
-  pkgs,
   modulesPath,
   ...
 }:
 {
-  nixpkgs.hostPlatform = "aarch64-linux"; # pi 3 >=
-  # nixpkgs.hostPlatform = "armv6l-linux"; # pi 1 & zero
-
-  system = {
-    copySystemConfiguration = true; # /run/current-system/configuration.nix
-    # includeBuildDependencies = true;
-  };
-
-  nix = {
-    settings.auto-optimise-store = true;
-  };
-
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   boot = {
@@ -111,7 +99,7 @@
         "wheel"
       ];
       initialPassword = "nimda"; # Need some kind of password to login
-      openssh.authorizedKeys.keys = (import ./lib/ssh-keys.nix).default;
+      openssh.authorizedKeys.keys = (import ../../../lib/ssh-keys.nix).default;
     };
   };
 

@@ -1,0 +1,108 @@
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+{
+  imports = [
+    ./nixpkgs.nix
+    ./difftastic.nix
+    ./experiment.nix
+    ./coding-agents.nix
+    ./desktop.nix
+    ./shell
+    ./tmux
+  ];
+
+  home = {
+    homeDirectory = (
+      if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}"
+    );
+    stateVersion = lib.mkDefault "22.11";
+    packages = with pkgs; [
+      curl
+      doggo
+      dust
+      ripgrep
+
+      nixfmt-rfc-style
+      git-annex
+      gnupg
+      ntfy-sh
+      rclone
+      git-annex-remote-rclone
+      nixd
+      klog-time-tracker
+      setup-envrc
+    ];
+  };
+
+  programs = {
+    home-manager.enable = true;
+
+    fd.enable = true;
+    ripgrep.enable = true;
+    btop.enable = true;
+    htop.enable = true;
+    jq.enable = true;
+    bat.enable = true;
+    eza.enable = true;
+    nushell.enable = true;
+
+    direnv = {
+      enable = true;
+      enableZshIntegration = true;
+      nix-direnv.enable = true;
+    };
+
+    neovim = {
+      enable = lib.mkDefault true;
+      viAlias = lib.mkDefault true;
+      vimAlias = lib.mkDefault true;
+      vimdiffAlias = lib.mkDefault true;
+      extraConfig = ''
+        set nocompatible
+        set nobackup
+      '';
+      plugins = with pkgs.vimPlugins; [
+        fugitive
+        surround
+        vim-nix
+      ];
+    };
+
+    gh = {
+      enable = true;
+
+      settings = {
+        git_protocol = "https";
+      };
+    };
+
+    git = {
+      enable = true;
+      settings = {
+        user = {
+          name = lib.mkDefault "Chris Portela";
+          email = lib.mkDefault "chris@chrisportela.com";
+        };
+        credential.helper = if pkgs.stdenv.isLinux then "libsecret" else "osxkeychain";
+        safe.directory = [ ];
+        init.defaultBranch = "main";
+      };
+      package = pkgs.gitFull;
+    };
+    delta = {
+      enable = true;
+      enableGitIntegration = true;
+    };
+    custom-difftastic.enable = true;
+
+    zoxide = {
+      enable = true;
+      enableZshIntegration = true;
+    };
+
+  };
+}

@@ -13,28 +13,21 @@
   };
 
   inputs = {
-    nixos.url = "github:nixos/nixpkgs/nixos-25.05";
-    nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
-    nixos-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/master";
-    #nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-25.05-darwin";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixos-unstable";
+    # Stable (25.05) for disko and any pinned usage
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    # Unstable for NixOS configs, darwin, and home-manager
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    home-manager-unstable = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     darwin = {
       url = "github:lnl7/nix-darwin";
-      #url = "github:lnl7/nix-darwin/nix-darwin-25.05";
-      inputs.nixpkgs.follows = "nixpkgs-darwin";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     nix-rosetta-builder = {
       url = "github:cpick/nix-rosetta-builder";
-      inputs.nixpkgs.follows = "nixpkgs-darwin";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     disko = {
       url = "github:nix-community/disko/latest";
@@ -47,10 +40,6 @@
     deploy-rs.url = "github:serokell/deploy-rs";
     vscode-server.url = "github:nix-community/nixos-vscode-server";
     rust-overlay.url = "github:oxalica/rust-overlay";
-    android-nixpkgs = {
-      url = "github:tadfisher/android-nixpkgs/stable";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     microvm = {
       url = "github:microvm-nix/microvm.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -67,61 +56,14 @@
       nixpkgs-unstable,
       darwin,
       home-manager,
-      home-manager-unstable,
       treefmt-nix,
       flake-utils,
       microvm,
       ...
     }:
     let
-      importPkgs = (
-        system:
-        let
-          overlays = with self.overlays; [
-            rust
-            rustToolchain
-            deploy-rs
-            terraform
-            setup-envrc
-            opencode-cursor
-          ];
-          unfreePredicate = (
-            pkg:
-            builtins.elem (nixpkgs.lib.getName pkg) [
-              "terraform"
-              "vault-bin"
-              "claude-code"
-            ]
-          );
-          nixosUnstablePkgs = import inputs.nixos-unstable {
-            inherit system;
-            config.allowUnfreePredicate = unfreePredicate;
-          };
-        in
-        rec {
-          pkgsUnstable = import nixpkgs-unstable {
-            inherit system;
-            config.allowUnfreePredicate = unfreePredicate;
-            overlays = overlays ++ [
-              (final: prev: {
-                claude-code = self.packages.${system}.claude-code;
-              })
-            ];
-          };
-          pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfreePredicate = unfreePredicate;
-            overlays = overlays ++ [
-              (final: prev: {
-                pkgsUnstable = pkgsUnstable;
-              })
-              (final: prev: {
-                claude-code = self.packages.${system}.claude-code;
-              })
-            ];
-          };
-        }
-      );
+      overlaysSet = (import ./overlays/default.nix) { inherit self inputs; };
+      importPkgs = (import ./lib/import-pkgs.nix) { inherit self nixpkgs nixpkgs-unstable inputs; };
     in
     (
       flake-utils.lib.eachDefaultSystem (
@@ -160,7 +102,7 @@
             pi = inputs.nixos-generators.nixosGenerate {
               system = "aarch64-linux";
               format = "sd-aarch64";
-              modules = [ ./lib/nixos/hardware/rpi4.nix ];
+              modules = [ ./modules/nixos/hardware/rpi4.nix ];
             };
 
             default = legacyPackages.homeConfigurations.cmp.activationPackage;
@@ -169,12 +111,12 @@
           legacyPackages = {
             installer-iso = self.nixosConfigurations.installer.config.formats.iso;
             homeConfigurations = {
-              cmp = home-manager-unstable.lib.homeManagerConfiguration {
+              cmp = home-manager.lib.homeManagerConfiguration {
                 pkgs = pkgsUnstable;
 
                 modules = [
-                  ./home/modules/nixpkgs.nix
-                  ./home/default.nix
+                  ./modules/home/nixpkgs.nix
+                  ./modules/home/default.nix
                   {
                     allowedUnfree = [
                       "vault-bin"
@@ -184,12 +126,12 @@
                   }
                 ];
               };
-              nixos = home-manager-unstable.lib.homeManagerConfiguration {
+              nixos = home-manager.lib.homeManagerConfiguration {
                 pkgs = pkgsUnstable;
 
                 modules = [
-                  ./home/modules/nixpkgs.nix
-                  ./home/default.nix
+                  ./modules/home/nixpkgs.nix
+                  ./modules/home/default.nix
                   {
                     allowedUnfree = [
                       "vault-bin"
@@ -205,42 +147,7 @@
 
           devShells = (
             let
-              overlays = with self.overlays; [
-                rust
-                rustToolchain
-                deploy-rs
-                terraform
-                (final: prev: {
-                  android-nixpkgs = inputs.android-nixpkgs;
-                })
-              ];
-              allowUnfreePredicate = (
-                pkg:
-                builtins.elem (nixpkgs.lib.getName pkg) [
-                  "terraform"
-                  "android-studio-stable"
-                  "Xcode.app"
-                  "xcode"
-                ]
-              );
-              pkgsUnstable = import nixpkgs-unstable {
-                inherit system;
-                overlays = overlays;
-                config = {
-                  inherit allowUnfreePredicate;
-                };
-              };
-              pkgs = import nixpkgs {
-                inherit system;
-                overlays = overlays ++ [
-                  (final: prev: {
-                    pkgsUnstable = pkgsUnstable;
-                  })
-                ];
-                config = {
-                  inherit allowUnfreePredicate;
-                };
-              };
+              inherit (importPkgs system) pkgs pkgsUnstable;
             in
             rec {
               default = dotfiles;
@@ -251,8 +158,8 @@
 
               devops = pkgs.callPackage ./shells/devops.nix { };
 
-              # TODO: Broken android and incorrect XCode setup
-              react-native = pkgs.callPackage ./shells/react-native.nix { };
+              # TODO: Broken android and incorrect XCode setup; requires android-nixpkgs input
+              # react-native = pkgs.callPackage ./shells/react-native.nix { };
             }
           );
           devShell = self.devShells.${system}.default;
@@ -269,65 +176,42 @@
         system:
         let
           inherit (importPkgs system) pkgs pkgsUnstable;
-          simpleHomeConfig = (
-            {
-              pkgs,
-              home-manager ? inputs.home-manager,
-              username ? "cmp",
-              options ? { },
-            }:
-            home-manager.lib.homeManagerConfiguration {
-              inherit pkgs;
-              modules = [
-                ./home/modules/nixpkgs.nix
-                ./home/default.nix
-                {
-                  allowedUnfree = [
-                    "vault-bin"
-                    "terraform"
-                  ];
-                  home.username = username;
-                }
-                options
-              ];
-            }
-          );
+          simpleHomeConfig = (import ./lib/simple-home-config.nix) inputs;
         in
         {
           homeConfigurations = {
             "cmp@flamme" = simpleHomeConfig {
               pkgs = pkgsUnstable;
-              home-manager = inputs.home-manager-unstable;
+              home-manager = inputs.home-manager;
               options.chrisportela = {
-                desktop = true;
-                enableExtraPackages = true;
+                desktop.enable = true;
+                experiment.enable = true;
                 coding-agents.enable = true;
               };
             };
             "cmp@ada" = simpleHomeConfig {
               pkgs = pkgsUnstable;
-              home-manager = inputs.home-manager-unstable;
+              home-manager = inputs.home-manager;
               options.chrisportela = {
-                desktop = true;
-                enableExtraPackages = true;
+                desktop.enable = true;
+                experiment.enable = true;
                 coding-agents.enable = true;
               };
             };
-            "cmp@roxy" = simpleHomeConfig {
-              pkgs = pkgsUnstable;
-              home-manager = inputs.home-manager-unstable;
-              options.chrisportela = {
-                coding-agents.enable = true;
-              };
-            };
+            # "cmp@roxy" = simpleHomeConfig {
+            #   inherit pkgs;
+            #   options.chrisportela = {
+            #     coding-agents.enable = true;
+            #   };
+            # };
 
             "deck@steamdeck" = simpleHomeConfig {
               inherit pkgs;
               home-manager = inputs.home-manager;
               username = "deck";
               options.chrisportela = {
-                desktop = false;
-                enableExtraPackages = false;
+                desktop.enable = false;
+                experiment.enable = false;
                 coding-agents.enable = false;
               };
             };
@@ -345,37 +229,23 @@
             };
           };
 
-          overlays = {
-            rust = (import inputs.rust-overlay);
+          overlays = overlaysSet;
 
-            # Provides a `rustToolchain` attribute for Nixpkgs that we can use to
-            # create a Rust environment
-            rustToolchain = (final: prev: { rustToolchain = prev.rust-bin.stable.latest.default; });
-
-            deploy-rs = (final: prev: { deploy-rs = inputs.deploy-rs.defaultPackage.${final.stdenv.system}; });
-
-            terraform = (final: prev: { terraformFull = self.packages.${final.stdenv.system}.terraform; });
-
-            setup-envrc = (final: prev: { setup-envrc = self.packages.${final.stdenv.system}.setup-envrc; });
-
-            opencode-cursor = (final: prev: { opencode-cursor = self.packages.${final.stdenv.system}.opencode-cursor; });
-          };
-
-          nixosModules = (import ./lib/nixos/modules/default.nix);
+          nixosModules = (import ./modules/nixos/default.nix);
 
           nixosConfigurations = {
-            installer = (import ./lib/nixos/configurations/installer.nix) {
+            installer = (import ./hosts/nixos/installer.nix) {
               inherit inputs self;
-              nixos = inputs.nixos-unstable;
+              nixos = inputs.nixpkgs-unstable;
               nixpkgs = inputs.nixpkgs;
             };
-            # builder = (import ./lib/nixos/configurations/builder.nix) {
+            # builder = (import ./hosts/nixos/builder.nix) {
             #   nixpkgs = inputs.nixpkgs;
             #   nixosModules = self.nixosModules;
             # };
-            ada = (import ./lib/nixos/configurations/ada.nix) {
+            ada = (import ./hosts/nixos/ada/default.nix) {
               inherit inputs;
-              nixos = inputs.nixos-unstable;
+              nixos = inputs.nixpkgs-unstable;
               nixosModules = self.nixosModules;
               overlays = [
                 (final: prev: {
@@ -384,16 +254,17 @@
 
               ];
             };
-            flamme = (import ./lib/nixos/configurations/flamme.nix) {
+            flamme = (import ./hosts/nixos/flamme/default.nix) {
               inherit inputs;
-              nixos = inputs.nixos-unstable;
+              nixos = inputs.nixpkgs-unstable;
               nixosModules = self.nixosModules;
             };
           };
 
           darwinModules = {
-            common = ./lib/darwin/common.nix;
-            nixpkgs = ./lib/darwin/nixpkgs.nix;
+            common = ./modules/darwin/common.nix;
+            nixpkgs = ./modules/darwin/nixpkgs.nix;
+            default = ./modules/darwin/default.nix;
           };
 
           darwinConfigurations = {
@@ -406,11 +277,11 @@
                   rust
                   rustToolchain
                 ];
-                nixpkgs = inputs.nixpkgs-darwin;
+                nixpkgs = inputs.nixpkgs-unstable;
               };
               modules = with self.darwinModules; [
-                common
-                ./lib/darwin/configurations/mba.nix
+                default
+                ./hosts/darwin/mba.nix
                 # { nix.linux-builder.enable = true; }
                 inputs.nix-rosetta-builder.darwinModules.default
                 {
@@ -431,11 +302,8 @@
                   rust
                   rustToolchain
                 ];
-                nixpkgs = inputs.nixpkgs-darwin.extend (
+                nixpkgs = inputs.nixpkgs-unstable.extend (
                   final: prev:
-                  let
-                    unstable = inputs.nixos-unstable."aarch64-darwin".legacyPackages;
-                  in
                   {
                     nodejs = prev.nodejs.overrideAttrs (old: {
                       doCheck = false;
@@ -444,37 +312,14 @@
                 );
               };
               modules = with self.darwinModules; [
-                common
-                ./lib/darwin/configurations/mba.nix
-                { ids.gids.nixbld = 350; }
-                # { nix.linux-builder.enable = true; }
+                default
+                ./hosts/darwin/mba.nix
+                ./hosts/darwin/roxy.nix
                 inputs.nix-rosetta-builder.darwinModules.default
                 {
                   nix-rosetta-builder = {
                     enable = true;
                     onDemand = true;
-                    # onDemandLingerMinutes = 180;
-                  };
-                }
-                {
-                  nixpkgs.overlays = [
-                    (final: prev: {
-                      nodejs = inputs.nixpkgs-unstable.legacyPackages.aarch64-darwin.nodejs_20;
-                    })
-                  ];
-                  nix = {
-                    registry.nixpkgs.flake = inputs.nixpkgs-darwin;
-                    registry.nixos.flake = inputs.nixos;
-                    registry.nixos-unstable.flake = inputs.nixos-unstable;
-                    registry.nixpkgs-unstable.flake = inputs.nixpkgs-unstable;
-
-                    nixPath = [
-                      "nixpkgs=${inputs.nixpkgs-darwin}"
-                      "nixos=${inputs.nixos}"
-                      "nixpkgs-unstable=${inputs.nixpkgs-unstable}"
-                      "nixos-unstable=${inputs.nixos-unstable}"
-                      "/nix/var/nix/profiles/per-user/root/channels"
-                    ];
                   };
                 }
               ];
