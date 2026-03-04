@@ -1,0 +1,82 @@
+name: Nix
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v28
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@v14
+        with:
+          name: chrisportela-dotfiles
+
+      - name: Check flake
+        run: nix flake check
+
+  build:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v28
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@v14
+        with:
+          name: chrisportela-dotfiles
+
+      - name: Build packages and devShells
+        run: |
+          nix build \
+            .#packages.x86_64-linux.cachix-helper \
+            .#packages.x86_64-linux.setup-envrc \
+            .#formatter.x86_64-linux \
+            .#devShells.x86_64-linux.dotfiles \
+            .#devShells.x86_64-linux.dev \
+            .#devShells.x86_64-linux.devops \
+            .#devShells.x86_64-linux.react-native \
+            --no-link
+
+      - name: Build home-manager
+        run: nix build .#legacyPackages.x86_64-linux.homeConfigurations.cmp.activationPackage --no-link
+
+      - name: Build NixOS config (ada)
+        run: nix build .#nixosConfigurations.ada.config.system.build.toplevel --no-link
+
+  build-darwin:
+    name: Build (Darwin)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v28
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cachix/cachix-action@v14
+        with:
+          name: chrisportela-dotfiles
+
+      - name: Build darwin config and devShell
+        run: |
+          nix build \
+            .#darwinConfigurations.lux.config.system.build.toplevel \
+            .#devShells.aarch64-darwin.default \
+            --no-link
