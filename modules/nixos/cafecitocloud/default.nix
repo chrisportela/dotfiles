@@ -1,6 +1,14 @@
-{ config, lib, pkgs, ... }:
-let cfg = config.cafecitocloud;
-in with lib; {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.cafecitocloud;
+in
+with lib;
+{
   options.cafecitocloud = {
     enable = mkEnableOption "Cafecito Cloud config";
     enableACME = mkOption {

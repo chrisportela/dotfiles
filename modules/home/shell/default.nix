@@ -1,32 +1,39 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 lib.mkMerge [
   {
-    home.shellAliases = let
-      git = "${pkgs.git}/bin/git";
-      readlink = "${pkgs.coreutils}/bin/readlink";
-    in {
-      "reload" = "[[ -o login ]] && exec $SHELL -l || exec $SHELL";
-      "realcd" = "cd $(${readlink} -f .)";
+    home.shellAliases =
+      let
+        git = "${pkgs.git}/bin/git";
+        readlink = "${pkgs.coreutils}/bin/readlink";
+      in
+      {
+        "reload" = "[[ -o login ]] && exec $SHELL -l || exec $SHELL";
+        "realcd" = "cd $(${readlink} -f .)";
 
-      "g" = "${git} ";
-      "gs" = "${git} status ";
-      "gl" = "${git} log ";
-      "ga" = "${git} add ";
-      "gb" = "${git} branch";
-      "push" = "${git} push ";
-      "pusho" = "${git} push origin HEAD";
-      "fpush" = "${git} push --force-with-lease";
-      "pull" = "${git} pull --ff --tags --prune";
-      "fpull" = "${git} pull --force --ff --tags --prune";
-      # "grh" = "${git} reset --hard origin/HEAD";
+        "g" = "${git} ";
+        "gs" = "${git} status ";
+        "gl" = "${git} log ";
+        "ga" = "${git} add ";
+        "gb" = "${git} branch";
+        "push" = "${git} push ";
+        "pusho" = "${git} push origin HEAD";
+        "fpush" = "${git} push --force-with-lease";
+        "pull" = "${git} pull --ff --tags --prune";
+        "fpull" = "${git} pull --force --ff --tags --prune";
+        # "grh" = "${git} reset --hard origin/HEAD";
 
-      # These are just nice helpers for whatever "terraform" is in the environment.
-      "t" = "terraform";
-      "tf" = "terraform";
-      "tip" = "terraform init && terraform plan -out plan.out";
-      "tp" = "terraform plan -out plan.out";
-      "tap" = "terraform apply plan.out";
-    };
+        # These are just nice helpers for whatever "terraform" is in the environment.
+        "t" = "terraform";
+        "tf" = "terraform";
+        "tip" = "terraform init && terraform plan -out plan.out";
+        "tp" = "terraform plan -out plan.out";
+        "tap" = "terraform apply plan.out";
+      };
 
     programs.git.enable = true;
 
@@ -34,13 +41,19 @@ lib.mkMerge [
       enable = lib.mkDefault true;
       enableZshIntegration = lib.mkDefault true;
       defaultCommand = "fd --type f";
-      defaultOptions = [ "--height 40%" "--border" ];
+      defaultOptions = [
+        "--height 40%"
+        "--border"
+      ];
       fileWidgetCommand = "fd --type f";
       fileWidgetOptions = [ "--preview 'head {}'" ];
       changeDirWidgetCommand = "fd --type d";
       changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
       tmux.enableShellIntegration = lib.mkDefault true;
-      historyWidgetOptions = [ "--sort" "--exact" ];
+      historyWidgetOptions = [
+        "--sort"
+        "--exact"
+      ];
     };
 
     programs.zsh = {
@@ -56,60 +69,70 @@ lib.mkMerge [
         ignoreSpace = true;
         expireDuplicatesFirst = true;
       };
-      initContent = let
-        zshConfigEarlyInit = lib.mkOrder 550 ''
-          if type brew &>/dev/null
-          then
-            FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
-          fi
-        '';
-        zshConfigInit = lib.mkOrder 1000 ''
-          if [ -e ${config.home.homeDirectory}/.nix-profile/etc/profile.d/nix.sh ]; then
-              source ${config.home.homeDirectory}/.nix-profile/etc/profile.d/nix.sh;
-          fi # added by Nix installer
-
-          if [[ -f "${config.home.homeDirectory}/.cargo/env" ]]; then
-              source "${config.home.homeDirectory}/.cargo/env"
-          fi
-
-          if [[ -f "/opt/homebrew/bin/brew" ]]; then
-              eval "$(/opt/homebrew/bin/brew shellenv)"
-          fi
-
-          export ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX=YES
-          source ${./iterm2_shell_integration.zsh}
-
-          if [[ "$TERM_PROGRAM" = vscode ]]; then
-            export EDITOR=code;
-          fi
-
-          if command -v pyenv 1>/dev/null 2>&1; then
-            eval "$(pyenv init -)"
-          fi
-
-          if [[ -f "$HOME/.shellfishrc" ]]; then
-            source "$HOME/.shellfishrc"
-          fi
-
-          if [[ -d "$HOME/.npm-global" ]]; then
-            export PATH="$PATH:$HOME/.npm-global/bin"
-          fi
-
-          ${if pkgs.stdenv.isDarwin then ''
-            if [[ -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]]; then
-              export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS"
-              alias tailscale=Tailscale
-              alias ts=Tailscale
+      initContent =
+        let
+          zshConfigEarlyInit = lib.mkOrder 550 ''
+            if type brew &>/dev/null
+            then
+              FPATH="$(brew --prefix)/share/zsh/site-functions:$FPATH"
             fi
-          '' else ''
-            if command -v tailscale 1>/dev/null 2>&1; then
-              alias ts=tailscale
-            fi
-          ''}
+          '';
+          zshConfigInit = lib.mkOrder 1000 ''
+            if [ -e ${config.home.homeDirectory}/.nix-profile/etc/profile.d/nix.sh ]; then
+                source ${config.home.homeDirectory}/.nix-profile/etc/profile.d/nix.sh;
+            fi # added by Nix installer
 
-          source ${./shell_functions.sh}
-        '';
-      in lib.mkMerge [ zshConfigEarlyInit zshConfigInit ];
+            if [[ -f "${config.home.homeDirectory}/.cargo/env" ]]; then
+                source "${config.home.homeDirectory}/.cargo/env"
+            fi
+
+            if [[ -f "/opt/homebrew/bin/brew" ]]; then
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+            fi
+
+            export ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX=YES
+            source ${./iterm2_shell_integration.zsh}
+
+            if [[ "$TERM_PROGRAM" = vscode ]]; then
+              export EDITOR=code;
+            fi
+
+            if command -v pyenv 1>/dev/null 2>&1; then
+              eval "$(pyenv init -)"
+            fi
+
+            if [[ -f "$HOME/.shellfishrc" ]]; then
+              source "$HOME/.shellfishrc"
+            fi
+
+            if [[ -d "$HOME/.npm-global" ]]; then
+              export PATH="$PATH:$HOME/.npm-global/bin"
+            fi
+
+            ${
+              if pkgs.stdenv.isDarwin then
+                ''
+                  if [[ -f "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]]; then
+                    export PATH="$PATH:/Applications/Tailscale.app/Contents/MacOS"
+                    alias tailscale=Tailscale
+                    alias ts=Tailscale
+                  fi
+                ''
+              else
+                ''
+                  if command -v tailscale 1>/dev/null 2>&1; then
+                    alias ts=tailscale
+                  fi
+                ''
+            }
+
+            source ${./shell_functions.sh}
+          '';
+        in
+        lib.mkMerge [
+          zshConfigEarlyInit
+          zshConfigInit
+        ];
 
     };
 
@@ -173,7 +196,9 @@ lib.mkMerge [
           truncation_length = 5;
           format = "in [$path]($style)[$lock_symbol]($lock_style) ";
         };
-        kubernetes = { disabled = false; };
+        kubernetes = {
+          disabled = false;
+        };
         package.disabled = true;
         gcloud = {
           disabled = true;
@@ -200,12 +225,13 @@ lib.mkMerge [
     };
   }
   (lib.mkIf pkgs.stdenv.isLinux {
-    home.shellAliases = { "open" = "xdg-open"; };
+    home.shellAliases = {
+      "open" = "xdg-open";
+    };
   })
   (lib.mkIf pkgs.stdenv.isDarwin {
     home.shellAliases = {
-      "flushdns" =
-        "sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder";
+      "flushdns" = "sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder";
     };
   })
 ]

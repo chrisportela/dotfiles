@@ -1,4 +1,11 @@
-{ config, lib, pkgs, modulesPath, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
+{
   nixpkgs.hostPlatform = "aarch64-linux"; # pi 3 >=
   # nixpkgs.hostPlatform = "armv6l-linux"; # pi 1 & zero
 
@@ -7,7 +14,9 @@
     # includeBuildDependencies = true;
   };
 
-  nix = { settings.auto-optimise-store = true; };
+  nix = {
+    settings.auto-optimise-store = true;
+  };
 
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
@@ -97,7 +106,10 @@
     users.admin = {
       isNormalUser = true;
       group = "admin";
-      extraGroups = [ "gpio" "wheel" ];
+      extraGroups = [
+        "gpio"
+        "wheel"
+      ];
       initialPassword = "nimda"; # Need some kind of password to login
       openssh.authorizedKeys.keys = (import ./lib/ssh-keys.nix).default;
     };

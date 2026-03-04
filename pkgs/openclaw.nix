@@ -1,5 +1,14 @@
-{ lib, stdenvNoCC, fetchFromGitHub, fetchPnpmDeps, pnpmConfigHook, pnpm_10
-, nodejs_22, makeWrapper, versionCheckHook, }:
+{
+  lib,
+  stdenvNoCC,
+  fetchFromGitHub,
+  fetchPnpmDeps,
+  pnpmConfigHook,
+  pnpm_10,
+  nodejs_22,
+  makeWrapper,
+  versionCheckHook,
+}:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "openclaw";
@@ -21,7 +30,12 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     hash = finalAttrs.pnpmDepsHash;
   };
 
-  nativeBuildInputs = [ pnpmConfigHook pnpm_10 nodejs_22 makeWrapper ];
+  nativeBuildInputs = [
+    pnpmConfigHook
+    pnpm_10
+    nodejs_22
+    makeWrapper
+  ];
 
   buildPhase = ''
     runHook preBuild
@@ -73,8 +87,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       (Originally known as Moltbot and ClawdBot)
     '';
     homepage = "https://openclaw.ai";
-    changelog =
-      "https://github.com/openclaw/openclaw/releases/tag/${finalAttrs.src.tag}";
+    changelog = "https://github.com/openclaw/openclaw/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.mit;
     mainProgram = "openclaw";
     maintainers = with lib.maintainers; [ chrisportela ];

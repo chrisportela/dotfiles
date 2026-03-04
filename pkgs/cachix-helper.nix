@@ -1,4 +1,10 @@
-{ pkgs, lib, stdenv, cachix, nix, }:
+{
+  pkgs,
+  lib,
+  stdenv,
+  cachix,
+  nix,
+}:
 let
   cachixRepo = "chrisportela-dotfiles";
   cachixArgs = lib.concatStringsSep " " [
@@ -9,7 +15,8 @@ let
   nixBin = "${nix}/bin/nix";
   cachixBin = "${cachix}/bin/cachix";
   hmConfig = "cmp";
-in (pkgs.writeShellScriptBin "cachix-helper" ''
+in
+(pkgs.writeShellScriptBin "cachix-helper" ''
   set -eu
   SYSTEM="${stdenv.system}"
   if [ -n "''${1-}" ]; then
@@ -40,7 +47,8 @@ in (pkgs.writeShellScriptBin "cachix-helper" ''
   ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-dev-$SYSTEM result-shell-dev
 
   echo "#### Finished!"
-'') // {
+'')
+// {
 
   meta = with lib; {
     description = "A helper script for using Cachix";

@@ -1,4 +1,11 @@
-{ config, lib, pkgs, modulesPath, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -16,12 +23,22 @@
   # Specifically this patch: https://github.com/torvalds/linux/commit/073237281a508ac80ec025872ad7de50cfb5a28a
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  boot.initrd.availableKernelModules =
-    [ "xhci_pci" "thunderbolt" "nvme" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules = [
+    "xhci_pci"
+    "thunderbolt"
+    "nvme"
+    "usbhid"
+    "usb_storage"
+    "sd_mod"
+  ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
-  boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" ];
+  boot.supportedFilesystems = [
+    "ntfs"
+    "ext4"
+    "vfat"
+  ];
   # boot.zfs = {
   #   extraPools = [ "zpool" ];
   #   requestEncryptionCredentials = [ "zpool" ];
@@ -54,11 +71,10 @@
   hardware.graphics = {
     enable = true;
     #driSupport32Bit = true;
-    extraPackages = with pkgs;
-      [
-        vpl-gpu-rt # for after 24.05
-        # TODO: use unstable?
-      ];
+    extraPackages = with pkgs; [
+      vpl-gpu-rt # for after 24.05
+      # TODO: use unstable?
+    ];
   };
 
   # Load nvidia driver for Xorg and Wayland
@@ -89,6 +105,5 @@
   nixpkgs.hostPlatform = "x86_64-linux";
   powerManagement.cpuFreqGovernor = "powersave";
   hardware.enableRedistributableFirmware = true;
-  hardware.cpu.intel.updateMicrocode =
-    config.hardware.enableRedistributableFirmware;
+  hardware.cpu.intel.updateMicrocode = config.hardware.enableRedistributableFirmware;
 }

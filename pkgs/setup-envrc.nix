@@ -1,6 +1,12 @@
-{ pkgs, lib, direnv, }:
-let direnvBin = "${direnv}/bin/direnv";
-in (pkgs.writeShellScriptBin "setup-envrc" ''
+{
+  pkgs,
+  lib,
+  direnv,
+}:
+let
+  direnvBin = "${direnv}/bin/direnv";
+in
+(pkgs.writeShellScriptBin "setup-envrc" ''
   set -eu
 
   # Check if we're in a git repository
@@ -55,7 +61,8 @@ in (pkgs.writeShellScriptBin "setup-envrc" ''
     echo "Warning: direnv not found in PATH, skipping approval" >&2
     echo "Run 'direnv allow' manually to approve the .envrc file"
   fi
-'') // {
+'')
+// {
   meta = {
     description = "Setup and approve .envrc file in git repositories";
     license = lib.licenses.mit;

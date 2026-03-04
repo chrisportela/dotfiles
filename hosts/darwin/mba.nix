@@ -1,4 +1,10 @@
-{ lib, config, pkgs, ... }: {
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+{
   chrisportela = {
     darwin-common.enable = true;
     stats.enable = true;
@@ -16,8 +22,7 @@
 
   allowedUnfree = [ "1password-cli" ];
 
-  security.pki.certificateFiles =
-    [ ../../../modules/nixos/cafecitocloud/cafecitocloud-root_ca.crt ];
+  security.pki.certificateFiles = [ ../../../modules/nixos/cafecitocloud/cafecitocloud-root_ca.crt ];
 
   nix.settings.connect-timeout = "5";
 

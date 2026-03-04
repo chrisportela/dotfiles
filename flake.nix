@@ -81,8 +81,18 @@
     let
       overlaysSet = (import ./overlays/default.nix) { inherit self inputs; };
       importPkgs = (import ./lib/import-pkgs.nix) {
-        inherit self nixpkgs nixpkgs-unstable inputs;
-        allowUnfree = [ "terraform" "vault-bin" "claude-code" "xcode" ];
+        inherit
+          self
+          nixpkgs
+          nixpkgs-unstable
+          inputs
+          ;
+        allowUnfree = [
+          "terraform"
+          "vault-bin"
+          "claude-code"
+          "xcode"
+        ];
       };
     in
     (

@@ -1,11 +1,11 @@
 # Roxy-specific overrides: nodejs version, nix registry/nixPath, and gid for nixbld.
-{ inputs, pkgs, ... }: {
+{ inputs, pkgs, ... }:
+{
   ids.gids.nixbld = 350;
 
   nixpkgs.overlays = [
     (final: prev: {
-      nodejs =
-        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.system}.nodejs_20;
+      nodejs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.system}.nodejs_20;
     })
   ];
 

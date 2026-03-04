@@ -6,8 +6,15 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs { inherit system; };
         prisma-engines = pkgs.prisma-engines_7;
@@ -21,10 +28,16 @@
           version = "0.1.0";
           src = pkgs.lib.cleanSourceWith {
             src = self;
-            filter = path: type:
-              let baseName = baseNameOf path;
-              in baseName != "node_modules" && baseName != ".next" && baseName
-              != ".git" && baseName != "result" && baseName != ".direnv"
+            filter =
+              path: type:
+              let
+                baseName = baseNameOf path;
+              in
+              baseName != "node_modules"
+              && baseName != ".next"
+              && baseName != ".git"
+              && baseName != "result"
+              && baseName != ".direnv"
               && !pkgs.lib.hasPrefix ".env" baseName
               && !pkgs.lib.hasPrefix "result" baseName;
           };
@@ -45,10 +58,8 @@
 
           PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
           PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
-          PRISMA_QUERY_ENGINE_LIBRARY =
-            "${prisma-engines}/lib/libquery_engine.node";
-          PRISMA_INTROSPECTION_ENGINE_BINARY =
-            "${prisma-engines}/bin/introspection-engine";
+          PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
+          PRISMA_INTROSPECTION_ENGINE_BINARY = "${prisma-engines}/bin/introspection-engine";
           PRISMA_FMT_BINARY = "${prisma-engines}/bin/prisma-fmt";
           # Prisma generate may need a dummy URL at build time
           DATABASE_URL = "postgresql://localhost/dummy?schema=public";
@@ -91,7 +102,8 @@
             runHook postInstall
           '';
         });
-      in {
+      in
+      {
         packages = {
           default = production;
           production = production;
@@ -155,5 +167,6 @@
             echo "Note: Prisma binaries are provided by Nix for consistent deployment"
           '';
         };
-      });
+      }
+    );
 }

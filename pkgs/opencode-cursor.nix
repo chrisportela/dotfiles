@@ -1,4 +1,9 @@
-{ lib, stdenvNoCC, fetchFromGitHub, bun, }:
+{
+  lib,
+  stdenvNoCC,
+  fetchFromGitHub,
+  bun,
+}:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "opencode-cursor";

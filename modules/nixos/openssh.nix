@@ -1,7 +1,9 @@
 # Provides opinionated secure defaults for SSH Config
 { config, lib, ... }:
-let cfg = config.services.openssh;
-in {
+let
+  cfg = config.services.openssh;
+in
+{
   options.services.openssh = { };
   config = {
     services.openssh = {

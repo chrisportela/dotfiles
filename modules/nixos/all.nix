@@ -1,5 +1,6 @@
 # Aggregator: import all NixOS modules. Each module is toggled via its enable option.
-{ ... }: {
+{ ... }:
+{
   imports = [
     ./nixpkgs.nix
     ./common.nix

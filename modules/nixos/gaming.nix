@@ -1,6 +1,16 @@
-{ config, lib, pkgs, inputs, system, ... }:
-let cfg = config.chrisportela.gaming;
-in with lib; {
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  system,
+  ...
+}:
+let
+  cfg = config.chrisportela.gaming;
+in
+with lib;
+{
   options.chrisportela.gaming = {
     enable = lib.mkEnableOption "Gaming config";
     #     nvidia = lib.mkEnableOption "Nvidia specific settings";
@@ -52,10 +62,8 @@ in with lib; {
     programs.steam = {
       enable = true;
       extest.enable = true;
-      remotePlay.openFirewall =
-        false; # Open ports in the firewall for Steam Remote Play
-      dedicatedServer.openFirewall =
-        false; # Open ports in the firewall for Source Dedicated Server
+      remotePlay.openFirewall = false; # Open ports in the firewall for Steam Remote Play
+      dedicatedServer.openFirewall = false; # Open ports in the firewall for Source Dedicated Server
       localNetworkGameTransfers.openFirewall = true;
       gamescopeSession.enable = true;
       # gamescopeSession.args = ["--prefer-vk-device 8086:9bc4"];

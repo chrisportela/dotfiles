@@ -27,7 +27,9 @@
                 # LUKS passphrase will be prompted interactively only
                 type = "luks";
                 name = "crypted";
-                settings = { allowDiscards = true; };
+                settings = {
+                  allowDiscards = true;
+                };
                 content = {
                   type = "filesystem";
                   format = "ext4";
