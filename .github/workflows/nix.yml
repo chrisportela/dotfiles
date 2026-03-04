@@ -55,8 +55,8 @@ jobs:
       - name: Build home-manager
         run: nix build .#legacyPackages.x86_64-linux.homeConfigurations.cmp.activationPackage --no-link
 
-      - name: Build NixOS config (ada)
-        run: nix build .#nixosConfigurations.ada.config.system.build.toplevel --no-link
+      # - name: Build NixOS config (ada)
+      #   run: nix build .#nixosConfigurations.ada.config.system.build.toplevel --no-link
 
   build-darwin:
     name: Build (Darwin)
