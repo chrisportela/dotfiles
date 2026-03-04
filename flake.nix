@@ -14,7 +14,9 @@
 
   inputs = {
     # Stable (25.05) for disko and any pinned usage
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs-stable.follows = "nixpkgs";
+    nixpkgs-25_11.follows = "nixpkgs";
     # Unstable for NixOS configs, darwin, and home-manager
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
@@ -23,30 +25,43 @@
     };
     darwin = {
       url = "github:lnl7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs-25_11";
     };
     nix-rosetta-builder = {
       url = "github:cpick/nix-rosetta-builder";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs-25_11";
     };
     disko = {
       url = "github:nix-community/disko/latest";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    agenix.url = "github:ryantm/agenix";
-    deploy-rs.url = "github:serokell/deploy-rs";
-    vscode-server.url = "github:nix-community/nixos-vscode-server";
-    rust-overlay.url = "github:oxalica/rust-overlay";
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
+    vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
+    };
     microvm = {
       url = "github:microvm-nix/microvm.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-stable";
     };
 
-    # For installer target
-    nixos-generators.url = "github:nix-community/nixos-generators";
   };
 
   outputs =
@@ -63,7 +78,14 @@
     }:
     let
       overlaysSet = (import ./overlays/default.nix) { inherit self inputs; };
-      importPkgs = (import ./lib/import-pkgs.nix) { inherit self nixpkgs nixpkgs-unstable inputs; };
+      importPkgs = (import ./lib/import-pkgs.nix) {
+        inherit
+          self
+          nixpkgs
+          nixpkgs-unstable
+          inputs
+          ;
+      };
     in
     (
       flake-utils.lib.eachDefaultSystem (
@@ -99,17 +121,13 @@
 
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
-            pi = inputs.nixos-generators.nixosGenerate {
-              system = "aarch64-linux";
-              format = "sd-aarch64";
-              modules = [ ./modules/nixos/hardware/rpi4.nix ];
-            };
+            pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
 
             default = legacyPackages.homeConfigurations.cmp.activationPackage;
           };
 
           legacyPackages = {
-            installer-iso = self.nixosConfigurations.installer.config.formats.iso;
+            installer-iso = self.nixosConfigurations.installer.config.system.build.isoImage;
             homeConfigurations = {
               cmp = home-manager.lib.homeManagerConfiguration {
                 pkgs = pkgsUnstable;
@@ -239,6 +257,11 @@
               nixos = inputs.nixpkgs-unstable;
               nixpkgs = inputs.nixpkgs;
             };
+            rpi4 = (import ./hosts/nixos/rpi4-image.nix) {
+              inherit inputs self;
+              nixos = inputs.nixpkgs-unstable;
+              nixpkgs = inputs.nixpkgs;
+            };
             # builder = (import ./hosts/nixos/builder.nix) {
             #   nixpkgs = inputs.nixpkgs;
             #   nixosModules = self.nixosModules;
@@ -248,9 +271,7 @@
               nixos = inputs.nixpkgs-unstable;
               nixosModules = self.nixosModules;
               overlays = [
-                (final: prev: {
-                  rmlint = self.packages.x86_64-linux.rmlint;
-                })
+                (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
 
               ];
             };
@@ -303,8 +324,7 @@
                   rustToolchain
                 ];
                 nixpkgs = inputs.nixpkgs-unstable.extend (
-                  final: prev:
-                  {
+                  final: prev: {
                     nodejs = prev.nodejs.overrideAttrs (old: {
                       doCheck = false;
                     });
