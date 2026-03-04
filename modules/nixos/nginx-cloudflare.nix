@@ -29,13 +29,9 @@ let
     "2a06:98c0::/29"
     "2c0f:f248::/32"
   ];
-in
-{ lib, config, ... }:
-let
-  cfg = config.services.nginx;
-in
-with lib;
-{
+in { lib, config, ... }:
+let cfg = config.services.nginx;
+in with lib; {
   options = {
     services.nginx = {
       allowCloudflareProxyIPs = mkOption {
@@ -65,10 +61,12 @@ with lib;
   config = mkIf cfg.allowCloudflareProxyIPs {
     services.nginx.appendHttpConfig = ''
       # Cloudflare IPv4 Addresses
-      ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};") (cfg.cloudflareIPv4IPs)}
+      ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};")
+      (cfg.cloudflareIPv4IPs)}
 
       # Cloudflare IPv6 Addresses
-      ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};") (cfg.cloudflareIPv6IPs)}
+      ${lib.concatMapStringsSep "\n" (x: "set_real_ip_from ${x};")
+      (cfg.cloudflareIPv6IPs)}
 
       # Tell nginx to use CF's header to get the real IP
       real_ip_header CF-Connecting-IP;

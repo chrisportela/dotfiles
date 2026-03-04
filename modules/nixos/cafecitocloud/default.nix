@@ -1,14 +1,6 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-let
-  cfg = config.cafecitocloud;
-in
-with lib;
-{
+{ config, lib, pkgs, ... }:
+let cfg = config.cafecitocloud;
+in with lib; {
   options.cafecitocloud = {
     enable = mkEnableOption "Cafecito Cloud config";
     enableACME = mkOption {
@@ -19,9 +11,7 @@ with lib;
   };
 
   config = mkIf cfg.enable {
-    security.pki.certificateFiles = [
-      ./cafecitocloud-root_ca.crt
-    ];
+    security.pki.certificateFiles = [ ./cafecitocloud-root_ca.crt ];
 
     security.acme = mkIf cfg.enableACME {
       acceptTerms = true;

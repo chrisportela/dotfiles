@@ -1,16 +1,9 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
-let
-  cfg = config.chrisportela.ftp;
-in
-{
+let cfg = config.chrisportela.ftp;
+in {
   options.chrisportela.ftp = {
     enable = mkEnableOption "Sony camera FTP server";
 
@@ -86,13 +79,7 @@ in
     };
 
     # Open firewall ports for FTP and passive mode
-    networking.firewall = {
-      allowedTCPPorts = [
-        cfg.port
-        50000
-        51000
-      ];
-    };
+    networking.firewall = { allowedTCPPorts = [ cfg.port 50000 51000 ]; };
 
     # Ensure the photo dump directory exists and has correct permissions
     system.activationScripts.createFtpDirectory = ''

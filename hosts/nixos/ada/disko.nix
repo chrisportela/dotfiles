@@ -3,7 +3,8 @@
     disk = {
       boot-usb = {
         type = "disk";
-        device = "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0371324100002895-0:0";
+        device =
+          "/dev/disk/by-id/usb-Samsung_Flash_Drive_FIT_0371324100002895-0:0";
         content = {
           type = "gpt";
           partitions = {
@@ -31,9 +32,7 @@
               content = {
                 type = "luks";
                 name = "crypt-ssd0";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -55,9 +54,7 @@
               content = {
                 type = "luks";
                 name = "crypt-ssd1";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -79,9 +76,7 @@
               content = {
                 type = "luks";
                 name = "crypt-ssd2";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -103,9 +98,7 @@
               content = {
                 type = "luks";
                 name = "crypt-ssd3";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 # passwordFile = "/tmp/secret.key"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -128,9 +121,7 @@
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd0";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -153,9 +144,7 @@
               content = {
                 type = "luks";
                 name = "crypt-evo-ssd1";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -185,9 +174,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd0";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -217,9 +204,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd1";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -249,9 +234,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd2";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -281,9 +264,7 @@
               content = {
                 type = "luks";
                 name = "crypt-intel-ssd3";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -305,9 +286,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-0";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -329,9 +308,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-1";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -353,9 +330,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-2";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -377,9 +352,7 @@
               content = {
                 type = "luks";
                 name = "crypt-hdd-wd8tb-3";
-                settings = {
-                  allowDiscards = true;
-                };
+                settings = { allowDiscards = true; };
                 passwordFile = "/tmp/tank-passwd"; # Interactive prompt
                 content = {
                   type = "zfs";
@@ -390,55 +363,54 @@
           };
         };
       };
-      /*
-      hdd-wd14tb-0 = {
-        type = "disk";
-        device = "/dev/disk/by-id/ata-WDC_WD141KFGX-68FH9N0_9RHGPXZL";
-        content = {
-          type = "gpt";
-          partitions = {
-            luks = {
-              size = "100%";
-              content = {
-                type = "luks";
-                name = "crypt-hdd-wd14tb-0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                content = {
-                  type = "zfs";
-                  pool = "hpool0";
-                };
-              };
-            };
-          };
-        };
-      };
-      hdd-mdd12tb-0 = {
-        type = "disk";
-        device = "/dev/disk/by-id/ata-HUH721212ALE601_AAJBZVEH";
-        content = {
-          type = "gpt";
-          partitions = {
-            luks = {
-              size = "100%";
-              content = {
-                type = "luks";
-                name = "crypt-hdd-mdd12tb-0";
-                settings = {
-                  allowDiscards = true;
-                };
-                # passwordFile = "/tmp/secret.key"; # Interactive prompt
-                content = {
-                  type = "zfs";
-                  pool = "hpool1";
-                };
-              };
-            };
-          };
-        };
-      };
+      /* hdd-wd14tb-0 = {
+           type = "disk";
+           device = "/dev/disk/by-id/ata-WDC_WD141KFGX-68FH9N0_9RHGPXZL";
+           content = {
+             type = "gpt";
+             partitions = {
+               luks = {
+                 size = "100%";
+                 content = {
+                   type = "luks";
+                   name = "crypt-hdd-wd14tb-0";
+                   settings = {
+                     allowDiscards = true;
+                   };
+                   # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                   content = {
+                     type = "zfs";
+                     pool = "hpool0";
+                   };
+                 };
+               };
+             };
+           };
+         };
+         hdd-mdd12tb-0 = {
+           type = "disk";
+           device = "/dev/disk/by-id/ata-HUH721212ALE601_AAJBZVEH";
+           content = {
+             type = "gpt";
+             partitions = {
+               luks = {
+                 size = "100%";
+                 content = {
+                   type = "luks";
+                   name = "crypt-hdd-mdd12tb-0";
+                   settings = {
+                     allowDiscards = true;
+                   };
+                   # passwordFile = "/tmp/secret.key"; # Interactive prompt
+                   content = {
+                     type = "zfs";
+                     pool = "hpool1";
+                   };
+                 };
+               };
+             };
+           };
+         };
       */
     };
     zpool = {
@@ -447,17 +419,15 @@
         mode = {
           topology = {
             type = "topology";
-            vdev = [
-              {
-                mode = "raidz1";
-                members = [
-                  "/dev/mapper/crypt-ssd0"
-                  "/dev/mapper/crypt-ssd1"
-                  "/dev/mapper/crypt-ssd2"
-                  "/dev/mapper/crypt-ssd3"
-                ];
-              }
-            ];
+            vdev = [{
+              mode = "raidz1";
+              members = [
+                "/dev/mapper/crypt-ssd0"
+                "/dev/mapper/crypt-ssd1"
+                "/dev/mapper/crypt-ssd2"
+                "/dev/mapper/crypt-ssd3"
+              ];
+            }];
           };
         };
         rootFsOptions = {
@@ -494,7 +464,8 @@
             type = "zfs_fs";
             mountpoint = "/";
             options."com.sun:auto-snapshot" = "false";
-            postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^zroot/local/root@blank$' || zfs snapshot zroot/local/root@blank";
+            postCreateHook =
+              "zfs list -t snapshot -H -o name | grep -E '^zroot/local/root@blank$' || zfs snapshot zroot/local/root@blank";
           };
         };
       };
@@ -503,39 +474,31 @@
         mode = {
           topology = {
             type = "topology";
-            vdev = [
-              {
-                mode = "raidz1";
-                members = [
-                  "/dev/mapper/crypt-hdd-wd8tb-0"
-                  "/dev/mapper/crypt-hdd-wd8tb-1"
-                  "/dev/mapper/crypt-hdd-wd8tb-2"
-                  "/dev/mapper/crypt-hdd-wd8tb-3"
-                ];
-              }
-            ];
-            cache = [
-              "/dev/mapper/crypt-evo-ssd0"
-              "/dev/mapper/crypt-evo-ssd1"
-            ];
-            log = [
-              {
-                mode = "mirror";
-                members = [
-                  "/dev/mapper/crypt-intel-ssd0"
-                  "/dev/mapper/crypt-intel-ssd1"
-                ];
-              }
-            ];
-            special = [
-              {
-                mode = "mirror";
-                members = [
-                  "/dev/mapper/crypt-intel-ssd2"
-                  "/dev/mapper/crypt-intel-ssd3"
-                ];
-              }
-            ];
+            vdev = [{
+              mode = "raidz1";
+              members = [
+                "/dev/mapper/crypt-hdd-wd8tb-0"
+                "/dev/mapper/crypt-hdd-wd8tb-1"
+                "/dev/mapper/crypt-hdd-wd8tb-2"
+                "/dev/mapper/crypt-hdd-wd8tb-3"
+              ];
+            }];
+            cache =
+              [ "/dev/mapper/crypt-evo-ssd0" "/dev/mapper/crypt-evo-ssd1" ];
+            log = [{
+              mode = "mirror";
+              members = [
+                "/dev/mapper/crypt-intel-ssd0"
+                "/dev/mapper/crypt-intel-ssd1"
+              ];
+            }];
+            special = [{
+              mode = "mirror";
+              members = [
+                "/dev/mapper/crypt-intel-ssd2"
+                "/dev/mapper/crypt-intel-ssd3"
+              ];
+            }];
           };
         };
         rootFsOptions = {
@@ -555,45 +518,44 @@
           };
         };
       };
-      /*
-      hpool0 = {
-        type = "zpool";
-        rootFsOptions = {
-          # https://wiki.archlinux.org/title/Install_Arch_Linux_on_ZFS
-          acltype = "posixacl";
-          atime = "off";
-          compression = "zstd";
-          mountpoint = "none";
-          xattr = "sa";
-        };
-        options.ashift = "12";
-        datasets = {
-          "hpool0/main" = {
-            type = "zfs_fs";
-            mountpoint = "/mnt/hpool0";
-            options."com.sun:auto-snapshot" = "false";
-          };
-        };
-      };
-      hpool1 = {
-        type = "zpool";
-        rootFsOptions = {
-          # https://wiki.archlinux.org/title/Install_Arch_Linux_on_ZFS
-          acltype = "posixacl";
-          atime = "off";
-          compression = "zstd";
-          mountpoint = "none";
-          xattr = "sa";
-        };
-        options.ashift = "12";
-        datasets = {
-          "hpool1/main" = {
-            type = "zfs_fs";
-            mountpoint = "/mnt/hpool1";
-            options."com.sun:auto-snapshot" = "false";
-          };
-        };
-      };
+      /* hpool0 = {
+           type = "zpool";
+           rootFsOptions = {
+             # https://wiki.archlinux.org/title/Install_Arch_Linux_on_ZFS
+             acltype = "posixacl";
+             atime = "off";
+             compression = "zstd";
+             mountpoint = "none";
+             xattr = "sa";
+           };
+           options.ashift = "12";
+           datasets = {
+             "hpool0/main" = {
+               type = "zfs_fs";
+               mountpoint = "/mnt/hpool0";
+               options."com.sun:auto-snapshot" = "false";
+             };
+           };
+         };
+         hpool1 = {
+           type = "zpool";
+           rootFsOptions = {
+             # https://wiki.archlinux.org/title/Install_Arch_Linux_on_ZFS
+             acltype = "posixacl";
+             atime = "off";
+             compression = "zstd";
+             mountpoint = "none";
+             xattr = "sa";
+           };
+           options.ashift = "12";
+           datasets = {
+             "hpool1/main" = {
+               type = "zfs_fs";
+               mountpoint = "/mnt/hpool1";
+               options."com.sun:auto-snapshot" = "false";
+             };
+           };
+         };
       */
     };
   };

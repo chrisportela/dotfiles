@@ -1,14 +1,6 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-let
-  cfg = config.chrisportela.local-llm;
-in
-with lib;
-{
+{ config, lib, pkgs, ... }:
+let cfg = config.chrisportela.local-llm;
+in with lib; {
   options.chrisportela.local-llm = {
     enable = lib.mkEnableOption "Local Large-Language-Model config";
   };
@@ -54,14 +46,10 @@ with lib;
 
     nixpkgs.overlays = [
       (final: prev: {
-        python3-hf = prev.python3.withPackages (
-          ps:
+        python3-hf = prev.python3.withPackages (ps:
           with ps;
-          [ huggingface-hub ]
-          ++ (
-            with huggingface-hub.optional-dependencies; (hf_transfer ++ hf_xet ++ torch ++ cli ++ inference)
-          )
-        );
+          [ huggingface-hub ] ++ (with huggingface-hub.optional-dependencies;
+            (hf_transfer ++ hf_xet ++ torch ++ cli ++ inference)));
       })
     ];
 

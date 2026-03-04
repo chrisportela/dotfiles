@@ -25,36 +25,33 @@
         # Ruby 3.x for Gemfile / CocoaPods (Gemfile requires >= 3.0, < 4.1)
         ruby = pkgs.ruby_3_3;
 
-        androidSdk = pkgs.androidSdk (sdkPkgs: with sdkPkgs; [
-          cmdline-tools-latest
-          build-tools-34-0-0
-          platform-tools
-          platforms-android-34
-          emulator
-        ]);
+        androidSdk = pkgs.androidSdk (sdkPkgs:
+          with sdkPkgs; [
+            cmdline-tools-latest
+            build-tools-34-0-0
+            platform-tools
+            platforms-android-34
+            emulator
+          ]);
 
         # Writable SDK dir for shell hook (Nix store is read-only)
         androidSdkStorePath = "${androidSdk}/share/android-sdk";
-      in
-      {
+      in {
         devShells.default = pkgs.mkShellNoCC {
-          buildInputs = with pkgs; [
-            nodejs
-            nodePackages.pnpm
-            watchman
-            jdk
-            androidSdk
-            gradle
-            ruby
-            bundler
-          ]
-          ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
-            cocoapods
-            darwin.xcode_16_2
-          ])
-          ++ pkgs.lib.optionals pkgs.stdenv.isLinux (with pkgs; [
-            android-studio-full
-          ]);
+          buildInputs = with pkgs;
+            [
+              nodejs
+              nodePackages.pnpm
+              watchman
+              jdk
+              androidSdk
+              gradle
+              ruby
+              bundler
+            ] ++ pkgs.lib.optionals pkgs.stdenv.isDarwin
+            (with pkgs; [ cocoapods darwin.xcode_16_2 ])
+            ++ pkgs.lib.optionals pkgs.stdenv.isLinux
+            (with pkgs; [ android-studio-full ]);
 
           shellHook = ''
             export PATH="$PWD/node_modules/.bin:$PATH"
@@ -77,6 +74,5 @@
             echo "Run ./setup.sh MyApp then pnpm install to generate native projects."
           '';
         };
-      }
-    );
+      });
 }

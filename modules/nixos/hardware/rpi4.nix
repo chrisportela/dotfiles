@@ -1,11 +1,4 @@
-{
-  pkgs,
-  config,
-  lib,
-  modulesPath,
-  ...
-}:
-{
+{ pkgs, config, lib, modulesPath, ... }: {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   boot = {
@@ -94,10 +87,7 @@
     users.admin = {
       isNormalUser = true;
       group = "admin";
-      extraGroups = [
-        "gpio"
-        "wheel"
-      ];
+      extraGroups = [ "gpio" "wheel" ];
       initialPassword = "nimda"; # Need some kind of password to login
       openssh.authorizedKeys.keys = (import ../../../lib/ssh-keys.nix).default;
     };

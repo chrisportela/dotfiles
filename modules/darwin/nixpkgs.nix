@@ -1,10 +1,4 @@
-{
-  lib,
-  pkgs,
-  config,
-  ...
-}:
-{
+{ lib, pkgs, config, ... }: {
   imports = [ ../../nixos/nixpkgs.nix ];
 
   # options.allowedUnfree = lib.mkOption {
@@ -21,11 +15,9 @@
     nix = {
       package = pkgs.nixVersions.nix_2_31;
       settings = {
-        sandbox = false; # Even relaxed prevents HM builds - https://github.com/NixOS/nix/issues/4119 (2020)
-        trusted-users = [
-          "root"
-          "@admin"
-        ];
+        sandbox =
+          false; # Even relaxed prevents HM builds - https://github.com/NixOS/nix/issues/4119 (2020)
+        trusted-users = [ "root" "@admin" ];
       };
     };
   };

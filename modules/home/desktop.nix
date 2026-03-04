@@ -1,25 +1,12 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-let
-  cfg = config.chrisportela.desktop;
-in
-{
+{ config, lib, pkgs, ... }:
+let cfg = config.chrisportela.desktop;
+in {
   options.chrisportela.desktop = {
     enable = lib.mkEnableOption "Desktop related apps and settings";
   };
 
   config = lib.mkIf cfg.enable {
-    allowedUnfree = [
-      "terraform"
-      "vault-bin"
-      "vscode"
-      "discord"
-      "obsidian"
-    ];
+    allowedUnfree = [ "terraform" "vault-bin" "vscode" "discord" "obsidian" ];
 
     chrisportela.experiment.enable = lib.mkDefault true;
 

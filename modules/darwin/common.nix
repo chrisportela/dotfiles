@@ -1,11 +1,10 @@
 { lib, pkgs, config, ... }:
 with lib;
-let
-  cfg = config.chrisportela.darwin-common;
-in
-{
+let cfg = config.chrisportela.darwin-common;
+in {
   options.chrisportela.darwin-common = {
-    enable = lib.mkEnableOption "Darwin common (zsh, tmux, vim, system packages)";
+    enable =
+      lib.mkEnableOption "Darwin common (zsh, tmux, vim, system packages)";
   };
 
   config = lib.mkIf cfg.enable {

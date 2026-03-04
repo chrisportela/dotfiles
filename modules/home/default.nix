@@ -1,10 +1,4 @@
-{
-  pkgs,
-  lib,
-  config,
-  ...
-}:
-{
+{ pkgs, lib, config, ... }: {
   imports = [
     ./nixpkgs.nix
     ./difftastic.nix
@@ -16,9 +10,10 @@
   ];
 
   home = {
-    homeDirectory = (
-      if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}"
-    );
+    homeDirectory = (if pkgs.stdenv.isDarwin then
+      "/Users/${config.home.username}"
+    else
+      "/home/${config.home.username}");
     stateVersion = lib.mkDefault "22.11";
     packages = with pkgs; [
       curl
@@ -65,19 +60,13 @@
         set nocompatible
         set nobackup
       '';
-      plugins = with pkgs.vimPlugins; [
-        fugitive
-        surround
-        vim-nix
-      ];
+      plugins = with pkgs.vimPlugins; [ fugitive surround vim-nix ];
     };
 
     gh = {
       enable = true;
 
-      settings = {
-        git_protocol = "https";
-      };
+      settings = { git_protocol = "https"; };
     };
 
     git = {
@@ -87,7 +76,8 @@
           name = lib.mkDefault "Chris Portela";
           email = lib.mkDefault "chris@chrisportela.com";
         };
-        credential.helper = if pkgs.stdenv.isLinux then "libsecret" else "osxkeychain";
+        credential.helper =
+          if pkgs.stdenv.isLinux then "libsecret" else "osxkeychain";
         safe.directory = [ ];
         init.defaultBranch = "main";
       };

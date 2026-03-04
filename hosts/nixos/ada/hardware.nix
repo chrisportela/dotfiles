@@ -1,15 +1,5 @@
-{
-  config,
-  lib,
-  pkgs,
-  modulesPath,
-  ...
-}:
-{
-  imports = [
-    (modulesPath + "/installer/scan/not-detected.nix")
-    ./disko.nix
-  ];
+{ config, lib, pkgs, modulesPath, ... }: {
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ./disko.nix ];
 
   boot.initrd.systemd.enable = true;
   boot.initrd.availableKernelModules = [
@@ -70,9 +60,7 @@
 
   time.hardwareClockInLocalTime = true;
 
-  boot.kernel.sysctl = {
-    "vm.swappiness" = 133;
-  };
+  boot.kernel.sysctl = { "vm.swappiness" = 133; };
 
   zramSwap = {
     enable = true;
@@ -85,9 +73,10 @@
   hardware.graphics = {
     enable = true;
     #driSupport32Bit = true;
-    extraPackages = with pkgs; [
-      # onevpl-intel-gpu
-    ];
+    extraPackages = with pkgs;
+      [
+        # onevpl-intel-gpu
+      ];
   };
 
   # https://nixos.wiki/wiki/Intel_Graphics#12th_Gen_(Alder_Lake)
@@ -134,7 +123,8 @@
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
 
-  hardware.nvidia-container-toolkit.enable = lib.mkIf config.virtualisation.docker.enable true;
+  hardware.nvidia-container-toolkit.enable =
+    lib.mkIf config.virtualisation.docker.enable true;
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
@@ -175,9 +165,7 @@
       };
     };
 
-    wakeups = {
-      Systemd-Timer.match = "^(?!.*logrotate).*";
-    };
+    wakeups = { Systemd-Timer.match = "^(?!.*logrotate).*"; };
   };
   services.thermald.enable = true;
 
@@ -188,5 +176,6 @@
   nixpkgs.hostPlatform = "x86_64-linux";
   powerManagement.cpuFreqGovernor = "performance";
   hardware.enableRedistributableFirmware = true;
-  hardware.cpu.intel.updateMicrocode = config.hardware.enableRedistributableFirmware;
+  hardware.cpu.intel.updateMicrocode =
+    config.hardware.enableRedistributableFirmware;
 }

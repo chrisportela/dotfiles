@@ -2,23 +2,15 @@
 # ```sh
 # nix-shell maintainers/scripts/update.nix --argstr commit true --arg predicate '(path: pkg: builtins.elem path [["claude-code"] ["claude-code-bin"] ["vscode-extensions" "anthropic" "claude-code"]])'
 # ```
-{
-  lib,
-  stdenv,
-  buildNpmPackage,
-  fetchzip,
-  versionCheckHook,
-  writableTmpDirAsHomeHook,
-  bubblewrap,
-  procps,
-  socat,
-}:
+{ lib, stdenv, buildNpmPackage, fetchzip, versionCheckHook
+, writableTmpDirAsHomeHook, bubblewrap, procps, socat, }:
 buildNpmPackage (finalAttrs: {
   pname = "claude-code";
   version = "2.1.55";
 
   src = fetchzip {
-    url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${finalAttrs.version}.tgz";
+    url =
+      "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${finalAttrs.version}.tgz";
     hash = "sha256-8es/B8qIhnosWjbSpyhKmAGmrDF8cK/aYrblEuRHDCY=";
   };
 
@@ -47,31 +39,24 @@ buildNpmPackage (finalAttrs: {
       --set DISABLE_INSTALLATION_CHECKS 1 \
       --unset DEV \
       --prefix PATH : ${
-        lib.makeBinPath (
-          [
-            # claude-code uses [node-tree-kill](https://github.com/pkrumins/node-tree-kill) which requires procps's pgrep(darwin) or ps(linux)
-            procps
-          ]
-          # the following packages are required for the sandbox to work (Linux only)
-          ++ lib.optionals stdenv.hostPlatform.isLinux [
-            bubblewrap
-            socat
-          ]
-        )
+        lib.makeBinPath ([
+          # claude-code uses [node-tree-kill](https://github.com/pkrumins/node-tree-kill) which requires procps's pgrep(darwin) or ps(linux)
+          procps
+        ]
+        # the following packages are required for the sandbox to work (Linux only)
+          ++ lib.optionals stdenv.hostPlatform.isLinux [ bubblewrap socat ])
       }
   '';
 
   doInstallCheck = true;
-  nativeInstallCheckInputs = [
-    writableTmpDirAsHomeHook
-    versionCheckHook
-  ];
+  nativeInstallCheckInputs = [ writableTmpDirAsHomeHook versionCheckHook ];
   versionCheckKeepEnvironment = [ "HOME" ];
 
   passthru.updateScript = ./update.sh;
 
   meta = {
-    description = "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster";
+    description =
+      "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster";
     homepage = "https://github.com/anthropics/claude-code";
     downloadPage = "https://www.npmjs.com/package/@anthropic-ai/claude-code";
     license = lib.licenses.unfree;

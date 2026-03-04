@@ -1,14 +1,8 @@
-{
-  lib,
-  pkgs,
-  config,
-  ...
-}:
+{ lib, pkgs, config, ... }:
 let
   cfg = config.chrisportela.common;
   sshKeys = (import ../../lib/ssh-keys.nix);
-in
-{
+in {
   options.chrisportela.common = {
     enable = lib.mkEnableOption "Common configuration options";
     enableDualbootSettings = lib.mkEnableOption "Dual-Boot related settings";
@@ -33,12 +27,7 @@ in
       LC_TIME = "en_US.UTF-8";
     };
 
-    environment.systemPackages = with pkgs; [
-      curl
-      git
-      python3
-      uv
-    ];
+    environment.systemPackages = with pkgs; [ curl git python3 uv ];
 
     security.sudo.wheelNeedsPassword = lib.mkDefault true;
 

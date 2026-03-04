@@ -1,14 +1,7 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, pkgs, ... }:
 with lib;
-let
-  cfg = config.programs.custom-difftastic;
-in
-{
+let cfg = config.programs.custom-difftastic;
+in {
   meta.maintainers = [ ];
 
   options = {
@@ -30,10 +23,7 @@ in
       };
 
       background = mkOption {
-        type = types.enum [
-          "light"
-          "dark"
-        ];
+        type = types.enum [ "light" "dark" ];
         default = "light";
         example = "dark";
         description = ''
@@ -43,11 +33,7 @@ in
       };
 
       color = mkOption {
-        type = types.enum [
-          "always"
-          "auto"
-          "never"
-        ];
+        type = types.enum [ "always" "auto" "never" ];
         default = "auto";
         example = "always";
         description = ''
@@ -56,11 +42,7 @@ in
       };
 
       display = mkOption {
-        type = types.enum [
-          "side-by-side"
-          "side-by-side-show-both"
-          "inline"
-        ];
+        type = types.enum [ "side-by-side" "side-by-side-show-both" "inline" ];
         default = "side-by-side";
         example = "inline";
         description = ''
@@ -73,27 +55,26 @@ in
   config = mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    programs.git.iniContent =
-      let
-        difft = "${pkgs.difftastic}/bin/difft";
-        difftCommand = concatStringsSep " " [
-          difft
-          "--color ${cfg.color}"
-          "--background ${cfg.background}"
-          "--display ${cfg.display}"
-        ];
-      in
-      {
-        diff.tool = "difftastic";
-        difftool = {
-          prompt = false;
-          difftastic.cmd = ''${difft} "$LOCAL" "$REMOTE"'';
-        };
-        pager.difftool = true;
-        alias = {
-          dft = "difftool";
-          dlog = "!f() { GIT_EXTERNAL_DIFF='${difft}' git log -p --ext-diff $@; }; f";
-        };
+    programs.git.iniContent = let
+      difft = "${pkgs.difftastic}/bin/difft";
+      difftCommand = concatStringsSep " " [
+        difft
+        "--color ${cfg.color}"
+        "--background ${cfg.background}"
+        "--display ${cfg.display}"
+      ];
+    in {
+      diff.tool = "difftastic";
+      difftool = {
+        prompt = false;
+        difftastic.cmd = ''${difft} "$LOCAL" "$REMOTE"'';
       };
+      pager.difftool = true;
+      alias = {
+        dft = "difftool";
+        dlog =
+          "!f() { GIT_EXTERNAL_DIFF='${difft}' git log -p --ext-diff $@; }; f";
+      };
+    };
   };
 }

@@ -1,16 +1,6 @@
-{
-  config,
-  lib,
-  pkgs,
-  inputs,
-  system,
-  ...
-}:
-let
-  cfg = config.chrisportela.gaming;
-in
-with lib;
-{
+{ config, lib, pkgs, inputs, system, ... }:
+let cfg = config.chrisportela.gaming;
+in with lib; {
   options.chrisportela.gaming = {
     enable = lib.mkEnableOption "Gaming config";
     #     nvidia = lib.mkEnableOption "Nvidia specific settings";
@@ -19,7 +9,9 @@ with lib;
   config = mkIf cfg.enable {
     nix.settings = {
       substituters = [ "https://nix-gaming.cachix.org" ];
-      trusted-public-keys = [ "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4=" ];
+      trusted-public-keys = [
+        "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
+      ];
     };
 
     allowedUnfree = [
@@ -49,9 +41,7 @@ with lib;
       protontricks
       samba
 
-      (lutris.override {
-        extraLibraries = pkgs: [ ];
-      })
+      (lutris.override { extraLibraries = pkgs: [ ]; })
       goverlay
       mangohud
       protonup-ng
@@ -62,8 +52,10 @@ with lib;
     programs.steam = {
       enable = true;
       extest.enable = true;
-      remotePlay.openFirewall = false; # Open ports in the firewall for Steam Remote Play
-      dedicatedServer.openFirewall = false; # Open ports in the firewall for Source Dedicated Server
+      remotePlay.openFirewall =
+        false; # Open ports in the firewall for Steam Remote Play
+      dedicatedServer.openFirewall =
+        false; # Open ports in the firewall for Source Dedicated Server
       localNetworkGameTransfers.openFirewall = true;
       gamescopeSession.enable = true;
       # gamescopeSession.args = ["--prefer-vk-device 8086:9bc4"];
