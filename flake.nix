@@ -13,10 +13,9 @@
   };
 
   inputs = {
-    # Stable (25.05) for disko and any pinned usage
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
-    # Unstable for NixOS configs, darwin, and home-manager
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
