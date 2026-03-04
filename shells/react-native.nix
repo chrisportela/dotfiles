@@ -32,9 +32,6 @@ pkgs.mkShellNoCC {
       # For file watching
       watchman
 
-      # iOS development
-      ios-deploy
-
       # Android development
       jdk
       androidSdk
@@ -49,6 +46,8 @@ pkgs.mkShellNoCC {
       [
         # iOS dependencies (macOS only)
         cocoapods
+        ios-deploy
+        sourcekit-lsp
         # apple-sdk_15
         # (xcodeenv.composeXcodeWrapper { versions = [ "16.2" ]; })
         darwin.xcode_26_2_Apple_silicon
