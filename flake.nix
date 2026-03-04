@@ -110,12 +110,7 @@
             };
           };
           packages = {
-            terraform = pkgs.terraform.withPlugins (p: [
-              p.cloudflare
-              p.aws
-              p.google
-              p.google-beta
-            ]);
+            terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
 
             cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
 
