@@ -15,8 +15,6 @@
   inputs = {
     # Stable (25.05) for disko and any pinned usage
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
-    nixpkgs-stable.follows = "nixpkgs";
-    nixpkgs-25_11.follows = "nixpkgs";
     # Unstable for NixOS configs, darwin, and home-manager
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
@@ -25,41 +23,45 @@
     };
     darwin = {
       url = "github:lnl7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs-25_11";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-rosetta-builder = {
       url = "github:cpick/nix-rosetta-builder";
-      inputs.nixpkgs.follows = "nixpkgs-25_11";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     disko = {
       url = "github:nix-community/disko/latest";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     agenix = {
       url = "github:ryantm/agenix";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     deploy-rs = {
       url = "github:serokell/deploy-rs";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     microvm = {
       url = "github:microvm-nix/microvm.nix";
-      inputs.nixpkgs.follows = "nixpkgs-stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    android-nixpkgs = {
+      url = "github:tadfisher/android-nixpkgs/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };
@@ -79,12 +81,8 @@
     let
       overlaysSet = (import ./overlays/default.nix) { inherit self inputs; };
       importPkgs = (import ./lib/import-pkgs.nix) {
-        inherit
-          self
-          nixpkgs
-          nixpkgs-unstable
-          inputs
-          ;
+        inherit self nixpkgs nixpkgs-unstable inputs;
+        allowUnfree = [ "terraform" "vault-bin" "claude-code" "xcode" ];
       };
     in
     (
@@ -165,7 +163,7 @@
 
           devShells = (
             let
-              inherit (importPkgs system) pkgs pkgsUnstable;
+              inherit (importPkgs system) pkgs;
             in
             rec {
               default = dotfiles;
@@ -176,8 +174,7 @@
 
               devops = pkgs.callPackage ./shells/devops.nix { };
 
-              # TODO: Broken android and incorrect XCode setup; requires android-nixpkgs input
-              # react-native = pkgs.callPackage ./shells/react-native.nix { };
+              react-native = pkgs.callPackage ./shells/react-native.nix { inherit (inputs) android-nixpkgs; };
             }
           );
           devShell = self.devShells.${system}.default;
@@ -258,14 +255,8 @@
               nixpkgs = inputs.nixpkgs;
             };
             rpi4 = (import ./hosts/nixos/rpi4-image.nix) {
-              inherit inputs self;
-              nixos = inputs.nixpkgs-unstable;
-              nixpkgs = inputs.nixpkgs;
+              inherit inputs self nixpkgs;
             };
-            # builder = (import ./hosts/nixos/builder.nix) {
-            #   nixpkgs = inputs.nixpkgs;
-            #   nixosModules = self.nixosModules;
-            # };
             ada = (import ./hosts/nixos/ada/default.nix) {
               inherit inputs;
               nixos = inputs.nixpkgs-unstable;
