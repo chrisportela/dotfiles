@@ -4,9 +4,12 @@
   stdenv,
   cachix,
   nix,
+  cachixRepo ? "chrisportela-dotfiles",
+  hmConfig ? "cmp",
+  keepRevisions ? 2,
+  shellNames ? [ "dotfiles" "dev" "devops" "react-native" ],
 }:
 let
-  cachixRepo = "chrisportela-dotfiles";
   cachixArgs = lib.concatStringsSep " " [
     "--compression-level 9"
     "--compression-method zstd"
@@ -14,7 +17,13 @@ let
   ];
   nixBin = "${nix}/bin/nix";
   cachixBin = "${cachix}/bin/cachix";
-  hmConfig = "cmp";
+
+  shellBlocks = lib.concatMapStringsSep "\n\n" (name: ''
+    echo "#### Building shell: ${name}"
+    ${nixBin} build --out-link result-shell-${name} .#devShells.$SYSTEM.${name}
+    ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-${name}
+    ${cachixBin} pin ${cachixRepo} --keep-revisions ${toString keepRevisions} shell-${name}-$SYSTEM result-shell-${name}
+  '') shellNames;
 in
 (pkgs.writeShellScriptBin "cachix-helper" ''
   set -eu
@@ -22,38 +31,36 @@ in
   if [ -n "''${1-}" ]; then
     SYSTEM="$1"
   fi
+  echo "Using SYSTEM=$SYSTEM"
+
+  if [ ! -f flake.nix ]; then
+    echo "Error: flake.nix not found. Run this script from the flake root." >&2
+    exit 1
+  fi
+
   echo "#### Building HM"
   if command -v home-manager 1>/dev/null 2>&1; then
     home-manager build --flake .#${hmConfig}
   else
     ${nixBin} build .#legacyPackages.$SYSTEM.homeConfigurations.${hmConfig}.activationPackage
   fi
-  rm result-hm-cmp || true
-  mv result result-hm-cmp
-  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-hm-cmp
-  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 home-manager-$SYSTEM result-hm-cmp
+  rm result-hm-${hmConfig} || true
+  mv result result-hm-${hmConfig}
+  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-hm-${hmConfig}
+  ${cachixBin} pin ${cachixRepo} --keep-revisions ${toString keepRevisions} home-manager-$SYSTEM result-hm-${hmConfig}
 
   echo "#### Building shells"
-  ${nixBin} build --out-link result-shell-dotfiles .#devShells.$SYSTEM.dotfiles
-  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-dotfiles
-  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-dotfiles-$SYSTEM result-shell-dotfiles
-
-  ${nixBin} build --out-link result-shell-devops .#devShells.$SYSTEM.devops
-  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-devops
-  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-devops-$SYSTEM result-shell-devops
-
-  ${nixBin} build --out-link result-shell-dev .#devShells.$SYSTEM.dev
-  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-dev
-  ${cachixBin} pin ${cachixRepo} --keep-revisions 2 shell-dev-$SYSTEM result-shell-dev
+  ${shellBlocks}
 
   echo "#### Finished!"
 '')
 // {
 
   meta = with lib; {
-    description = "A helper script for using Cachix";
+    description = "Helper script for building and pushing home-manager and dev shells to Cachix";
     license = licenses.mit;
-    maintainers = with maintainers; [ "chrisportela" ];
+    maintainers = [ ];
+    mainProgram = "cachix-helper";
     platforms = platforms.unix;
   };
 }
