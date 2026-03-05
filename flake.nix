@@ -92,6 +92,7 @@
           "vault-bin"
           "claude-code"
           "xcode"
+          "android-studio"
           "android-studio-stable"
           "android-sdk-cmdline-tools"
         ];
