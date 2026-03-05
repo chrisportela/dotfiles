@@ -8,11 +8,17 @@ let
   # Use nodejs from nixpkgs
   nodejs = pkgs.nodejs_24;
 
+  android-nixpkgs' = pkgs.callPackage android-nixpkgs {
+    channel = "stable";
+    accept_license = true;
+  };
+
   # Configure Android SDK
   android-sdk = let
     apiVersion = "34";
     system = pkgs.stdenv.system;
-    in android-nixpkgs.sdk.${system} (
+    in android-nixpkgs'.sdk.${system} (
+
     sdkPkgs: with sdkPkgs; [
       sdkPkgs."build-tools-${apiVersion}-0-0"
       cmdline-tools-latest
