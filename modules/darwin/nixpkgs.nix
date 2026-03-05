@@ -5,7 +5,7 @@
   ...
 }:
 {
-  imports = [ ../../nixos/nixpkgs.nix ];
+  imports = [ ../nixos/nixpkgs.nix ];
 
   # options.allowedUnfree = lib.mkOption {
   #   type = lib.types.listOf lib.types.str;
