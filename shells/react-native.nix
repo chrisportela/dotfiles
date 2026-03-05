@@ -37,6 +37,7 @@ pkgs.mkShellNoCC {
 
       # iOS development
       ios-deploy
+      sourcekit-lsp
 
       # Android development
       jdk
