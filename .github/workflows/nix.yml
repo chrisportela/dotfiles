@@ -76,9 +76,17 @@ jobs:
         with:
           name: chrisportela-dotfiles
 
-      - name: Build darwin config and devShell
+      - name: Build devShells
         run: |
           nix build \
-            .#darwinConfigurations.lux.config.system.build.toplevel \
             .#devShells.aarch64-darwin.default \
+            .#devShells.aarch64-darwin.react-native \
+            .#devShells.aarch64-darwin.dev \
+            .#devShells.aarch64-darwin.devops \
             --no-link
+
+      # - name: Build darwin config (lux)
+      #   run: nix build .#darwinConfigurations.lux.config.system.build.toplevel --no-link
+
+      # - name: Build darwin config (roxy)
+      #   run: nix build .#darwinConfigurations.roxy.config.system.build.toplevel --no-link
