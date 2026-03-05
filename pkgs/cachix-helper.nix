@@ -7,7 +7,12 @@
   cachixRepo ? "chrisportela-dotfiles",
   hmConfig ? "cmp",
   keepRevisions ? 2,
-  shellNames ? [ "dotfiles" "dev" "devops" "react-native" ],
+  shellNames ? [
+    "dotfiles"
+    "dev"
+    "devops"
+    "react-native"
+  ],
 }:
 let
   cachixArgs = lib.concatStringsSep " " [

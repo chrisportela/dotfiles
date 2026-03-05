@@ -14,31 +14,36 @@ let
   };
 
   # Configure Android SDK
-  android-sdk = let
-    apiVersion = "34";
-    system = pkgs.stdenv.system;
-    in android-nixpkgs'.sdk.${system} (
+  android-sdk =
+    let
+      apiVersion = "34";
+      system = pkgs.stdenv.system;
+    in
+    android-nixpkgs'.sdk.${system} (
 
-    sdkPkgs: with sdkPkgs; [
-      sdkPkgs."build-tools-${apiVersion}-0-0"
-      cmdline-tools-latest
-      emulator
-      platform-tools
-      sdkPkgs."platforms-android-${apiVersion}"
+      sdkPkgs:
+      with sdkPkgs;
+      [
+        sdkPkgs."build-tools-${apiVersion}-0-0"
+        cmdline-tools-latest
+        emulator
+        platform-tools
+        sdkPkgs."platforms-android-${apiVersion}"
 
-      # Other useful packages for a development environment.
-      # ndk-26-1-10909125
-      # skiaparser-3
-      # "sources-android-${apiVersion}"
-    ]++ lib.optionals (system == "aarch64-darwin") [
-      sdkPkgs."system-images-android-${apiVersion}-google-apis-arm64-v8a"
-      sdkPkgs."system-images-android-${apiVersion}-google-apis-playstore-arm64-v8a"
-    ]
-    ++ lib.optionals (system == "x86_64-darwin" || system == "x86_64-linux") [
-      sdkPkgs."system-images-android-${apiVersion}-google-apis-x86-64"
-      sdkPkgs."system-images-android-${apiVersion}-google-apis-playstore-x86-64"
-    ]
-  );
+        # Other useful packages for a development environment.
+        # ndk-26-1-10909125
+        # skiaparser-3
+        # "sources-android-${apiVersion}"
+      ]
+      ++ lib.optionals (system == "aarch64-darwin") [
+        sdkPkgs."system-images-android-${apiVersion}-google-apis-arm64-v8a"
+        sdkPkgs."system-images-android-${apiVersion}-google-apis-playstore-arm64-v8a"
+      ]
+      ++ lib.optionals (system == "x86_64-darwin" || system == "x86_64-linux") [
+        sdkPkgs."system-images-android-${apiVersion}-google-apis-x86-64"
+        sdkPkgs."system-images-android-${apiVersion}-google-apis-playstore-x86-64"
+      ]
+    );
   # xcodeenv = import (nixpkgs + "/pkgs/development/mobile/xcodeenv") { inherit (pkgs) callPackage; };
 in
 pkgs.mkShellNoCC {
@@ -112,7 +117,7 @@ pkgs.mkShellNoCC {
       echo "React Native development environment ready!"
     '';
 
-    meta = with pkgs.lib; {
-      broken = pkgs.stdenv.system == "aarch64-linux";
-    };
+  meta = with pkgs.lib; {
+    broken = pkgs.stdenv.system == "aarch64-linux";
+  };
 }

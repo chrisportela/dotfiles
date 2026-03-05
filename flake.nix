@@ -182,7 +182,9 @@
 
               devops = pkgs.callPackage ./shells/devops.nix { };
 
-              react-native = pkgs.pkgsUnstable.callPackage ./shells/react-native.nix { inherit (inputs) android-nixpkgs; };
+              react-native = pkgs.pkgsUnstable.callPackage ./shells/react-native.nix {
+                inherit (inputs) android-nixpkgs;
+              };
             }
           );
           devShell = self.devShells.${system}.default;
