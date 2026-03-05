@@ -92,6 +92,7 @@
           "vault-bin"
           "claude-code"
           "xcode"
+          "android-studio-stable"
         ];
       };
     in
