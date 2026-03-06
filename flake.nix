@@ -242,6 +242,18 @@
               pkgs = pkgsUnstable;
               home-manager = inputs.home-manager;
               options.chrisportela = {
+                desktop = true;
+                enableExtraPackages = true;
+                coding-agents.enable = true;
+              };
+            };
+            "cmp@roxy" = let
+              darwinPkgs = importPkgs "aarch64-darwin";
+            in
+            simpleHomeConfig {
+              pkgs = darwinPkgs.pkgsUnstable;
+              home-manager = inputs.home-manager;
+              options.chrisportela = {
                 desktop.enable = true;
                 experiment.enable = true;
                 coding-agents.enable = true;

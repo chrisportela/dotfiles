@@ -26,6 +26,9 @@
           "root"
           "@admin"
         ];
+        extra-allowed-impure-host-deps = [
+          "/Library/Apple/System"
+        ];
       };
     };
   };
