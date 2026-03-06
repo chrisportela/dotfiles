@@ -105,6 +105,7 @@
             overlays = overlays ++ [
               (final: prev: {
                 claude-code = self.packages.${system}.claude-code;
+                ntfy-sh = nixpkgs.legacyPackages.${system}.ntfy-sh;
               })
             ];
           };
@@ -313,8 +314,11 @@
                 coding-agents.enable = true;
               };
             };
-            "cmp@roxy" = simpleHomeConfig {
-              pkgs = pkgsUnstable;
+            "cmp@roxy" = let
+              darwinPkgs = importPkgs "aarch64-darwin";
+            in
+            simpleHomeConfig {
+              pkgs = darwinPkgs.pkgsUnstable;
               home-manager = inputs.home-manager-unstable;
               options.chrisportela = {
                 coding-agents.enable = true;
