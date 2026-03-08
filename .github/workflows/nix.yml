@@ -51,7 +51,6 @@ jobs:
             .#devShells.x86_64-linux.dotfiles \
             .#devShells.x86_64-linux.dev \
             .#devShells.x86_64-linux.devops \
-            .#devShells.x86_64-linux.react-native \
             --no-link
 
       - name: Build home-manager
@@ -81,7 +80,6 @@ jobs:
         run: |
           nix build \
             .#devShells.aarch64-darwin.default \
-            .#devShells.aarch64-darwin.react-native \
             .#devShells.aarch64-darwin.dev \
             .#devShells.aarch64-darwin.devops \
             --no-link

@@ -3,10 +3,10 @@
 let
   inherit (pkgs) lib;
   # For macOS, use jdk8 which is compatible with React Native
-  jdk = pkgs.zulu17;
+  jdk' = pkgs.zulu17;
 
   # Use nodejs from nixpkgs
-  nodejs = pkgs.nodejs_24;
+  nodejs' = pkgs.nodejs_24;
 
   android-nixpkgs' = pkgs.callPackage android-nixpkgs {
     channel = "stable";
@@ -50,14 +50,14 @@ pkgs.mkShellNoCC {
     with pkgs;
     [
       # Node.js environment
-      nodejs
+      nodejs'
       nodePackages.yarn
 
       # For file watching
       watchman
 
       # Android development
-      jdk
+      jdk'
       android-sdk
       gradle
 
@@ -102,7 +102,7 @@ pkgs.mkShellNoCC {
       # Android configuration
       export ANDROID_HOME=${android-sdk}/share/android-sdk
       export ANDROID_SDK_ROOT=${android-sdk}/share/android-sdk
-      export JAVA_HOME=${jdk.home}
+      export JAVA_HOME=${jdk'.home}
       # export PATH=$PATH:$ANDROID_HOME/emulator
       # export PATH=$PATH:$ANDROID_HOME/platform-tools
       # export PATH=$PATH:$ANDROID_HOME/tools/bin
