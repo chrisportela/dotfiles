@@ -10,7 +10,6 @@ let
 
   android-nixpkgs' = pkgs.callPackage android-nixpkgs {
     channel = "stable";
-    accept_license = true;
   };
 
   # Configure Android SDK
@@ -19,7 +18,7 @@ let
       apiVersion = "34";
       system = pkgs.stdenv.system;
     in
-    android-nixpkgs'.sdk.${system} (
+    android-nixpkgs'.sdk (
 
       sdkPkgs:
       with sdkPkgs;
@@ -87,7 +86,7 @@ pkgs.mkShellNoCC {
   # Shell hook to configure environment variables
   shellHook =
     let
-      xcodePaths = lib.optionals pkgs.stdenv.isDarwin ''
+      xcodePaths = lib.strings.optionalString pkgs.stdenv.isDarwin ''
         # If on macOS, set Xcode-related paths
         if [[ "$(uname)" == "Darwin" ]]; then
           # export PATH=$(echo $PATH | sd "${pkgs.xcbuild.xcrun}/bin" "")

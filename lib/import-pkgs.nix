@@ -5,7 +5,9 @@
   nixpkgs,
   nixpkgs-unstable,
   inputs,
+  config ? { },
   allowUnfree ? [ ],
+  allowUnfreePredicate ? null,
   overlays ? [ ],
 }:
 system:
@@ -20,17 +22,27 @@ let
       setup-envrc
       opencode-cursor
     ]);
-  unfreePredicate = (pkg: builtins.elem (nixpkgs.lib.getName pkg) allowUnfree);
+  unfreePredicate =
+    if allowUnfreePredicate == null then
+      (pkg: builtins.elem (nixpkgs.lib.getName pkg) allowUnfree)
+    else
+      allowUnfreePredicate;
 in
 rec {
   pkgsUnstable = import nixpkgs-unstable {
     inherit system;
-    config.allowUnfreePredicate = unfreePredicate;
+    config = {
+      allowUnfreePredicate = unfreePredicate;
+    }
+    // config;
     overlays = overlays';
   };
   pkgs = import nixpkgs {
     inherit system;
-    config.allowUnfreePredicate = unfreePredicate;
+    config = {
+      allowUnfreePredicate = unfreePredicate;
+    }
+    // config;
     overlays = [
       (final: prev: { pkgsUnstable = pkgsUnstable; })
     ]

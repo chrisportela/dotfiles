@@ -80,21 +80,19 @@
     }:
     let
       overlaysSet = (import ./overlays/default.nix) { inherit self inputs; };
-      importPkgs = (import ./lib/import-pkgs.nix) {
+      importPkgs = (import ./lib/import-pkgs.nix);
+      importedPkgs = (import ./lib/import-pkgs.nix) {
         inherit
           self
           nixpkgs
           nixpkgs-unstable
           inputs
           ;
+
         allowUnfree = [
           "terraform"
           "vault-bin"
           "claude-code"
-          "xcode"
-          "android-studio"
-          "android-studio-stable"
-          "android-sdk-cmdline-tools"
         ];
       };
     in
@@ -102,7 +100,7 @@
       flake-utils.lib.eachDefaultSystem (
         system:
         let
-          inherit (importPkgs system) pkgs pkgsUnstable;
+          inherit (importedPkgs system) pkgs pkgsUnstable;
           treefmt-eval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
         in
         rec {
@@ -171,7 +169,7 @@
 
           devShells = (
             let
-              inherit (importPkgs system) pkgs;
+              inherit (importedPkgs system) pkgs;
             in
             rec {
               default = dotfiles;
@@ -182,9 +180,27 @@
 
               devops = pkgs.callPackage ./shells/devops.nix { };
 
-              react-native = pkgs.pkgsUnstable.callPackage ./shells/react-native.nix {
-                inherit (inputs) android-nixpkgs;
-              };
+              react-native =
+                let
+                  pkgs =
+                    (importPkgs {
+                      inherit
+                        self
+                        nixpkgs
+                        nixpkgs-unstable
+                        inputs
+                        ;
+
+                      config = {
+                        android_sdk.accept_license = true;
+                      };
+
+                      allowUnfreePredicate = pkg: true;
+                    } system).pkgs;
+                in
+                pkgs.pkgsUnstable.callPackage ./shells/react-native.nix {
+                  inherit (inputs) android-nixpkgs;
+                };
             }
           );
           devShell = self.devShells.${system}.default;
@@ -200,7 +216,7 @@
       // (flake-utils.lib.eachDefaultSystemPassThrough (
         system:
         let
-          inherit (importPkgs system) pkgs pkgsUnstable;
+          inherit (importedPkgs system) pkgs pkgsUnstable;
           simpleHomeConfig = (import ./lib/simple-home-config.nix) inputs;
         in
         {
