@@ -70,6 +70,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postInstall
   '';
 
+  passthru.updateScript = ./openclaw-update.sh;
+
   nativeInstallCheckInputs = [ versionCheckHook ];
   doInstallCheck = true;
 
