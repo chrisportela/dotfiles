@@ -34,4 +34,10 @@
       opencode-cursor = self.packages.${final.stdenv.system}.opencode-cursor;
     }
   );
+
+  cliclick = (
+    final: prev: {
+      cliclick = self.packages.${final.stdenv.system}.cliclick;
+    }
+  );
 }

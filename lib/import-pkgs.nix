@@ -21,6 +21,7 @@ let
       terraform
       setup-envrc
       opencode-cursor
+      cliclick
     ]);
   unfreePredicate =
     if allowUnfreePredicate == null then

@@ -123,6 +123,8 @@
 
             claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
 
+            cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
+
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
             pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
