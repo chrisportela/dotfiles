@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(nix-prefetch-url:*)",
+      "Bash(nix hash:*)",
+      "Bash(nix fmt:*)",
+      "WebFetch(domain:nixos.org)",
+      "Bash(nix search:*)"
     ]
   }
 }
