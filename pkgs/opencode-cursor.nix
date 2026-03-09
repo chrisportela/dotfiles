@@ -48,6 +48,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postInstall
   '';
 
+  passthru.updateScript = ./opencode-cursor-update.sh;
+
   meta = {
     description = "Use Cursor Pro models in OpenCode via HTTP proxy with OAuth";
     longDescription = ''
