@@ -72,6 +72,7 @@ pkgs.mkShellNoCC {
         cocoapods
         ios-deploy
         sourcekit-lsp
+        cliclick
         # apple-sdk_15
         # (xcodeenv.composeXcodeWrapper { versions = [ "16.2" ]; })
         darwin.xcode_26_2_Apple_silicon
