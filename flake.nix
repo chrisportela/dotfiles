@@ -109,6 +109,10 @@
               type = "app";
               program = "${self.packages.${system}.cachix-helper}/bin/cachix-helper";
             };
+            update = {
+              type = "app";
+              program = "${self.packages.${system}.update}/bin/update";
+            };
           };
           packages = {
             terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
@@ -126,6 +130,8 @@
             cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
 
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
+
+            update = pkgs.callPackage ./pkgs/update.nix { };
 
             pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
 
