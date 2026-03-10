@@ -247,24 +247,17 @@
                 coding-agents.enable = true;
               };
             };
-            "cmp@roxy" = let
-              darwinPkgs = importPkgs "aarch64-darwin";
-            in
-            simpleHomeConfig {
-              pkgs = darwinPkgs.pkgsUnstable;
-              home-manager = inputs.home-manager;
-              options.chrisportela = {
-                desktop.enable = true;
-                experiment.enable = true;
-                coding-agents.enable = true;
+            "cmp@roxy" =
+              let
+                darwinPkgs = importedPkgs "aarch64-darwin";
+              in
+              simpleHomeConfig {
+                pkgs = darwinPkgs.pkgsUnstable;
+                home-manager = inputs.home-manager;
+                options.chrisportela = {
+                  coding-agents.enable = true;
+                };
               };
-            };
-            # "cmp@roxy" = simpleHomeConfig {
-            #   inherit pkgs;
-            #   options.chrisportela = {
-            #     coding-agents.enable = true;
-            #   };
-            # };
 
             "deck@steamdeck" = simpleHomeConfig {
               inherit pkgs;

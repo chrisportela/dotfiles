@@ -30,10 +30,11 @@ in
       codex
       opencode
       opencode-cursor
-      cursor-cli
-      code-cursor-fhs
       claude-code
       claude-monitor
+    ] ++ lib.optionals pkgs.stdenv.isLinux [
+      cursor-cli
+      code-cursor-fhs
     ];
 
     # OpenCode Cursor plugin: symlink so OpenCode loads it from ~/.config/opencode/plugin/.
