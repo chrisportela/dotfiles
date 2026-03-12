@@ -1,11 +1,11 @@
 {
   lib,
-  stdenvNoCC,
+  buildNpmPackage,
   fetchFromGitHub,
   bun,
 }:
 
-stdenvNoCC.mkDerivation (finalAttrs: {
+buildNpmPackage (finalAttrs: {
   pname = "opencode-cursor";
   version = "2.3.11";
 
@@ -16,14 +16,17 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     hash = "sha256-5sGEQAjDVUiNnzSy6Eaq/B3WODC3htnR3ua2JfUmPbU=";
   };
 
+  npmDepsHash = "sha256-3KVxslrcs20ombCHgnZjLqjcXWRkfnQaR2s4u7+yTCU=";
+
   nativeBuildInputs = [ bun ];
+
+  # We use bun build instead of npm run build
+  dontNpmBuild = true;
 
   buildPhase = ''
     runHook preBuild
-
-    bun install
-    bun run build
-
+    bun build ./src/index.ts ./src/plugin-entry.ts ./src/cli/discover.ts ./src/cli/opencode-cursor.ts \
+      --outdir ./dist --target node
     runHook postBuild
   '';
 
@@ -40,8 +43,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
     # Wrapper for sync-models: requires cursor-agent and python3 on PATH at runtime
     cat > $out/bin/opencode-cursor-sync-models << WRAPPER
-    #!${stdenvNoCC.shell}
-    exec ${stdenvNoCC.shell} $share/scripts/sync-models.sh "\$@"
+    #!/bin/sh
+    exec sh $share/scripts/sync-models.sh "\$@"
     WRAPPER
     chmod +x $out/bin/opencode-cursor-sync-models
 
@@ -57,7 +60,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       Your Cursor subscription, properly integrated.
     '';
     homepage = "https://github.com/Nomadcxx/opencode-cursor";
-    license = lib.licenses.bsd3;
+    license = lib.licenses.isc;
     mainProgram = "opencode-cursor-sync-models";
     maintainers = with lib.maintainers; [ chrisportela ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;

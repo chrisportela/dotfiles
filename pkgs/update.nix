@@ -34,12 +34,17 @@ writeShellApplication {
 
     run_update() {
       local pkg="$1"
-      local script
-      script="$(get_update_script "$pkg")"
+      local store_path
+      store_path="$(get_update_script "$pkg")"
+      local tmp
+      tmp="$(mktemp)"
+      cp "$store_path" "$tmp"
+      chmod +x "$tmp"
       echo "==> Updating $pkg"
       UPDATE_NIX_ATTR_PATH="$pkg" \
       UPDATE_NIX_PNAME="$pkg" \
-        bash "$script"
+        "$tmp"
+      rm -f "$tmp"
       echo "==> Done updating $pkg"
     }
 
