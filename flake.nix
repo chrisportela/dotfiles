@@ -121,7 +121,9 @@
 
             rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
 
-            openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix { };
+            openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix {
+              inherit (pkgs.pkgsUnstable) openclaw;
+            };
 
             opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor.nix { };
 
@@ -242,8 +244,8 @@
               pkgs = pkgsUnstable;
               home-manager = inputs.home-manager;
               options.chrisportela = {
-                desktop = true;
-                enableExtraPackages = true;
+                desktop.enable = true;
+                experiment.enable = true;
                 coding-agents.enable = true;
               };
             };
