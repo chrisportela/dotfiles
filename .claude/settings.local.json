@@ -1,16 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(xargs:*)",
-      "Bash(nix-prefetch-url:*)",
-      "Bash(nix hash:*)",
-      "Bash(nix fmt:*)",
-      "Bash(nix search:*)",
-      "Bash(nix eval:*)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:nixos.org)"
+      "Bash(xargs *)",
+      "WebFetch(domain:nixos.org)",
+      "WebFetch(domain:wiki.nixos.org)",
+      "WebFetch(domain:nix-community.github.io)",
+      "WebFetch(domain:deepwiki.com)"
     ]
   }
 }
