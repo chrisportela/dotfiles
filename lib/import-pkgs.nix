@@ -22,6 +22,7 @@ let
       setup-envrc
       opencode-cursor
       cliclick
+      peekaboo
     ]);
   unfreePredicate =
     if allowUnfreePredicate == null then

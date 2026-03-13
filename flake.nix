@@ -137,6 +137,8 @@
 
             cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
 
+            peekaboo = pkgs.callPackage ./pkgs/peekaboo/default.nix { };
+
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 
             update = pkgs.callPackage ./pkgs/update.nix { };

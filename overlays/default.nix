@@ -40,4 +40,10 @@
       cliclick = self.packages.${final.stdenv.system}.cliclick;
     }
   );
+
+  peekaboo = (
+    final: prev: {
+      peekaboo = self.packages.${final.stdenv.system}.peekaboo;
+    }
+  );
 }
