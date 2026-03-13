@@ -94,6 +94,12 @@
           "vault-bin"
           "claude-code"
         ];
+
+        overlays = [
+          (final: prev: {
+            ntfy-sh = nixpkgs.legacyPackages.${final.stdenv.system}.ntfy-sh;
+          })
+        ];
       };
     in
     (
