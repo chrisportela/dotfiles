@@ -55,12 +55,7 @@ with lib;
     nixpkgs.overlays = [
       (final: prev: {
         python3-hf = prev.python3.withPackages (
-          ps:
-          with ps;
-          [ huggingface-hub ]
-          ++ (
-            with huggingface-hub.optional-dependencies; (hf_xet ++ torch)
-          )
+          ps: with ps; [ huggingface-hub ] ++ (with huggingface-hub.optional-dependencies; (hf_xet ++ torch))
         );
       })
     ];

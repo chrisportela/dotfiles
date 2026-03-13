@@ -26,16 +26,19 @@ in
       enable = true;
     };
 
-    home.packages = with pkgs; [
-      codex
-      opencode
-      opencode-cursor
-      claude-code
-      claude-monitor
-    ] ++ lib.optionals pkgs.stdenv.isLinux [
-      cursor-cli
-      code-cursor-fhs
-    ];
+    home.packages =
+      with pkgs;
+      [
+        codex
+        opencode
+        opencode-cursor
+        claude-code
+        claude-monitor
+      ]
+      ++ lib.optionals pkgs.stdenv.isLinux [
+        cursor-cli
+        code-cursor-fhs
+      ];
 
     # OpenCode Cursor plugin: symlink so OpenCode loads it from ~/.config/opencode/plugin/.
     # Add "cursor-acp" to the plugin array in ~/.config/opencode/opencode.json and the
