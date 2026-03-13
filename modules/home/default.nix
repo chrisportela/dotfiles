@@ -26,7 +26,11 @@
       dust
       ripgrep
 
-      nixfmt-rfc-style
+      nixfmt
+      nixpkgs-review
+      glow
+      nix-output-monitor
+
       git-annex
       gnupg
       ntfy-sh
