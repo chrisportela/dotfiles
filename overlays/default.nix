@@ -36,8 +36,9 @@
   );
 
   cliclick = (
-    final: prev: {
-      cliclick = self.packages.${final.stdenv.system}.cliclick;
+    final: prev:
+    prev.lib.optionalAttrs prev.stdenv.isDarwin {
+      cliclick = self.packages.${prev.stdenv.system}.cliclick;
     }
   );
 
