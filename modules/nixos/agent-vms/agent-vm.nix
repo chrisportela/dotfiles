@@ -306,6 +306,25 @@ FLAKE
 
     echo "Starting VM '$name'..."
     sudo systemctl start "microvm@$name"
+
+    # Wait for SSH to become available
+    local ip
+    ip="$(cat "$vm_dir/.ip")"
+    echo "Waiting for SSH..."
+    local attempts=0
+    while ! ${pkgs.openssh}/bin/ssh -q \
+        -o ConnectTimeout=2 \
+        -o StrictHostKeyChecking=accept-new \
+        -o UserKnownHostsFile="$vm_dir/known_hosts" \
+        "$USER_NAME@$ip" true 2>/dev/null; do
+      attempts=$((attempts + 1))
+      if [ "$attempts" -ge 30 ]; then
+        echo "Warning: SSH not available after 60s. VM may still be booting." >&2
+        break
+      fi
+      sleep 2
+    done
+
     echo "VM '$name' started. SSH with: agent-vm ssh $name"
   }
 
