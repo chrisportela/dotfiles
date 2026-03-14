@@ -153,6 +153,8 @@ in
 
   security.sudo.wheelNeedsPassword = false;
 
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   programs.zsh.enable = true;
 
   environment.systemPackages = with pkgs; [
