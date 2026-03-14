@@ -34,6 +34,7 @@ nixos.lib.nixosSystem {
           "1password-cli"
           "ookla-speedtest"
           "elasticsearch"
+          "claude-code"
 
           # Must include because gaming is only enabled in desktop mode
           "nvidia-persistenced"
@@ -63,6 +64,11 @@ nixos.lib.nixosSystem {
           };
           gaming.enable = true;
           local-llm.enable = true;
+          agent-vms = {
+            enable = true;
+            nat.externalInterface = "enp6s0";
+            user.authorizedKeys = (import ../../../lib/ssh-keys.nix).users.cmp ++ ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILsqpaOSjCbxoTry3oYRHElBMbnFvZVVa5sxjbTZO/lX cmp@ada"];
+          };
         };
 
         security.sudo.wheelNeedsPassword = false;
