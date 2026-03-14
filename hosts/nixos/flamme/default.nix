@@ -17,7 +17,6 @@ nixos.lib.nixosSystem {
   modules = [
     ./hardware.nix
     nixosModules.default
-    inputs.microvm.nixosModules.host
 
     (
       {
@@ -46,6 +45,11 @@ nixos.lib.nixosSystem {
             };
           };
           gaming.enable = true;
+          agent-vms = {
+            enable = true;
+            nat.externalInterface = "eno1";
+            user.authorizedKeys = (import ../../../lib/ssh-keys.nix).users.cmp;
+          };
         };
 
         services.pcscd.enable = true; # For configuring Yubikey
