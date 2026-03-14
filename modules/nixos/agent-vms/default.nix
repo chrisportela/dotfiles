@@ -119,6 +119,7 @@ let
           homeManagerModule = inputs.home-manager.nixosModules.home-manager;
           inherit (vmCfg) claude direnv extraHomeModules;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
+          claudePackagePath = "${pkgs.claude-code}";
         })
       ];
     };
