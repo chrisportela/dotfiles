@@ -220,6 +220,9 @@ VMBASE
 }
 FLAKE
 
+    # microvm.nix services run as microvm:kvm — they need write access
+    sudo chown -R microvm:kvm "$vm_dir"
+
     echo "VM '$name' created."
     echo "  IP: $ip"
     echo "  Dir: $vm_dir"

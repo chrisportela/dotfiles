@@ -231,6 +231,7 @@ in
                 ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" -f "$VM_DIR/ssh-host-keys/ssh_host_ed25519_key" -q
               fi
               echo "${vm.ipAddress}" > "$VM_DIR/.ip"
+              chown -R microvm:kvm "$VM_DIR"
             '') cfg.vms
           );
           ipsContent = lib.concatStringsSep "\\n" (
