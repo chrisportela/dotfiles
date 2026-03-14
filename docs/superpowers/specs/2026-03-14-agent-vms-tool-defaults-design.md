@@ -20,7 +20,7 @@ Under `chrisportela.agent-vms.defaults`:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `claude` | bool | `false` | Include Claude Code in VMs by default |
-| `claudeConfigDir` | str | `"/home/<user>/.claude"` | Host path to `.claude/` directory (mounted read-only into VMs) |
+| `claudeConfigDir` | str | `"/home/${cfg.user.name}/.claude"` | Host path to `.claude/` directory (mounted read-only into VMs) |
 | `direnv` | bool | `true` | Include direnv + nix-direnv in VMs by default |
 
 These also appear in the `vmSubmodule` for declarative VMs, defaulting to the module-level values.
@@ -35,18 +35,21 @@ Added to `agent-vm create`:
 | `--no-claude` | Disable Claude Code (overrides module default) |
 | `--direnv` | Enable direnv + nix-direnv |
 | `--no-direnv` | Disable direnv (overrides module default) |
-| `--hm-module <path>` | Additional home-manager module file to include |
+| `--hm-module <path>` | Additional home-manager module file to include (repeatable) |
 
 Precedence: CLI flag > module default. If neither `--claude` nor `--no-claude` is passed, `defaults.claude` applies.
+
+`--hm-module` is repeatable. Each file is copied into `$vm_dir/` with its original filename. The generated `flake.nix` references them via relative import (e.g., `import ./my-hm.nix`). If two files share a name, the second overwrites the first (user error). This flag is ad-hoc only; declarative VMs use the `extraHomeModules` option which takes normal Nix module paths/functions.
 
 ## What Each Flag Does
 
 ### `--claude`
 
-1. **Package:** `claude-code` added to `environment.systemPackages`
-2. **Credential mount:** Host `claudeConfigDir` (e.g., `/home/cmp/.claude/`) mounted read-only via virtiofs at `/home/<user>/.claude-host`
-3. **Seed on first boot:** Activation/tmpfiles copies `.claude-host` → `~/.claude/` if `~/.claude/` doesn't exist, giving the VM a writable copy seeded from the host's auth tokens
+1. **Package:** `claude-code` added to `environment.systemPackages`. Note: `claude-code` is not in nixpkgs — the ad-hoc flake and declarative VMs must source it from an overlay, a custom flake input, or by adding it via `--packages` with an overlay in scope. Initially, we assume users install `claude-code` via `--packages` or a custom `--hm-module`. If a `claude-code` package becomes available in the host's nixpkgs or overlays, the flag will use it automatically.
+2. **Credential mount:** Host `claudeConfigDir` (e.g., `/home/cmp/.claude/`) mounted via virtiofs at `/home/<userName>/.claude-host`
+3. **Seed on first boot:** Home-manager activation copies `.claude-host` → `/home/<userName>/.claude/` if the latter doesn't exist, giving the VM a writable copy seeded from the host's auth tokens
 4. **Result:** `claude` works immediately on first SSH into the VM
+5. **Conflict guard:** If `--claude` is used alongside `--credentials` targeting the same `.claude` path, the CLI should warn and skip the duplicate credential mount
 
 ### `--direnv`
 
@@ -67,36 +70,41 @@ New parameters:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
+| `homeManagerModule` | (required) | The `home-manager.nixosModules.home-manager` NixOS module, passed in by the caller since vm-base.nix has no access to flake inputs |
 | `claude` | `false` | Enable Claude Code |
 | `claudeConfigDir` | `null` | Host path to `.claude/` (when claude is enabled) |
 | `direnv` | `true` | Enable direnv + nix-direnv |
 | `extraHomeModules` | `[]` | Additional home-manager modules for the VM user |
 
+**How `homeManagerModule` is provided:**
+- Declarative VMs: `default.nix`'s `mkVm` passes `inputs.home-manager.nixosModules.home-manager`
+- Ad-hoc VMs: the generated `flake.nix` passes `home-manager.nixosModules.home-manager` (from the flake's home-manager input)
+
 Configuration added:
 
 ```nix
-imports = [ home-manager.nixosModules.home-manager ];
+imports = [ homeManagerModule ];
 
 home-manager.useGlobalPkgs = true;
 home-manager.useUserPackages = true;
 
-home-manager.users.<userName> = { pkgs, ... }: {
+home-manager.users.${userName} = { pkgs, ... }: {
   imports = extraHomeModules;
 
   programs.zsh.enable = true;
 
-  # When direnv enabled:
-  programs.direnv = {
-    enable = true;       # direnv flag
+  # Conditional on direnv parameter:
+  programs.direnv = lib.mkIf direnv {
+    enable = true;
     nix-direnv.enable = true;
   };
 
-  # When claude enabled:
+  # Conditional on claude parameter:
   # Seed ~/.claude from read-only mount on first use
   home.activation.seedClaude = lib.mkIf claude (
     lib.hm.dag.entryAfter ["writeBoundary"] ''
-      if [ ! -d "$HOME/.claude" ] && [ -d "$HOME/.claude-host" ]; then
-        cp -a "$HOME/.claude-host" "$HOME/.claude"
+      if [ ! -d "/home/${userName}/.claude" ] && [ -d "/home/${userName}/.claude-host" ]; then
+        cp -a "/home/${userName}/.claude-host" "/home/${userName}/.claude"
       fi
     ''
   );
@@ -131,9 +139,11 @@ New options in `vmSubmodule`:
 ### Ad-hoc Flake Generation
 
 The generated `flake.nix` gains:
-- `home-manager` input (pinned rev)
-- `claude`, `claudeConfigDir`, `direnv` parameters passed to `vm-base.nix`
-- `home-manager.nixosModules.home-manager` in the module imports (passed via vm-base.nix or directly)
+- `home-manager` input (pinned rev, same pattern as microvm and nixpkgs)
+- `home-manager.nixosModules.home-manager` passed to `vm-base.nix` as the `homeManagerModule` parameter
+- `claude`, `claudeConfigDir`, `direnv` boolean/string parameters passed to `vm-base.nix`
+- `extraHomeModules` list referencing any `--hm-module` files copied into the VM directory (e.g., `[ (import ./my-hm.nix) ]`)
+- Existing parameters (`varSize`, `extraShares`, etc.) continue to be passed as before
 
 ## Files Changed
 
