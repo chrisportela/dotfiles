@@ -21,8 +21,19 @@ let
   gatewayOctets = lib.splitString "." gatewayAddress;
   subnetPrefix = lib.concatStringsSep "." (lib.take 3 gatewayOctets);
 
-  # Read vm-base.nix content to embed in generated flakes
+  # Read files to embed in generated flakes
   vmBaseContent = builtins.readFile ./vm-base.nix;
+  # Strip updateScript passthru (references ./update.sh which won't exist in VM dir)
+  claudeCodePkgContent = builtins.replaceStrings
+    [ ''
+base.overrideAttrs (prev: {
+  passthru = prev.passthru // {
+    updateScript = ./update.sh;
+  };
+})'' ]
+    [ "base" ]
+    (builtins.readFile ../../pkgs/claude-code/package.nix);
+  claudeCodeLockfile = ../../pkgs/claude-code/package-lock.json;
 in
 pkgs.writeShellScriptBin "agent-vm" ''
   set -euo pipefail
@@ -46,7 +57,6 @@ pkgs.writeShellScriptBin "agent-vm" ''
   DEFAULT_CLAUDE="${lib.boolToString defaults.claude}"
   DEFAULT_CLAUDE_CONFIG_DIR="${defaults.claudeConfigDir}"
   DEFAULT_DIRENV="${lib.boolToString defaults.direnv}"
-  DOTFILES_FLAKE_URL="${defaults.dotfilesFlakeUrl}"
 
   usage() {
     cat <<'USAGE'
@@ -192,6 +202,15 @@ USAGE
 ${vmBaseContent}
 VMBASE
 
+    # Copy claude-code package files if claude is enabled
+    if [ "$claude" = "true" ]; then
+      sudo mkdir -p "$vm_dir/claude-code"
+      sudo tee "$vm_dir/claude-code/package.nix" > /dev/null <<'CLAUDEPKG'
+${claudeCodePkgContent}
+CLAUDEPKG
+      sudo cp ${claudeCodeLockfile} "$vm_dir/claude-code/package-lock.json"
+    fi
+
     # Copy any extra home-manager modules into the VM directory
     local hm_imports_nix="[ ]"
     if [ -n "$hm_modules" ]; then
@@ -235,18 +254,18 @@ VMBASE
       url = "$HOME_MANAGER_URL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    dotfiles = {
-      url = "$DOTFILES_FLAKE_URL";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = { self, nixpkgs, microvm, home-manager, dotfiles, ... }:
+  outputs = { self, nixpkgs, microvm, home-manager, ... }:
   let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
-      overlays = [ dotfiles.overlays.claude-code ];
+      overlays = [
+        (final: prev: {
+          claude-code = final.callPackage ./claude-code/package.nix { };
+        })
+      ];
     };
   in
   {
