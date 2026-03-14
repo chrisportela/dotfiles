@@ -105,7 +105,7 @@ USAGE
     local packages=""
     local vcpu="$DEFAULT_VCPU"
     local mem="$DEFAULT_MEM"
-    local credentials=()
+    local credentials=""
 
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -113,7 +113,7 @@ USAGE
         --packages) packages="$2"; shift 2 ;;
         --vcpu) vcpu="$2"; shift 2 ;;
         --mem) mem="$2"; shift 2 ;;
-        --credentials) credentials+=("$2"); shift 2 ;;
+        --credentials) credentials="$credentials $2"; shift 2 ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
       esac
     done
@@ -143,9 +143,9 @@ USAGE
 
     # Build credentials Nix expression
     local creds_nix="[ ]"
-    if [ "''${#credentials[@]:-0}" -gt 0 ]; then
+    if [ -n "$credentials" ]; then
       creds_nix="["
-      for cred in "''${credentials[@]}"; do
+      for cred in $credentials; do
         local src="''${cred%%:*}"
         local mnt="''${cred#*:}"
         creds_nix="$creds_nix { source = \"$src\"; mountPoint = \"$mnt\"; }"
