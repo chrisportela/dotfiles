@@ -12,6 +12,7 @@ let
   # Bake in flake input revisions (direct attributes on locked inputs)
   microvmRev = inputs.microvm.rev;
   nixpkgsRev = inputs.nixpkgs.rev;
+  homeManagerRev = inputs.home-manager.rev;
 
   # Parse gateway from subnet ("192.168.83.1/24" -> "192.168.83.1")
   gatewayAddress = builtins.head (lib.splitString "/" bridge.subnet);
@@ -41,6 +42,10 @@ pkgs.writeShellScriptBin "agent-vm" ''
   # Pinned flake inputs (baked in at build time)
   MICROVM_URL="github:microvm-nix/microvm.nix/${microvmRev}"
   NIXPKGS_URL="github:nixos/nixpkgs/${nixpkgsRev}"
+  HOME_MANAGER_URL="github:nix-community/home-manager/${homeManagerRev}"
+  DEFAULT_CLAUDE="${lib.boolToString defaults.claude}"
+  DEFAULT_CLAUDE_CONFIG_DIR="${defaults.claudeConfigDir}"
+  DEFAULT_DIRENV="${lib.boolToString defaults.direnv}"
 
   usage() {
     cat <<'USAGE'
@@ -60,6 +65,11 @@ Create flags:
   --credentials <source:mount>    Credential share (repeatable)
   --vcpu <n>                      Override default vCPUs
   --mem <n>                       Override default RAM
+  --claude                        Enable Claude Code (credentials + config)
+  --no-claude                     Disable Claude Code
+  --direnv                        Enable direnv + nix-direnv
+  --no-direnv                     Disable direnv
+  --hm-module <path>              Additional home-manager module (repeatable)
 USAGE
   }
 
@@ -106,6 +116,9 @@ USAGE
     local vcpu="$DEFAULT_VCPU"
     local mem="$DEFAULT_MEM"
     local credentials=""
+    local claude="$DEFAULT_CLAUDE"
+    local use_direnv="$DEFAULT_DIRENV"
+    local hm_modules=""
 
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -114,6 +127,11 @@ USAGE
         --vcpu) vcpu="$2"; shift 2 ;;
         --mem) mem="$2"; shift 2 ;;
         --credentials) credentials="$credentials $2"; shift 2 ;;
+        --claude) claude="true"; shift ;;
+        --no-claude) claude="false"; shift ;;
+        --direnv) use_direnv="true"; shift ;;
+        --no-direnv) use_direnv="false"; shift ;;
+        --hm-module) hm_modules="$hm_modules $2"; shift 2 ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
       esac
     done
@@ -173,6 +191,36 @@ USAGE
 ${vmBaseContent}
 VMBASE
 
+    # Copy any extra home-manager modules into the VM directory
+    local hm_imports_nix="[ ]"
+    if [ -n "$hm_modules" ]; then
+      hm_imports_nix="["
+      for mod in $hm_modules; do
+        local modbase
+        modbase="$(basename "$mod")"
+        sudo cp "$mod" "$vm_dir/$modbase"
+        hm_imports_nix="$hm_imports_nix (import ./$modbase)"
+      done
+      hm_imports_nix="$hm_imports_nix ]"
+    fi
+
+    # Warn if --claude and --credentials both target .claude
+    if [ "$claude" = "true" ] && [ -n "$credentials" ]; then
+      for cred in $credentials; do
+        local cred_src="''${cred%%:*}"
+        if [ "$cred_src" = "$DEFAULT_CLAUDE_CONFIG_DIR" ]; then
+          echo "Warning: --claude already mounts $DEFAULT_CLAUDE_CONFIG_DIR; skipping duplicate --credentials entry" >&2
+          credentials="$(echo "$credentials" | ${pkgs.gnused}/bin/sed "s| $cred||")"
+        fi
+      done
+    fi
+
+    # Build claude config dir Nix expression
+    local claude_config_nix="null"
+    if [ "$claude" = "true" ]; then
+      claude_config_nix="\"$DEFAULT_CLAUDE_CONFIG_DIR\""
+    fi
+
     # Generate flake.nix
     sudo tee "$vm_dir/flake.nix" > /dev/null <<FLAKE
 {
@@ -182,9 +230,13 @@ VMBASE
       url = "$MICROVM_URL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    home-manager = {
+      url = "$HOME_MANAGER_URL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, microvm, ... }:
+  outputs = { self, nixpkgs, microvm, home-manager, ... }:
   let
     system = "x86_64-linux";
     pkgs = import nixpkgs { inherit system; };
@@ -210,12 +262,17 @@ VMBASE
           gid = $USER_GID;
           authorizedKeys = $keys_nix;
           sshHostKeyPath = "$vm_dir/ssh-host-keys";
+          homeManagerModule = home-manager.nixosModules.home-manager;
+          claude = $claude;
+          claudeConfigDir = $claude_config_nix;
+          direnv = $use_direnv;
+          extraHomeModules = $hm_imports_nix;
         })
       ];
     };
 
     # Required by microvm.nix for imperative VMs
-    packages.''${system}.default = self.nixosConfigurations.$name.config.microvm.declaredRunner;
+    packages.\''${system}.default = self.nixosConfigurations.$name.config.microvm.declaredRunner;
   };
 }
 FLAKE
