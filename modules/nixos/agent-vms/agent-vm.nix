@@ -240,14 +240,7 @@ FLAKE
     # Build the VM flake and create the 'current' symlink
     # microvm.nix services expect /var/lib/microvms/<name>/current/bin/microvm-run
     echo "Building VM '$name'..."
-    local result
-    result="$(${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --no-link --print-out-paths 2>&1)"
-    if [ $? -ne 0 ]; then
-      echo "Error building VM: $result" >&2
-      exit 1
-    fi
-    sudo ln -sfT "$result" "$vm_dir/current"
-    sudo chown -h microvm:kvm "$vm_dir/current"
+    ${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --out-link "$vm_dir/current"
 
     echo "Starting VM '$name'..."
     sudo systemctl start "microvm@$name"
