@@ -231,6 +231,24 @@ FLAKE
 
   cmd_start() {
     local name="$1"
+    local vm_dir="$MICROVMS_DIR/$name"
+    if [ ! -d "$vm_dir" ]; then
+      echo "Error: VM '$name' not found at $vm_dir" >&2
+      exit 1
+    fi
+
+    # Build the VM flake and create the 'current' symlink
+    # microvm.nix services expect /var/lib/microvms/<name>/current/bin/microvm-run
+    echo "Building VM '$name'..."
+    local result
+    result="$(${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --no-link --print-out-paths 2>&1)"
+    if [ $? -ne 0 ]; then
+      echo "Error building VM: $result" >&2
+      exit 1
+    fi
+    sudo ln -sfT "$result" "$vm_dir/current"
+    sudo chown -h microvm:kvm "$vm_dir/current"
+
     echo "Starting VM '$name'..."
     sudo systemctl start "microvm@$name"
     echo "VM '$name' started. SSH with: agent-vm ssh $name"
