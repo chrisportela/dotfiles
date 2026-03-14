@@ -74,6 +74,21 @@ let
         default = [ ];
         description = "Additional virtiofs mounts";
       };
+      claude = lib.mkOption {
+        type = lib.types.bool;
+        default = cfg.defaults.claude;
+        description = "Enable Claude Code credential sharing for this VM";
+      };
+      direnv = lib.mkOption {
+        type = lib.types.bool;
+        default = cfg.defaults.direnv;
+        description = "Enable direnv + nix-direnv for this VM";
+      };
+      extraHomeModules = lib.mkOption {
+        type = lib.types.listOf lib.types.anything;
+        default = [ ];
+        description = "Additional home-manager modules for the VM user";
+      };
     };
   };
 
@@ -101,6 +116,9 @@ let
           userName = cfg.user.name;
           inherit (cfg.user) uid gid authorizedKeys;
           sshHostKeyPath = "/var/lib/microvms/${name}/ssh-host-keys";
+          homeManagerModule = inputs.home-manager.nixosModules.home-manager;
+          inherit (vmCfg) claude direnv extraHomeModules;
+          claudeConfigDir = cfg.defaults.claudeConfigDir;
         })
       ];
     };
@@ -147,6 +165,21 @@ in
         type = lib.types.str;
         default = "cloud-hypervisor";
         description = "Default hypervisor";
+      };
+      claude = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Include Claude Code credential sharing in VMs by default";
+      };
+      claudeConfigDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/home/${cfg.user.name}/.claude";
+        description = "Host path to .claude/ directory (mounted read-only into VMs)";
+      };
+      direnv = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Include direnv + nix-direnv in VMs by default";
       };
     };
 
