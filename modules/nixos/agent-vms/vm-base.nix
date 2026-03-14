@@ -19,6 +19,11 @@
   varSize ? 8192,
   extraShares ? [ ],
   sshHostKeyPath,
+  homeManagerModule,
+  claude ? false,
+  claudeConfigDir ? null,
+  direnv ? true,
+  extraHomeModules ? [ ],
 }:
 {
   config,
@@ -52,6 +57,16 @@ let
       mountPoint = "/etc/ssh/host-keys";
     }
   ];
+
+  claudeShares =
+    lib.optionals (claude && claudeConfigDir != null) [
+      {
+        proto = "virtiofs";
+        tag = "claude-config";
+        source = claudeConfigDir;
+        mountPoint = "/home/${userName}/.claude-host";
+      }
+    ];
 in
 {
   microvm = {
@@ -88,6 +103,7 @@ in
       ++ sshKeyShares
       ++ workspaceShares
       ++ credentialShares
+      ++ claudeShares
       ++ extraShares;
   };
 
@@ -146,6 +162,32 @@ in
     fd
     jq
   ] ++ packages;
+
+  imports = [ homeManagerModule ];
+
+  home-manager.useGlobalPkgs = true;
+  home-manager.useUserPackages = true;
+
+  home-manager.users.${userName} = { pkgs, lib, ... }: {
+    imports = extraHomeModules;
+
+    programs.zsh.enable = true;
+
+    programs.direnv = lib.mkIf direnv {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+
+    home.activation.seedClaude = lib.mkIf claude (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        if [ ! -d "/home/${userName}/.claude" ] && [ -d "/home/${userName}/.claude-host" ]; then
+          cp -a "/home/${userName}/.claude-host" "/home/${userName}/.claude"
+        fi
+      ''
+    );
+
+    home.stateVersion = "25.11";
+  };
 
   # Fast shutdown
   systemd.settings.Manager = {
