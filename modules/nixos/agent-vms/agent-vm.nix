@@ -327,21 +327,18 @@ FLAKE
     ${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --out-link "$vm_dir/current"
 
     echo "Starting VM '$name'..."
+    # systemctl start blocks until VM signals readiness via vsock
     sudo systemctl start "microvm@$name"
 
-    # Wait for SSH to become available
+    # Wait for SSH port to accept connections
     local ip
     ip="$(cat "$vm_dir/.ip")"
-    echo "Waiting for SSH..."
+    echo "Waiting for SSH port..."
     local attempts=0
-    while ! ${pkgs.openssh}/bin/ssh -q \
-        -o ConnectTimeout=2 \
-        -o StrictHostKeyChecking=accept-new \
-        -o UserKnownHostsFile="$vm_dir/known_hosts" \
-        "$USER_NAME@$ip" true 2>/dev/null; do
+    while ! ${pkgs.netcat-openbsd}/bin/nc -z -w 2 "$ip" 22 2>/dev/null; do
       attempts=$((attempts + 1))
-      if [ "$attempts" -ge 30 ]; then
-        echo "Warning: SSH not available after 60s. VM may still be booting." >&2
+      if [ "$attempts" -ge 15 ]; then
+        echo "Warning: SSH port not open after 30s." >&2
         break
       fi
       sleep 2
