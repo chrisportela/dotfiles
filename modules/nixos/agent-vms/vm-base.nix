@@ -58,6 +58,10 @@ let
     }
   ];
 
+  # Derive vsock CID from IP last octet (CIDs 0-2 are reserved, offset by 3)
+  lastOctet = lib.toInt (lib.last (lib.splitString "." ipAddress));
+  vsockCid = lastOctet + 3;
+
   claudeShares =
     lib.optionals (claude && claudeConfigDir != null) [
       {
@@ -72,6 +76,7 @@ in
   microvm = {
     inherit hypervisor vcpu mem;
     socket = "control.socket";
+    vsock.cid = vsockCid;
 
     interfaces = [
       {
