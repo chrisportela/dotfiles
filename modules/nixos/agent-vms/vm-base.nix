@@ -157,13 +157,15 @@ in
 
   programs.zsh.enable = true;
 
+  nixpkgs.config.allowUnfree = claude;
+
   environment.systemPackages = with pkgs; [
     git
     ripgrep
     curl
     fd
     jq
-  ] ++ packages;
+  ] ++ lib.optionals claude [ pkgs.claude-code ] ++ packages;
 
   imports = [ homeManagerModule ];
 
