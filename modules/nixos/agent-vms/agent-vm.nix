@@ -143,7 +143,7 @@ USAGE
 
     # Build credentials Nix expression
     local creds_nix="[ ]"
-    if [ ''${#credentials[@]} -gt 0 ]; then
+    if [ "''${#credentials[@]:-0}" -gt 0 ]; then
       creds_nix="["
       for cred in "''${credentials[@]}"; do
         local src="''${cred%%:*}"
