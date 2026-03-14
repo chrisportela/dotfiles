@@ -181,6 +181,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.nat.externalInterface != "";
+        message = "chrisportela.agent-vms.nat.externalInterface must be set when agent-vms is enabled";
+      }
+    ];
+
     # Bridge network device
     systemd.network.netdevs."20-${cfg.bridge.name}".netdevConfig = {
       Kind = "bridge";
