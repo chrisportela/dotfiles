@@ -21,9 +21,6 @@ let
   gatewayOctets = lib.splitString "." gatewayAddress;
   subnetPrefix = lib.concatStringsSep "." (lib.take 3 gatewayOctets);
 
-  # Bake in store path of dotfiles' claude-code (host overlay version)
-  claudeCodeStorePath = "${pkgs.claude-code}";
-
   # Read vm-base.nix content to embed in generated flakes
   vmBaseContent = builtins.readFile ./vm-base.nix;
 in
@@ -49,7 +46,7 @@ pkgs.writeShellScriptBin "agent-vm" ''
   DEFAULT_CLAUDE="${lib.boolToString defaults.claude}"
   DEFAULT_CLAUDE_CONFIG_DIR="${defaults.claudeConfigDir}"
   DEFAULT_DIRENV="${lib.boolToString defaults.direnv}"
-  CLAUDE_CODE_STORE_PATH="${claudeCodeStorePath}"
+  DOTFILES_FLAKE_URL="${defaults.dotfilesFlakeUrl}"
 
   usage() {
     cat <<'USAGE'
@@ -238,12 +235,19 @@ VMBASE
       url = "$HOME_MANAGER_URL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    dotfiles = {
+      url = "$DOTFILES_FLAKE_URL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, microvm, home-manager, ... }:
+  outputs = { self, nixpkgs, microvm, home-manager, dotfiles, ... }:
   let
     system = "x86_64-linux";
-    pkgs = import nixpkgs { inherit system; };
+    pkgs = import nixpkgs {
+      inherit system;
+      overlays = [ dotfiles.overlays.claude-code ];
+    };
   in
   {
     nixosConfigurations.$name = nixpkgs.lib.nixosSystem {
@@ -269,7 +273,6 @@ VMBASE
           homeManagerModule = home-manager.nixosModules.home-manager;
           claude = $claude;
           claudeConfigDir = $claude_config_nix;
-          claudePackagePath = "$CLAUDE_CODE_STORE_PATH";
           direnv = $use_direnv;
           extraHomeModules = $hm_imports_nix;
         })

@@ -22,7 +22,6 @@
   homeManagerModule,
   claude ? false,
   claudeConfigDir ? null,
-  claudePackagePath ? null,
   direnv ? true,
   extraHomeModules ? [ ],
 }:
@@ -171,15 +170,7 @@ in
     curl
     fd
     jq
-  ] ++ lib.optionals (claude && claudePackagePath != null) [
-    # Wrap the baked-in store path so we use the host's overlay version
-    (pkgs.runCommand "claude-code-wrapped" { } ''
-      mkdir -p $out
-      for d in ${claudePackagePath}/*; do
-        ln -s "$d" "$out/$(basename "$d")"
-      done
-    '')
-  ] ++ packages;
+  ] ++ lib.optionals claude [ pkgs.claude-code ] ++ packages;
 
   imports = [ homeManagerModule ];
 

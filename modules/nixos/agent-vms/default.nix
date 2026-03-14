@@ -119,7 +119,6 @@ let
           homeManagerModule = inputs.home-manager.nixosModules.home-manager;
           inherit (vmCfg) claude direnv extraHomeModules;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
-          claudePackagePath = "${pkgs.claude-code}";
         })
       ];
     };
@@ -181,6 +180,11 @@ in
         type = lib.types.bool;
         default = true;
         description = "Include direnv + nix-direnv in VMs by default";
+      };
+      dotfilesFlakeUrl = lib.mkOption {
+        type = lib.types.str;
+        default = "path:/home/${cfg.user.name}/src/dotfiles";
+        description = "Flake URL for dotfiles repo (used for claude-code overlay in ad-hoc VMs)";
       };
     };
 
