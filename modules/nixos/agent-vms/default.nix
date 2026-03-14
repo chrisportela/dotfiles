@@ -1,0 +1,248 @@
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
+let
+  cfg = config.chrisportela.agent-vms;
+
+  # Parse "192.168.83.1/24" -> "192.168.83.1"
+  gatewayAddress = builtins.head (lib.splitString "/" cfg.bridge.subnet);
+
+  credentialSubmodule = lib.types.submodule {
+    options = {
+      source = lib.mkOption {
+        type = lib.types.str;
+        description = "Host path to credential directory";
+      };
+      mountPoint = lib.mkOption {
+        type = lib.types.str;
+        description = "Mount point inside the VM";
+      };
+    };
+  };
+
+  vmSubmodule = lib.types.submodule {
+    options = {
+      ipAddress = lib.mkOption {
+        type = lib.types.str;
+        description = "Static IP address on the bridge subnet";
+      };
+      mac = lib.mkOption {
+        type = lib.types.str;
+        description = "MAC address for the VM";
+      };
+      workspace = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Host directory to share via virtiofs";
+      };
+      autostart = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Start VM on boot";
+      };
+      packages = lib.mkOption {
+        type = lib.types.listOf lib.types.package;
+        default = [ ];
+        description = "Additional packages in VM";
+      };
+      credentials = lib.mkOption {
+        type = lib.types.listOf credentialSubmodule;
+        default = [ ];
+        description = "Credential directories (mounted read-only)";
+      };
+      vcpu = lib.mkOption {
+        type = lib.types.int;
+        default = cfg.defaults.vcpu;
+        description = "Number of vCPUs";
+      };
+      mem = lib.mkOption {
+        type = lib.types.int;
+        default = cfg.defaults.mem;
+        description = "RAM in MB";
+      };
+      varSize = lib.mkOption {
+        type = lib.types.int;
+        default = 8192;
+        description = "/var volume size in MB";
+      };
+      extraShares = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [ ];
+        description = "Additional virtiofs mounts";
+      };
+    };
+  };
+
+  # Generate microvm.vms entries from declarative VM definitions
+  mkVm = name: vmCfg: {
+    inherit (vmCfg) autostart;
+    config = {
+      imports = [
+        inputs.microvm.nixosModules.microvm
+        ((import ./vm-base.nix) {
+          hostName = name;
+          inherit (vmCfg)
+            ipAddress
+            mac
+            workspace
+            packages
+            credentials
+            vcpu
+            mem
+            varSize
+            extraShares
+            ;
+          inherit gatewayAddress;
+          hypervisor = cfg.defaults.hypervisor;
+          userName = cfg.user.name;
+          inherit (cfg.user) uid gid authorizedKeys;
+          sshHostKeyPath = "/var/lib/microvms/${name}/ssh-host-keys";
+        })
+      ];
+    };
+  };
+in
+{
+  # imports is top-level — cannot be inside lib.mkIf
+  imports = [ inputs.microvm.nixosModules.host ];
+
+  options.chrisportela.agent-vms = {
+    enable = lib.mkEnableOption "agent VM host support";
+
+    bridge = {
+      name = lib.mkOption {
+        type = lib.types.str;
+        default = "microbr";
+        description = "Bridge device name";
+      };
+      subnet = lib.mkOption {
+        type = lib.types.str;
+        default = "192.168.83.1/24";
+        description = "Bridge subnet (host gets .1)";
+      };
+    };
+
+    nat.externalInterface = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "Host interface to NAT through (required when enable = true)";
+    };
+
+    defaults = {
+      vcpu = lib.mkOption {
+        type = lib.types.int;
+        default = 8;
+        description = "Default vCPUs per VM";
+      };
+      mem = lib.mkOption {
+        type = lib.types.int;
+        default = 4096;
+        description = "Default RAM in MB per VM";
+      };
+      hypervisor = lib.mkOption {
+        type = lib.types.str;
+        default = "cloud-hypervisor";
+        description = "Default hypervisor";
+      };
+    };
+
+    user = {
+      name = lib.mkOption {
+        type = lib.types.str;
+        default = "cmp";
+        description = "Username inside VMs";
+      };
+      uid = lib.mkOption {
+        type = lib.types.int;
+        default = 1000;
+        description = "UID inside VMs";
+      };
+      gid = lib.mkOption {
+        type = lib.types.int;
+        default = 1000;
+        description = "GID inside VMs";
+      };
+      authorizedKeys = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "SSH authorized keys for VM user";
+      };
+    };
+
+    vms = lib.mkOption {
+      type = lib.types.attrsOf vmSubmodule;
+      default = { };
+      description = "Declarative VM definitions";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    # Bridge network device
+    systemd.network.netdevs."20-${cfg.bridge.name}".netdevConfig = {
+      Kind = "bridge";
+      Name = cfg.bridge.name;
+    };
+
+    systemd.network.networks."20-${cfg.bridge.name}" = {
+      matchConfig.Name = cfg.bridge.name;
+      addresses = [ { Address = cfg.bridge.subnet; } ];
+    };
+
+    # Auto-bridge TAP interfaces created by microvm
+    systemd.network.networks."21-microvm-tap" = {
+      matchConfig.Name = "vm-*";
+      networkConfig.Bridge = cfg.bridge.name;
+    };
+
+    # NAT for outbound VM traffic
+    networking.nat = {
+      enable = true;
+      internalInterfaces = [ cfg.bridge.name ];
+      externalInterface = cfg.nat.externalInterface;
+    };
+
+    # Trust the bridge in the firewall
+    networking.firewall.trustedInterfaces = [ cfg.bridge.name ];
+
+    # Generate declarative VMs
+    microvm.vms = lib.mapAttrs mkVm cfg.vms;
+
+    # Activation: generate SSH host keys and .ip files for declarative VMs,
+    # and write .declarative-ips for ad-hoc IP collision avoidance
+    system.activationScripts.agent-vm-setup = {
+      text =
+        let
+          perVm = lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (name: vm: ''
+              VM_DIR="/var/lib/microvms/${name}"
+              mkdir -p "$VM_DIR/ssh-host-keys"
+              if [ ! -f "$VM_DIR/ssh-host-keys/ssh_host_ed25519_key" ]; then
+                ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" -f "$VM_DIR/ssh-host-keys/ssh_host_ed25519_key" -q
+              fi
+              echo "${vm.ipAddress}" > "$VM_DIR/.ip"
+            '') cfg.vms
+          );
+          ipsContent = lib.concatStringsSep "\\n" (
+            lib.mapAttrsToList (_: vm: vm.ipAddress) cfg.vms
+          );
+        in
+        ''
+          mkdir -p /var/lib/microvms
+          printf '%b\n' "${ipsContent}" > /var/lib/microvms/.declarative-ips
+          ${perVm}
+        '';
+    };
+
+    # Add agent-vm CLI tool
+    environment.systemPackages = [
+      (import ./agent-vm.nix {
+        inherit pkgs lib inputs;
+        inherit (cfg) bridge defaults user;
+      })
+    ];
+  };
+}
