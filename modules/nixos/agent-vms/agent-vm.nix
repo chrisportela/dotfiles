@@ -32,8 +32,8 @@ base.overrideAttrs (prev: {
   };
 })'' ]
     [ "base" ]
-    (builtins.readFile ../../pkgs/claude-code/package.nix);
-  claudeCodeLockfile = ../../pkgs/claude-code/package-lock.json;
+    (builtins.readFile ../../../pkgs/claude-code/package.nix);
+  claudeCodeLockfile = ../../../pkgs/claude-code/package-lock.json;
 in
 pkgs.writeShellScriptBin "agent-vm" ''
   set -euo pipefail
@@ -324,7 +324,9 @@ FLAKE
     # Build the VM flake and create the 'current' symlink
     # microvm.nix services expect /var/lib/microvms/<name>/current/bin/microvm-run
     echo "Building VM '$name'..."
-    ${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --out-link "$vm_dir/current"
+    local build_result
+    build_result="$(${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --print-out-paths --no-link)"
+    sudo ln -sfT "$build_result" "$vm_dir/current"
 
     echo "Starting VM '$name'..."
     # systemctl start blocks until VM signals readiness via vsock
