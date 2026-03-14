@@ -1,4 +1,5 @@
 {
+  agent-vms = ./agent-vms;
   cafecitocloud = ./cafecitocloud;
   common = ./common.nix;
   # ddc = ./ddc.nix;
