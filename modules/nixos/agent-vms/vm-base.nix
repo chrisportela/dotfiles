@@ -160,7 +160,7 @@ in
       matchConfig.Name = "e*";
       addresses = [ { Address = "${ipAddress}/24"; } ];
       routes = [ { Gateway = gatewayAddress; } ];
-};
+    };
   };
 
   # --- OOM protection ---

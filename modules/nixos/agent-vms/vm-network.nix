@@ -199,14 +199,18 @@ in
 
       sslcrtd_program ${pkgs.squid}/libexec/security_file_certgen -s /var/lib/squid/certdb -M 16MB
 
-      acl localnet src 127.0.0.0/8
+      acl localnet src 127.0.0.0/8 ::1
       acl SSL_ports port 443
       acl Safe_ports port 80 443
       acl CONNECT method CONNECT
 
       # Domain ACLs
+      ${lib.optionalString (squidAllowedDomains != []) ''
       acl allowed_domains dstdomain ${lib.concatStringsSep " " squidAllowedDomains}
+      ''}
+      ${lib.optionalString (squidInterceptDomains != []) ''
       acl intercept_domains dstdomain ${lib.concatStringsSep " " squidInterceptDomains}
+      ''}
 
       ${lib.optionalString (proxyBlockRegexes != []) ''
       acl blocked_urls url_regex ${lib.concatStringsSep " " proxyBlockRegexes}
@@ -216,19 +220,27 @@ in
       acl step1 at_step SslBump1
       acl step2 at_step SslBump2
       ssl_bump peek step1 all
+      ${lib.optionalString (squidInterceptDomains != []) ''
       ssl_bump bump step2 intercept_domains
+      ''}
+      ${lib.optionalString (squidAllowedDomains != []) ''
       ssl_bump splice step2 allowed_domains
+      ''}
       ssl_bump terminate step2 all
 
       # Access control
       http_access deny !localnet
       http_access deny !Safe_ports
       http_access deny CONNECT !SSL_ports
-      ${lib.optionalString (proxyBlockRegexes != []) ''
+      ${lib.optionalString (proxyBlockRegexes != [] && squidInterceptDomains != []) ''
       http_access deny blocked_urls intercept_domains
       ''}
+      ${lib.optionalString (squidAllowedDomains != []) ''
       http_access allow allowed_domains
+      ''}
+      ${lib.optionalString (squidInterceptDomains != []) ''
       http_access allow intercept_domains
+      ''}
       http_access deny all
 
       # ICAP hook point (future — uncomment when adapter available)

@@ -226,6 +226,11 @@ USAGE
       esac
     done
 
+    if [ "$network_mode" != "default" ] && [ "$network_mode" != "restricted" ]; then
+      echo "Error: --network-mode must be 'default' or 'restricted'" >&2
+      exit 1
+    fi
+
     local vm_dir="$MICROVMS_DIR/$name"
     if [ -d "$vm_dir" ]; then
       echo "Error: VM '$name' already exists at $vm_dir" >&2
