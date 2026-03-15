@@ -11,7 +11,7 @@
 let
   # Bake in flake input revisions (direct attributes on locked inputs)
   microvmRev = inputs.microvm.rev;
-  nixpkgsRev = inputs.nixpkgs.rev;
+  nixpkgsRev = inputs.nixpkgs-unstable.rev;
   homeManagerRev = inputs.home-manager.rev;
 
   # Parse gateway from subnet ("192.168.83.1/24" -> "192.168.83.1")
@@ -56,6 +56,8 @@ pkgs.writeShellScriptBin "agent-vm" ''
   HOME_MANAGER_URL="github:nix-community/home-manager/${homeManagerRev}"
   DEFAULT_CLAUDE="${lib.boolToString defaults.claude}"
   DEFAULT_CLAUDE_CONFIG_DIR="${defaults.claudeConfigDir}"
+  DEFAULT_DOTFILES="${lib.boolToString defaults.dotfiles}"
+  DEFAULT_DOTFILES_DIR="${defaults.dotfilesDir}"
   DEFAULT_DIRENV="${lib.boolToString defaults.direnv}"
 
   usage() {
@@ -80,6 +82,8 @@ Create flags:
   --no-claude                     Disable Claude Code
   --direnv                        Enable direnv + nix-direnv
   --no-direnv                     Disable direnv
+  --dotfiles                      Mount dotfiles directory read-only
+  --no-dotfiles                   Disable dotfiles mount
   --hm-module <path>              Additional home-manager module (repeatable)
 USAGE
   }
@@ -128,6 +132,7 @@ USAGE
     local mem="$DEFAULT_MEM"
     local credentials=""
     local claude="$DEFAULT_CLAUDE"
+    local use_dotfiles="$DEFAULT_DOTFILES"
     local use_direnv="$DEFAULT_DIRENV"
     local hm_modules=""
 
@@ -140,6 +145,8 @@ USAGE
         --credentials) credentials="$credentials $2"; shift 2 ;;
         --claude) claude="true"; shift ;;
         --no-claude) claude="false"; shift ;;
+        --dotfiles) use_dotfiles="true"; shift ;;
+        --no-dotfiles) use_dotfiles="false"; shift ;;
         --direnv) use_direnv="true"; shift ;;
         --no-direnv) use_direnv="false"; shift ;;
         --hm-module) hm_modules="$hm_modules $2"; shift 2 ;;
@@ -202,8 +209,15 @@ USAGE
 ${vmBaseContent}
 VMBASE
 
-    # Copy claude-code package files if claude is enabled
+    # Copy claude credentials if claude is enabled
     if [ "$claude" = "true" ]; then
+      # Copy .claude.json (auth token) into a shareable directory
+      local claude_json_src="$(dirname "$DEFAULT_CLAUDE_CONFIG_DIR")/.claude.json"
+      if [ -f "$claude_json_src" ]; then
+        sudo mkdir -p "$vm_dir/claude-json"
+        sudo cp "$claude_json_src" "$vm_dir/claude-json/.claude.json"
+      fi
+
       sudo mkdir -p "$vm_dir/claude-code"
       sudo tee "$vm_dir/claude-code/package.nix" > /dev/null <<'CLAUDEPKG'
 ${claudeCodePkgContent}
@@ -241,6 +255,12 @@ CLAUDEPKG
       claude_config_nix="\"$DEFAULT_CLAUDE_CONFIG_DIR\""
     fi
 
+    # Build dotfiles dir Nix expression
+    local dotfiles_dir_nix="null"
+    if [ "$use_dotfiles" = "true" ]; then
+      dotfiles_dir_nix="\"$DEFAULT_DOTFILES_DIR\""
+    fi
+
     # Generate flake.nix
     sudo tee "$vm_dir/flake.nix" > /dev/null <<FLAKE
 {
@@ -259,19 +279,17 @@ CLAUDEPKG
   outputs = { self, nixpkgs, microvm, home-manager, ... }:
   let
     system = "x86_64-linux";
-    pkgs = import nixpkgs {
-      inherit system;
-      overlays = [
-        (final: prev: {
-          claude-code = final.callPackage ./claude-code/package.nix { };
-        })
-      ];
-    };
   in
   {
     nixosConfigurations.$name = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
+        { nixpkgs.overlays = [
+            (final: prev: {
+              claude-code = final.callPackage ./claude-code/package.nix { };
+            })
+          ];
+        }
         microvm.nixosModules.microvm
         ((import ./vm-base.nix) {
           hostName = "$name";
@@ -292,6 +310,9 @@ CLAUDEPKG
           homeManagerModule = home-manager.nixosModules.home-manager;
           claude = $claude;
           claudeConfigDir = $claude_config_nix;
+          claudeJsonDir = "$vm_dir/claude-json";
+          dotfiles = $use_dotfiles;
+          dotfilesDir = $dotfiles_dir_nix;
           direnv = $use_direnv;
           extraHomeModules = $hm_imports_nix;
         })
@@ -306,6 +327,17 @@ FLAKE
 
     # microvm.nix services run as microvm:kvm — they need write access
     sudo chown -R microvm:kvm "$vm_dir"
+    # SSH host keys must stay root-owned for sshd (group-readable for virtiofs)
+    sudo chown -R root:kvm "$vm_dir/ssh-host-keys"
+    sudo chmod 0640 "$vm_dir/ssh-host-keys/ssh_host_ed25519_key"
+    sudo chmod 0644 "$vm_dir/ssh-host-keys/ssh_host_ed25519_key.pub"
+
+    # Init git repo so Nix recognises the directory as a flake
+    sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" init -q
+    sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" add -A
+    sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" \
+      -c user.name="agent-vm" -c user.email="agent-vm@localhost" \
+      commit -q -m "init"
 
     echo "VM '$name' created."
     echo "  IP: $ip"
@@ -323,9 +355,10 @@ FLAKE
 
     # Build the VM flake and create the 'current' symlink
     # microvm.nix services expect /var/lib/microvms/<name>/current/bin/microvm-run
+    # Build as microvm user since the flake repo is owned by microvm:kvm
     echo "Building VM '$name'..."
     local build_result
-    build_result="$(${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --print-out-paths --no-link)"
+    build_result="$(cd "$vm_dir" && sudo -u microvm HOME="$vm_dir" ${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --print-out-paths --no-link)"
     sudo ln -sfT "$build_result" "$vm_dir/current"
 
     echo "Starting VM '$name'..."

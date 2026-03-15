@@ -66,7 +66,7 @@ let
       };
       varSize = lib.mkOption {
         type = lib.types.int;
-        default = 8192;
+        default = 51200;
         description = "/var volume size in MB";
       };
       extraShares = lib.mkOption {
@@ -78,6 +78,11 @@ let
         type = lib.types.bool;
         default = cfg.defaults.claude;
         description = "Enable Claude Code credential sharing for this VM";
+      };
+      dotfiles = lib.mkOption {
+        type = lib.types.bool;
+        default = cfg.defaults.dotfiles;
+        description = "Mount dotfiles directory read-only for this VM";
       };
       direnv = lib.mkOption {
         type = lib.types.bool;
@@ -117,8 +122,10 @@ let
           inherit (cfg.user) uid gid authorizedKeys;
           sshHostKeyPath = "/var/lib/microvms/${name}/ssh-host-keys";
           homeManagerModule = inputs.home-manager.nixosModules.home-manager;
-          inherit (vmCfg) claude direnv extraHomeModules;
+          inherit (vmCfg) claude dotfiles direnv extraHomeModules;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
+          claudeJsonDir = "/var/lib/microvms/${name}/claude-json";
+          dotfilesDir = cfg.defaults.dotfilesDir;
         })
       ];
     };
@@ -175,6 +182,16 @@ in
         type = lib.types.str;
         default = "/home/${cfg.user.name}/.claude";
         description = "Host path to .claude/ directory (mounted read-only into VMs)";
+      };
+      dotfiles = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Mount dotfiles directory read-only in VMs by default";
+      };
+      dotfilesDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/home/${cfg.user.name}/src/dotfiles";
+        description = "Host path to dotfiles directory (mounted read-only into VMs)";
       };
       direnv = lib.mkOption {
         type = lib.types.bool;
@@ -264,6 +281,14 @@ in
                 ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" -f "$VM_DIR/ssh-host-keys/ssh_host_ed25519_key" -q
               fi
               echo "${vm.ipAddress}" > "$VM_DIR/.ip"
+              # Copy .claude.json for VMs with claude enabled
+              ${lib.optionalString vm.claude ''
+                CLAUDE_JSON="${cfg.defaults.claudeConfigDir}/../.claude.json"
+                if [ -f "$CLAUDE_JSON" ]; then
+                  mkdir -p "$VM_DIR/claude-json"
+                  cp "$CLAUDE_JSON" "$VM_DIR/claude-json/.claude.json"
+                fi
+              ''}
               chown -R microvm:kvm "$VM_DIR"
             '') cfg.vms
           );

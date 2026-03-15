@@ -16,12 +16,15 @@
   uid ? 1000,
   gid ? 1000,
   authorizedKeys ? [ ],
-  varSize ? 8192,
+  varSize ? 51200,
   extraShares ? [ ],
   sshHostKeyPath,
   homeManagerModule,
   claude ? false,
   claudeConfigDir ? null,
+  claudeJsonDir ? null,
+  dotfiles ? false,
+  dotfilesDir ? null,
   direnv ? true,
   extraHomeModules ? [ ],
 }:
@@ -70,6 +73,24 @@ let
         source = claudeConfigDir;
         mountPoint = "/home/${userName}/.claude-host";
       }
+    ]
+    ++ lib.optionals (claude && claudeJsonDir != null) [
+      {
+        proto = "virtiofs";
+        tag = "claude-json";
+        source = claudeJsonDir;
+        mountPoint = "/home/${userName}/.claude-json-host";
+      }
+    ];
+
+  dotfilesShares =
+    lib.optionals (dotfiles && dotfilesDir != null) [
+      {
+        proto = "virtiofs";
+        tag = "dotfiles";
+        source = dotfilesDir;
+        mountPoint = dotfilesDir;
+      }
     ];
 in
 {
@@ -109,6 +130,7 @@ in
       ++ workspaceShares
       ++ credentialShares
       ++ claudeShares
+      ++ dotfilesShares
       ++ extraShares;
   };
 
@@ -191,6 +213,9 @@ in
       lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         if [ ! -d "/home/${userName}/.claude" ] && [ -d "/home/${userName}/.claude-host" ]; then
           cp -a "/home/${userName}/.claude-host" "/home/${userName}/.claude"
+        fi
+        if [ ! -f "/home/${userName}/.claude.json" ] && [ -f "/home/${userName}/.claude-json-host/.claude.json" ]; then
+          cp "/home/${userName}/.claude-json-host/.claude.json" "/home/${userName}/.claude.json"
         fi
       ''
     );
