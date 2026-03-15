@@ -78,6 +78,9 @@ in
 
   # --- Firewall: nftables ---
   networking.nftables.enable = true;
+  # Disable build-time ruleset validation — meta skuid references users
+  # (unbound, squid) that only exist inside the VM, not on the build host.
+  networking.nftables.checkRuleset = false;
 
   networking.nftables.ruleset = if isRestricted then ''
     table inet filter {
@@ -192,10 +195,12 @@ in
   environment.etc."squid/squid.conf" = lib.mkIf isRestricted {
     text = ''
       http_port 127.0.0.1:3128 ssl-bump \
-        cert=/etc/squid/ca/ca-cert.pem \
-        key=/etc/squid/ca/ca-key.pem \
+        cert=/var/lib/squid/ca/ca-cert.pem \
+        key=/var/lib/squid/ca/ca-key.pem \
         generate-host-certificates=on \
         dynamic_cert_mem_cache_size=16MB
+
+      pid_filename /run/squid/squid.pid
 
       sslcrtd_program ${pkgs.squid}/libexec/security_file_certgen -s /var/lib/squid/certdb -M 16MB
 
@@ -253,27 +258,63 @@ in
     '';
   };
 
+  # Copy CA cert/key from virtiofs mount (root-owned, 0600) to a location
+  # readable by the squid user, similar to ssh-host-keys-fixup in vm-base.nix.
+  systemd.services.squid-ca-fixup = lib.mkIf isRestricted {
+    description = "Copy proxy CA with correct permissions for Squid";
+    wantedBy = [ "squid.service" ];
+    before = [ "squid.service" ];
+    after = [ "local-fs.target" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      mkdir -p /var/lib/squid/ca
+      cp /etc/squid/ca/ca-cert.pem /var/lib/squid/ca/
+      # Convert to traditional RSA format (Squid rejects PKCS#8 keys)
+      ${pkgs.openssl}/bin/openssl rsa -traditional -in /etc/squid/ca/ca-key.pem -out /var/lib/squid/ca/ca-key.pem 2>/dev/null
+      chown squid:squid /var/lib/squid/ca/ca-cert.pem /var/lib/squid/ca/ca-key.pem
+      chmod 0600 /var/lib/squid/ca/ca-key.pem
+      chmod 0644 /var/lib/squid/ca/ca-cert.pem
+    '';
+  };
+
   systemd.services.squid = lib.mkIf isRestricted {
     description = "Squid Web Proxy";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" "vm-first-boot.service" ];
-    requires = [ "vm-first-boot.service" ];
+    after = [ "network.target" "vm-first-boot.service" "squid-ca-fixup.service" ];
+    requires = [ "vm-first-boot.service" "squid-ca-fixup.service" ];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${pkgs.squid}/bin/squid --foreground -f /etc/squid/squid.conf";
       ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
       User = "squid";
       Group = "squid";
+      RuntimeDirectory = "squid";
       Restart = "on-failure";
     };
   };
 
   # --- CA trust (restricted mode) ---
-  security.pki.certificateFiles = lib.mkIf isRestricted [
-    "/etc/squid/ca/ca-cert.pem"
-  ];
+  # The proxy CA cert lives on a virtiofs mount (/etc/squid/ca/) that is only
+  # available at runtime, so we cannot use security.pki.certificateFiles (which
+  # bakes certs into the Nix store at build time). Instead, create a combined
+  # CA bundle at boot and point standard env vars at it.
+  systemd.services.proxy-ca-trust = lib.mkIf isRestricted {
+    description = "Create combined CA bundle with proxy CA";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "squid.service" ];
+    after = [ "local-fs.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      mkdir -p /etc/ssl/certs
+      cat ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt /etc/squid/ca/ca-cert.pem \
+        > /etc/ssl/certs/ca-bundle-with-proxy.crt
+    '';
+  };
 
-  # --- Proxy environment variables (restricted mode) ---
+  # --- Proxy and CA environment variables (restricted mode) ---
   environment.sessionVariables = lib.mkIf isRestricted {
     http_proxy = "http://127.0.0.1:3128";
     https_proxy = "http://127.0.0.1:3128";
@@ -281,6 +322,9 @@ in
     HTTPS_PROXY = "http://127.0.0.1:3128";
     no_proxy = "localhost,127.0.0.1";
     NO_PROXY = "localhost,127.0.0.1";
+    SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle-with-proxy.crt";
+    NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle-with-proxy.crt";
+    NODE_EXTRA_CA_CERTS = "/etc/squid/ca/ca-cert.pem";
   };
 
   # --- IPv6: disable in restricted mode ---

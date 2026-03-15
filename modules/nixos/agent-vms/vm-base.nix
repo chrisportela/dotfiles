@@ -110,6 +110,12 @@ in
     socket = "control.socket";
     vsock.cid = vsockCid;
 
+    # Route serial to a socket file for interactive root console access.
+    # Overrides the default --serial tty; kernel console param must be
+    # re-added manually since cloud-hypervisor drops it for non-tty serial.
+    cloud-hypervisor.extraArgs = [ "--serial" "socket=console.sock" ];
+    kernelParams = [ "earlyprintk=ttyS0" "console=ttyS0" ];
+
     interfaces = [
       {
         type = "tap";
@@ -212,6 +218,13 @@ in
   };
   systemd.services.sshd.serviceConfig.OOMScoreAdjust = lib.mkForce (-900);
 
+  # --- Serial console for root access ---
+  # Enable login prompt on serial console (ttyS0 via console.sock)
+  systemd.services."serial-getty@ttyS0".enable = true;
+  # Default root password: "root" (change via console after first boot)
+  # mkpasswd -m sha-512 root
+  users.users.root.hashedPassword = "$6$rounds=10000$saltsalt$Uf1Ue2eDPNJn0HLVgPCm5OGOwe5BWWWKP8YBpOsSJbMqPF8.1PgPHnjaaXVHfzJrfKbLG7jixHAdjPGnQfZm/.";
+
   users.groups.${userName} = {
     inherit gid;
   };
@@ -220,12 +233,14 @@ in
     isNormalUser = true;
     inherit uid;
     group = userName;
-    extraGroups = [ "wheel" ];
+    # In restricted mode, no wheel/sudo — prevents agents from bypassing
+    # network isolation. Use root console for admin tasks instead.
+    extraGroups = lib.optionals (networkMode != "restricted") [ "wheel" ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = authorizedKeys;
   };
 
-  security.sudo.wheelNeedsPassword = false;
+  security.sudo.wheelNeedsPassword = lib.mkIf (networkMode != "restricted") false;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -331,9 +346,9 @@ in
 
     programs.git = {
       enable = true;
-      userName = userName;
-      userEmail = "${userName}@${hostName}";
-      extraConfig = {
+      settings = {
+        user.name = userName;
+        user.email = "${userName}@${hostName}";
         init.defaultBranch = "main";
         pull.rebase = true;
       };
@@ -344,7 +359,7 @@ in
       defaultEditor = true;
       viAlias = true;
       vimAlias = true;
-      extraLuaConfig = ''
+      initLua = ''
         vim.opt.number = true
         vim.opt.relativenumber = true
         vim.opt.expandtab = true

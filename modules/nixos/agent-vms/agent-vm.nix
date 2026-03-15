@@ -88,6 +88,7 @@ Commands:
   destroy <name>          Stop and remove a VM
   list                    List VMs with status and IP
   ssh <name> [ssh-args]   SSH into a VM
+  console <name>          Root console via serial socket
   edit <name>             Edit the VM's flake.nix with \$EDITOR
   templates               List available templates
 
@@ -252,9 +253,14 @@ USAGE
     if [ "$network_mode" = "restricted" ]; then
       sudo mkdir -p "$vm_dir/proxy-ca"
       sudo ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:4096 -nodes \
+        -traditional \
         -keyout "$vm_dir/proxy-ca/ca-key.pem" \
         -out "$vm_dir/proxy-ca/ca-cert.pem" \
         -days 3650 -subj "/CN=agent-vm-$name Proxy CA" 2>/dev/null
+      # Key must be world-readable on host for virtiofs (no UID remapping —
+      # host UID appears as-is inside VM, so only that UID can read 0600).
+      # The squid-ca-fixup service copies it with restrictive perms inside.
+      sudo chmod 0644 "$vm_dir/proxy-ca/ca-key.pem"
     fi
 
     # Build workspace share Nix expression
@@ -507,6 +513,17 @@ FLAKE
     echo "VM '$name' stopped."
   }
 
+  cmd_console() {
+    local name="$1"
+    local sock="$MICROVMS_DIR/$name/console.sock"
+    if [ ! -S "$sock" ]; then
+      echo "Error: console socket not found — is VM '$name' running?" >&2
+      exit 1
+    fi
+    echo "Connecting to $name serial console (Ctrl-O to disconnect)..."
+    exec ${pkgs.socat}/bin/socat STDIO,raw,echo=0,escape=0x0f "UNIX-CONNECT:$sock"
+  }
+
   cmd_destroy() {
     local name="$1"
     local vm_dir="$MICROVMS_DIR/$name"
@@ -632,6 +649,10 @@ FLAKE
       [ $# -lt 1 ] && { echo "Error: name required" >&2; usage; exit 1; }
       cmd_ssh "$@"
       ;;
+    console)
+      [ $# -lt 1 ] && { echo "Error: name required" >&2; usage; exit 1; }
+      cmd_console "$1"
+      ;;
     *)
       echo "Unknown command: $cmd" >&2
       usage
@@ -647,7 +668,7 @@ FLAKE
       cur="''${COMP_WORDS[COMP_CWORD]}"
       prev="''${COMP_WORDS[COMP_CWORD-1]}"
 
-      local commands="create start stop destroy list ssh edit templates"
+      local commands="create start stop destroy list ssh console edit templates"
       local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module --network-mode --allowed-domains --intercept-domains --block-regex --allow-ssh"
       local ssh_flags="--tmux"
 
@@ -661,7 +682,7 @@ FLAKE
       # Complete VM names for commands that take one
       if [ "$COMP_CWORD" -eq 2 ]; then
         case "$cmd" in
-          start|stop|destroy|ssh|edit)
+          start|stop|destroy|ssh|console|edit)
             local vms=""
             for dir in /var/lib/microvms/*/; do
               [ -d "$dir" ] || continue
@@ -735,6 +756,7 @@ FLAKE
         'destroy:Stop and remove a VM'
         'list:List VMs with status and IP'
         'ssh:SSH into a VM'
+        'console:Root console via serial socket'
         'edit:Edit VM flake.nix'
         'templates:List available templates'
       )
@@ -745,7 +767,7 @@ FLAKE
       fi
 
       case "''${words[2]}" in
-        start|stop|destroy|edit)
+        start|stop|destroy|console|edit)
           if (( CURRENT == 3 )); then
             _agent_vm_vms
           fi
