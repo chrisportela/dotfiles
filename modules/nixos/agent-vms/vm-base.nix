@@ -10,6 +10,7 @@
   mem ? 4096,
   hypervisor ? "cloud-hypervisor",
   workspace ? null,
+  copyWorkspace ? false,
   credentials ? [ ],
   packages ? [ ],
   userName ? "cmp",
@@ -22,11 +23,17 @@
   homeManagerModule,
   claude ? false,
   claudeConfigDir ? null,
-  claudeJsonDir ? null,
   dotfiles ? false,
   dotfilesDir ? null,
   direnv ? true,
   extraHomeModules ? [ ],
+  # Network isolation
+  networkMode ? "default", # "default" | "restricted"
+  allowedDomains ? [ ],    # Domains allowed through proxy (spliced — no TLS inspection)
+  interceptDomains ? [ ],  # Domains with TLS interception (bumped — full URL visibility)
+  proxyBlockRegexes ? [ ], # URL regexes to block on intercepted traffic
+  allowSSH ? false,        # Allow outbound SSH (port 22) to whitelisted IPs
+  upstreamDNS ? [ "1.1.1.1" "8.8.8.8" ],
 }:
 {
   config,
@@ -35,13 +42,15 @@
   ...
 }:
 let
+  workspaceMountPoint = if copyWorkspace then "${workspace}-ro" else workspace;
+
   workspaceShares =
     lib.optionals (workspace != null) [
       {
         proto = "virtiofs";
         tag = "workspace";
         source = workspace;
-        mountPoint = workspace;
+        mountPoint = workspaceMountPoint;
       }
     ];
 
@@ -57,7 +66,7 @@ let
       proto = "virtiofs";
       tag = "ssh-host-keys";
       source = sshHostKeyPath;
-      mountPoint = "/etc/ssh/host-keys";
+      mountPoint = "/etc/ssh/host-keys-ro";
     }
   ];
 
@@ -72,14 +81,6 @@ let
         tag = "claude-config";
         source = claudeConfigDir;
         mountPoint = "/home/${userName}/.claude-host";
-      }
-    ]
-    ++ lib.optionals (claude && claudeJsonDir != null) [
-      {
-        proto = "virtiofs";
-        tag = "claude-json";
-        source = claudeJsonDir;
-        mountPoint = "/home/${userName}/.claude-json-host";
       }
     ];
 
@@ -107,7 +108,9 @@ in
       }
     ];
 
-    writableStoreOverlay = "/nix/.rw-store";
+    # Place writable nix store overlay on persistent /var so installed
+    # packages survive reboots (default /nix/.rw-store is on tmpfs)
+    writableStoreOverlay = "/var/nix-store-overlay";
 
     volumes = [
       {
@@ -155,6 +158,45 @@ in
 
   services.resolved.enable = true;
 
+  # --- OOM protection ---
+  # Enable systemd-oomd for proactive cgroup-pressure-based OOM handling.
+  # Kills workloads under memory pressure before the kernel OOM killer
+  # fires indiscriminately.
+  systemd.oomd = {
+    enable = true;
+    enableRootSlice = true;
+    enableUserSlices = true;
+  };
+
+  # Protect core system services from OOM (-900 = almost never killed)
+  systemd.services.systemd-resolved.serviceConfig.OOMScoreAdjust = -900;
+  systemd.services.systemd-networkd.serviceConfig.OOMScoreAdjust = -900;
+  systemd.services.nix-daemon.serviceConfig.OOMScoreAdjust = -800;
+
+  # Make user sessions more likely to be killed under memory pressure.
+  # systemd-oomd monitors this slice and kills within it at 80% pressure.
+  systemd.slices."user-".sliceConfig = {
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "80%";
+  };
+
+  # Copy SSH host keys from virtiofs mount (root:kvm 0640) to local dir with
+  # correct permissions (root:root 0600) before sshd starts
+  systemd.services.ssh-host-keys-fixup = {
+    description = "Copy SSH host keys with correct permissions";
+    wantedBy = [ "sshd.service" ];
+    before = [ "sshd.service" ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      mkdir -p /etc/ssh/host-keys
+      cp /etc/ssh/host-keys-ro/ssh_host_ed25519_key /etc/ssh/host-keys/
+      cp /etc/ssh/host-keys-ro/ssh_host_ed25519_key.pub /etc/ssh/host-keys/
+      chmod 0600 /etc/ssh/host-keys/ssh_host_ed25519_key
+      chmod 0644 /etc/ssh/host-keys/ssh_host_ed25519_key.pub
+      chown root:root /etc/ssh/host-keys/ssh_host_ed25519_key /etc/ssh/host-keys/ssh_host_ed25519_key.pub
+    '';
+  };
+
   services.openssh = {
     enable = true;
     hostKeys = [
@@ -164,6 +206,7 @@ in
       }
     ];
   };
+  systemd.services.sshd.serviceConfig.OOMScoreAdjust = lib.mkForce (-900);
 
   users.groups.${userName} = {
     inherit gid;
@@ -183,16 +226,48 @@ in
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   programs.zsh.enable = true;
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    viAlias = true;
+    vimAlias = true;
+  };
+  programs.tmux.enable = true;
 
   nixpkgs.config.allowUnfree = claude;
 
   environment.systemPackages = with pkgs; [
     git
+    tmux
+    neovim
+    nodejs
+    python3
     ripgrep
     curl
     fd
     jq
+    bash
   ] ++ lib.optionals claude [ pkgs.claude-code ] ++ packages;
+
+  # Ensure /bin/bash exists for scripts that expect it
+  system.activationScripts.binbash = lib.stringAfter [ "stdio" ] ''
+    mkdir -p /bin
+    ln -sf ${pkgs.bash}/bin/bash /bin/bash
+  '';
+
+  # Persist /home/${userName} on the /var volume so user data survives reboots.
+  # The tmpfs rootfs is ephemeral — without this, home is wiped on every start.
+  fileSystems."/home/${userName}" = {
+    device = "/var/home/${userName}";
+    fsType = "none";
+    options = [ "bind" ];
+  };
+
+  # Ensure the backing directory exists with correct ownership before the
+  # bind mount is attempted
+  systemd.tmpfiles.rules = [
+    "d /var/home/${userName} 0700 ${userName} ${userName} -"
+  ];
 
   imports = [ homeManagerModule ];
 
@@ -204,23 +279,109 @@ in
 
     programs.zsh.enable = true;
 
+    programs.tmux = {
+      enable = true;
+      terminal = "tmux-256color";
+      escapeTime = 0;
+      historyLimit = 50000;
+      mouse = true;
+      keyMode = "vi";
+      baseIndex = 1;
+      extraConfig = ''
+        set -g renumber-windows on
+        set -g set-titles on
+        set -g focus-events on
+        bind | split-window -h -c "#{pane_current_path}"
+        bind - split-window -v -c "#{pane_current_path}"
+        bind c new-window -c "#{pane_current_path}"
+      '';
+    };
+
+    programs.git = {
+      enable = true;
+      userName = userName;
+      userEmail = "${userName}@${hostName}";
+      extraConfig = {
+        init.defaultBranch = "main";
+        pull.rebase = true;
+      };
+    };
+
+    programs.neovim = {
+      enable = true;
+      defaultEditor = true;
+      viAlias = true;
+      vimAlias = true;
+      extraLuaConfig = ''
+        vim.opt.number = true
+        vim.opt.relativenumber = true
+        vim.opt.expandtab = true
+        vim.opt.shiftwidth = 2
+        vim.opt.tabstop = 2
+        vim.opt.smartindent = true
+        vim.opt.termguicolors = true
+        vim.opt.signcolumn = "yes"
+        vim.opt.clipboard = "unnamedplus"
+        vim.opt.undofile = true
+        vim.opt.ignorecase = true
+        vim.opt.smartcase = true
+        vim.opt.scrolloff = 8
+        vim.g.mapleader = " "
+      '';
+    };
+
     programs.direnv = lib.mkIf direnv {
       enable = true;
       nix-direnv.enable = true;
     };
 
-    home.activation.seedClaude = lib.mkIf claude (
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        if [ ! -d "/home/${userName}/.claude" ] && [ -d "/home/${userName}/.claude-host" ]; then
-          cp -a "/home/${userName}/.claude-host" "/home/${userName}/.claude"
-        fi
-        if [ ! -f "/home/${userName}/.claude.json" ] && [ -f "/home/${userName}/.claude-json-host/.claude.json" ]; then
-          cp "/home/${userName}/.claude-json-host/.claude.json" "/home/${userName}/.claude.json"
-        fi
-      ''
-    );
-
     home.stateVersion = "25.11";
+  };
+
+  # --- First-boot provisioning ---
+  # All one-time setup (workspace copy, credential seeding) is gated behind
+  # a sentinel file on the persistent /var volume. This means:
+  #   - start/stop preserves all VM state (var.img persists)
+  #   - only `agent-vm destroy` removes the disk and resets state
+  #   - subsequent boots skip provisioning entirely
+
+  systemd.services.vm-first-boot = {
+    description = "First-boot provisioning";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "local-fs.target" ];
+    unitConfig.ConditionPathExists = "!/var/lib/vm-initialized";
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = let
+      copyWorkspaceScript = lib.optionalString (workspace != null && copyWorkspace) ''
+        # Copy workspace from RO virtiofs mount to writable location
+        if [ -d "${workspaceMountPoint}" ]; then
+          echo "Copying workspace to ${workspace}..."
+          ${pkgs.sudo}/bin/sudo -u ${userName} ${pkgs.rsync}/bin/rsync -a "${workspaceMountPoint}/" "${workspace}/"
+        fi
+      '';
+      seedClaudeScript = lib.optionalString claude ''
+        home="/home/${userName}"
+        # Seed .claude/ directory from host mount
+        if [ ! -d "$home/.claude" ] && [ -d "$home/.claude-host" ]; then
+          ${pkgs.sudo}/bin/sudo -u ${userName} cp -a "$home/.claude-host" "$home/.claude"
+        fi
+        # Seed .claude.json from latest backup
+        if [ ! -f "$home/.claude.json" ] && [ -d "$home/.claude-host/backups" ]; then
+          latest="$(ls -t "$home/.claude-host/backups/.claude.json."* 2>/dev/null | head -1)"
+          if [ -n "$latest" ]; then
+            ${pkgs.sudo}/bin/sudo -u ${userName} cp "$latest" "$home/.claude.json"
+          fi
+        fi
+      '';
+    in ''
+      ${copyWorkspaceScript}
+      ${seedClaudeScript}
+      mkdir -p /var/lib
+      touch /var/lib/vm-initialized
+    '';
   };
 
   # Fast shutdown

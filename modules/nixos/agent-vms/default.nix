@@ -11,6 +11,61 @@ let
   # Parse "192.168.83.1/24" -> "192.168.83.1"
   gatewayAddress = builtins.head (lib.splitString "/" cfg.bridge.subnet);
 
+  templateSubmodule = lib.types.submodule {
+    options = {
+      workspace = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Host directory to share via virtiofs";
+      };
+      packages = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Additional nixpkgs attribute names to include";
+      };
+      credentials = lib.mkOption {
+        type = lib.types.listOf credentialSubmodule;
+        default = [ ];
+        description = "Credential directories (mounted read-only)";
+      };
+      vcpu = lib.mkOption {
+        type = lib.types.nullOr lib.types.int;
+        default = null;
+        description = "Override default vCPUs";
+      };
+      mem = lib.mkOption {
+        type = lib.types.nullOr lib.types.int;
+        default = null;
+        description = "Override default RAM in MB";
+      };
+      varSize = lib.mkOption {
+        type = lib.types.nullOr lib.types.int;
+        default = null;
+        description = "Override /var volume size in MB";
+      };
+      claude = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Enable Claude Code";
+      };
+      dotfiles = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Mount dotfiles directory read-only";
+      };
+      direnv = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Enable direnv + nix-direnv";
+      };
+      copyWorkspace = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Copy workspace instead of sharing directly";
+      };
+    };
+  };
+
   credentialSubmodule = lib.types.submodule {
     options = {
       source = lib.mkOption {
@@ -79,6 +134,11 @@ let
         default = cfg.defaults.claude;
         description = "Enable Claude Code credential sharing for this VM";
       };
+      copyWorkspace = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Copy workspace instead of sharing directly";
+      };
       dotfiles = lib.mkOption {
         type = lib.types.bool;
         default = cfg.defaults.dotfiles;
@@ -122,9 +182,8 @@ let
           inherit (cfg.user) uid gid authorizedKeys;
           sshHostKeyPath = "/var/lib/microvms/${name}/ssh-host-keys";
           homeManagerModule = inputs.home-manager.nixosModules.home-manager;
-          inherit (vmCfg) claude dotfiles direnv extraHomeModules;
+          inherit (vmCfg) copyWorkspace claude dotfiles direnv extraHomeModules;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
-          claudeJsonDir = "/var/lib/microvms/${name}/claude-json";
           dotfilesDir = cfg.defaults.dotfilesDir;
         })
       ];
@@ -223,6 +282,12 @@ in
       };
     };
 
+    templates = lib.mkOption {
+      type = lib.types.attrsOf templateSubmodule;
+      default = { };
+      description = "Named presets for ad-hoc VM creation (agent-vm create -t <name>)";
+    };
+
     vms = lib.mkOption {
       type = lib.types.attrsOf vmSubmodule;
       default = { };
@@ -281,14 +346,6 @@ in
                 ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" -f "$VM_DIR/ssh-host-keys/ssh_host_ed25519_key" -q
               fi
               echo "${vm.ipAddress}" > "$VM_DIR/.ip"
-              # Copy .claude.json for VMs with claude enabled
-              ${lib.optionalString vm.claude ''
-                CLAUDE_JSON="${cfg.defaults.claudeConfigDir}/../.claude.json"
-                if [ -f "$CLAUDE_JSON" ]; then
-                  mkdir -p "$VM_DIR/claude-json"
-                  cp "$CLAUDE_JSON" "$VM_DIR/claude-json/.claude.json"
-                fi
-              ''}
               chown -R microvm:kvm "$VM_DIR"
             '') cfg.vms
           );
@@ -307,7 +364,7 @@ in
     environment.systemPackages = [
       (import ./agent-vm.nix {
         inherit pkgs lib inputs;
-        inherit (cfg) bridge defaults user;
+        inherit (cfg) bridge defaults user templates;
       })
     ];
   };

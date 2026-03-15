@@ -7,6 +7,7 @@
   bridge,
   defaults,
   user,
+  templates,
 }:
 let
   # Bake in flake input revisions (direct attributes on locked inputs)
@@ -34,8 +35,19 @@ base.overrideAttrs (prev: {
     [ "base" ]
     (builtins.readFile ../../../pkgs/claude-code/package.nix);
   claudeCodeLockfile = ../../../pkgs/claude-code/package-lock.json;
-in
-pkgs.writeShellScriptBin "agent-vm" ''
+
+  # Serialize templates to JSON, filtering out null values
+  cleanTemplate = t: lib.filterAttrs (_: v: v != null) {
+    inherit (t) workspace vcpu mem varSize claude dotfiles direnv copyWorkspace;
+    packages = if t.packages != [ ] then t.packages else null;
+    credentials = if t.credentials != [ ] then
+      map (c: { inherit (c) source mountPoint; }) t.credentials
+    else null;
+  };
+  templatesJson = builtins.toJSON (lib.mapAttrs (_: cleanTemplate) templates);
+  templateNames = lib.concatStringsSep " " (builtins.attrNames templates);
+
+  script = pkgs.writeShellScriptBin "agent-vm" ''
   set -euo pipefail
 
   MICROVMS_DIR="/var/lib/microvms"
@@ -59,6 +71,7 @@ pkgs.writeShellScriptBin "agent-vm" ''
   DEFAULT_DOTFILES="${lib.boolToString defaults.dotfiles}"
   DEFAULT_DOTFILES_DIR="${defaults.dotfilesDir}"
   DEFAULT_DIRENV="${lib.boolToString defaults.direnv}"
+  TEMPLATES_JSON='${templatesJson}'
 
   usage() {
     cat <<'USAGE'
@@ -71,8 +84,11 @@ Commands:
   destroy <name>          Stop and remove a VM
   list                    List VMs with status and IP
   ssh <name> [ssh-args]   SSH into a VM
+  edit <name>             Edit the VM's flake.nix with \$EDITOR
+  templates               List available templates
 
 Create flags:
+  -t, --template <name>           Use a named template as base
   --workspace <path>              Host directory to share
   --packages <pkg1,pkg2,...>      Additional nixpkgs to include
   --credentials <source:mount>    Credential share (repeatable)
@@ -84,7 +100,12 @@ Create flags:
   --no-direnv                     Disable direnv
   --dotfiles                      Mount dotfiles directory read-only
   --no-dotfiles                   Disable dotfiles mount
+  --var-size <n>                  Override /var volume size in MB
+  --copy-workspace                Copy workspace instead of sharing directly
   --hm-module <path>              Additional home-manager module (repeatable)
+
+SSH flags:
+  --tmux [session]                Start or attach to a tmux session
 USAGE
   }
 
@@ -124,13 +145,37 @@ USAGE
     printf "02:00:00:00:00:%02x" "$last_octet"
   }
 
+  apply_template() {
+    local tpl_name="$1"
+    local tpl
+    tpl="$(echo "$TEMPLATES_JSON" | ${pkgs.jq}/bin/jq -e --arg n "$tpl_name" '.[$n]' 2>/dev/null)" || {
+      echo "Error: unknown template '$tpl_name'" >&2
+      echo "Available templates: $(echo "$TEMPLATES_JSON" | ${pkgs.jq}/bin/jq -r 'keys | join(", ")')" >&2
+      exit 1
+    }
+    # Apply template values (only non-null fields override defaults)
+    local val
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.workspace // empty')" && [ -n "$val" ] && workspace="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.vcpu // empty')" && [ -n "$val" ] && vcpu="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.mem // empty')" && [ -n "$val" ] && mem="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.varSize // empty')" && [ -n "$val" ] && var_size="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.claude // empty')" && [ -n "$val" ] && claude="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.dotfiles // empty')" && [ -n "$val" ] && use_dotfiles="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.direnv // empty')" && [ -n "$val" ] && use_direnv="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.copyWorkspace // empty')" && [ -n "$val" ] && copy_workspace="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.packages // []) | join(",")')" && [ -n "$val" ] && packages="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.credentials // []) | map(.source + ":" + .mountPoint) | join(" ")')" && [ -n "$val" ] && credentials="$val"
+  }
+
   cmd_create() {
     local name="$1"; shift
     local workspace=""
     local packages=""
     local vcpu="$DEFAULT_VCPU"
     local mem="$DEFAULT_MEM"
+    local var_size="51200"
     local credentials=""
+    local copy_workspace="false"
     local claude="$DEFAULT_CLAUDE"
     local use_dotfiles="$DEFAULT_DOTFILES"
     local use_direnv="$DEFAULT_DIRENV"
@@ -138,11 +183,14 @@ USAGE
 
     while [ $# -gt 0 ]; do
       case "$1" in
+        -t|--template) apply_template "$2"; shift 2 ;;
         --workspace) workspace="$2"; shift 2 ;;
         --packages) packages="$2"; shift 2 ;;
         --vcpu) vcpu="$2"; shift 2 ;;
         --mem) mem="$2"; shift 2 ;;
+        --var-size) var_size="$2"; shift 2 ;;
         --credentials) credentials="$credentials $2"; shift 2 ;;
+        --copy-workspace) copy_workspace="true"; shift ;;
         --claude) claude="true"; shift ;;
         --no-claude) claude="false"; shift ;;
         --dotfiles) use_dotfiles="true"; shift ;;
@@ -211,13 +259,6 @@ VMBASE
 
     # Copy claude credentials if claude is enabled
     if [ "$claude" = "true" ]; then
-      # Copy .claude.json (auth token) into a shareable directory
-      local claude_json_src="$(dirname "$DEFAULT_CLAUDE_CONFIG_DIR")/.claude.json"
-      if [ -f "$claude_json_src" ]; then
-        sudo mkdir -p "$vm_dir/claude-json"
-        sudo cp "$claude_json_src" "$vm_dir/claude-json/.claude.json"
-      fi
-
       sudo mkdir -p "$vm_dir/claude-code"
       sudo tee "$vm_dir/claude-code/package.nix" > /dev/null <<'CLAUDEPKG'
 ${claudeCodePkgContent}
@@ -298,8 +339,10 @@ CLAUDEPKG
           gatewayAddress = "$GATEWAY";
           vcpu = $vcpu;
           mem = $mem;
+          varSize = $var_size;
           hypervisor = "$DEFAULT_HYPERVISOR";
           workspace = $workspace_nix;
+          copyWorkspace = $copy_workspace;
           credentials = $creds_nix;
           packages = $pkgs_nix;
           userName = "$USER_NAME";
@@ -310,7 +353,6 @@ CLAUDEPKG
           homeManagerModule = home-manager.nixosModules.home-manager;
           claude = $claude;
           claudeConfigDir = $claude_config_nix;
-          claudeJsonDir = "$vm_dir/claude-json";
           dotfiles = $use_dotfiles;
           dotfilesDir = $dotfiles_dir_nix;
           direnv = $use_direnv;
@@ -327,10 +369,6 @@ FLAKE
 
     # microvm.nix services run as microvm:kvm — they need write access
     sudo chown -R microvm:kvm "$vm_dir"
-    # SSH host keys must stay root-owned for sshd (group-readable for virtiofs)
-    sudo chown -R root:kvm "$vm_dir/ssh-host-keys"
-    sudo chmod 0640 "$vm_dir/ssh-host-keys/ssh_host_ed25519_key"
-    sudo chmod 0644 "$vm_dir/ssh-host-keys/ssh_host_ed25519_key.pub"
 
     # Init git repo so Nix recognises the directory as a flake
     sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" init -q
@@ -434,10 +472,37 @@ FLAKE
     fi
     local ip
     ip="$(cat "$vm_dir/.ip")"
-    exec ${pkgs.openssh}/bin/ssh \
-      -o StrictHostKeyChecking=accept-new \
-      -o UserKnownHostsFile="$vm_dir/known_hosts" \
-      "$USER_NAME@$ip" "$@"
+
+    # Parse --tmux flag
+    local tmux_session=""
+    local use_tmux="false"
+    local ssh_extra_args=()
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --tmux)
+          use_tmux="true"
+          shift
+          if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+            tmux_session="$1"; shift
+          else
+            tmux_session="main"
+          fi
+          ;;
+        *) ssh_extra_args+=("$1"); shift ;;
+      esac
+    done
+
+    if [ "$use_tmux" = "true" ]; then
+      exec ${pkgs.openssh}/bin/ssh \
+        -o StrictHostKeyChecking=accept-new \
+        -o UserKnownHostsFile="$vm_dir/known_hosts" \
+        -t "$USER_NAME@$ip" "tmux new-session -A -s $tmux_session" "''${ssh_extra_args[@]}"
+    else
+      exec ${pkgs.openssh}/bin/ssh \
+        -o StrictHostKeyChecking=accept-new \
+        -o UserKnownHostsFile="$vm_dir/known_hosts" \
+        "$USER_NAME@$ip" "''${ssh_extra_args[@]}"
+    fi
   }
 
   if [ $# -lt 1 ]; then
@@ -467,6 +532,22 @@ FLAKE
     list)
       cmd_list
       ;;
+    edit)
+      [ $# -lt 1 ] && { echo "Error: name required" >&2; usage; exit 1; }
+      vm_dir="$MICROVMS_DIR/$1"
+      if [ ! -f "$vm_dir/flake.nix" ]; then
+        echo "Error: VM '$1' not found or missing flake.nix" >&2
+        exit 1
+      fi
+      exec "''${EDITOR:-vi}" "$vm_dir/flake.nix"
+      ;;
+    templates)
+      echo "Available templates:"
+      echo "$TEMPLATES_JSON" | ${pkgs.jq}/bin/jq -r 'to_entries[] | "  \(.key): \(.value | to_entries | map("  \(.key)=\(.value)") | join(", "))"'
+      if [ "$(echo "$TEMPLATES_JSON" | ${pkgs.jq}/bin/jq 'length')" = "0" ]; then
+        echo "  (none configured)"
+      fi
+      ;;
     ssh)
       [ $# -lt 1 ] && { echo "Error: name required" >&2; usage; exit 1; }
       cmd_ssh "$@"
@@ -477,4 +558,153 @@ FLAKE
       exit 1
       ;;
   esac
-''
+'';
+
+  bashCompletion = pkgs.writeText "agent-vm.bash" ''
+    _agent_vm() {
+      local cur prev cmd
+      COMPREPLY=()
+      cur="''${COMP_WORDS[COMP_CWORD]}"
+      prev="''${COMP_WORDS[COMP_CWORD-1]}"
+
+      local commands="create start stop destroy list ssh edit templates"
+      local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module"
+      local ssh_flags="--tmux"
+
+      if [ "$COMP_CWORD" -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
+        return
+      fi
+
+      cmd="''${COMP_WORDS[1]}"
+
+      # Complete VM names for commands that take one
+      if [ "$COMP_CWORD" -eq 2 ]; then
+        case "$cmd" in
+          start|stop|destroy|ssh|edit)
+            local vms=""
+            for dir in /var/lib/microvms/*/; do
+              [ -d "$dir" ] || continue
+              vms="$vms $(basename "$dir")"
+            done
+            COMPREPLY=( $(compgen -W "$vms" -- "$cur") )
+            return
+            ;;
+        esac
+      fi
+
+      case "$cmd" in
+        create)
+          case "$prev" in
+            -t|--template)
+              COMPREPLY=( $(compgen -W "${templateNames}" -- "$cur") )
+              return
+              ;;
+            --workspace)
+              COMPREPLY=( $(compgen -d -- "$cur") )
+              return
+              ;;
+            --hm-module)
+              COMPREPLY=( $(compgen -f -- "$cur") )
+              return
+              ;;
+            --vcpu|--mem|--var-size|--packages|--credentials)
+              return
+              ;;
+          esac
+          if [[ "$cur" == -* ]]; then
+            COMPREPLY=( $(compgen -W "$create_flags" -- "$cur") )
+          fi
+          ;;
+        ssh)
+          if [[ "$cur" == -* ]]; then
+            COMPREPLY=( $(compgen -W "$ssh_flags" -- "$cur") )
+          fi
+          ;;
+      esac
+    }
+    complete -F _agent_vm agent-vm
+  '';
+
+  zshCompletion = pkgs.writeText "_agent-vm" ''
+    #compdef agent-vm
+
+    _agent_vm_vms() {
+      local -a vms
+      local dir
+      for dir in /var/lib/microvms/*/; do
+        [[ -d "$dir" ]] && vms+=("''${dir:t}")
+      done
+      (( ''${#vms} )) && compadd -a vms
+    }
+
+    _agent_vm_templates() {
+      local -a templates=( ${templateNames} )
+      (( ''${#templates} )) && compadd -a templates
+    }
+
+    _agent_vm() {
+      local -a commands=(
+        'create:Create a new ad-hoc VM'
+        'start:Start a VM'
+        'stop:Stop a VM'
+        'destroy:Stop and remove a VM'
+        'list:List VMs with status and IP'
+        'ssh:SSH into a VM'
+        'edit:Edit VM flake.nix'
+        'templates:List available templates'
+      )
+
+      if (( CURRENT == 2 )); then
+        _describe 'command' commands
+        return
+      fi
+
+      case "''${words[2]}" in
+        start|stop|destroy|edit)
+          if (( CURRENT == 3 )); then
+            _agent_vm_vms
+          fi
+          ;;
+        ssh)
+          if (( CURRENT == 3 )); then
+            _agent_vm_vms
+          else
+            _arguments \
+              '--tmux[Start or attach to tmux session]::session name:'
+          fi
+          ;;
+        create)
+          _arguments \
+            '(-t --template)'{-t,--template}'[Use a named template]:template:_agent_vm_templates' \
+            '--workspace[Host directory to share]:directory:_directories' \
+            '--packages[Additional packages]:packages:' \
+            '--credentials[Credential share]:credentials:' \
+            '--vcpu[Override vCPUs]:vcpus:' \
+            '--mem[Override RAM in MB]:mem:' \
+            '--var-size[Override /var size in MB]:size:' \
+            '--claude[Enable Claude Code]' \
+            '--no-claude[Disable Claude Code]' \
+            '--direnv[Enable direnv]' \
+            '--no-direnv[Disable direnv]' \
+            '--dotfiles[Mount dotfiles]' \
+            '--no-dotfiles[Disable dotfiles]' \
+            '--copy-workspace[Copy workspace]' \
+            '*--hm-module[Home-manager module]:module:_files'
+          ;;
+      esac
+    }
+
+    _agent_vm "$@"
+  '';
+in
+pkgs.symlinkJoin {
+  name = "agent-vm";
+  paths = [
+    script
+    (pkgs.runCommand "agent-vm-completions" { } ''
+      install -Dm644 ${bashCompletion} $out/share/bash-completion/completions/agent-vm
+      install -Dm644 ${zshCompletion} $out/share/zsh/site-functions/_agent-vm
+    '')
+  ];
+}
