@@ -24,6 +24,7 @@ let
 
   # Read files to embed in generated flakes
   vmBaseContent = builtins.readFile ./vm-base.nix;
+  vmNetworkContent = builtins.readFile ./vm-network.nix;
   # Strip updateScript passthru (references ./update.sh which won't exist in VM dir)
   claudeCodePkgContent = builtins.replaceStrings
     [ ''
@@ -38,11 +39,14 @@ base.overrideAttrs (prev: {
 
   # Serialize templates to JSON, filtering out null values
   cleanTemplate = t: lib.filterAttrs (_: v: v != null) {
-    inherit (t) workspace vcpu mem varSize claude dotfiles direnv copyWorkspace;
+    inherit (t) workspace vcpu mem varSize claude dotfiles direnv copyWorkspace networkMode allowSSH;
     packages = if t.packages != [ ] then t.packages else null;
     credentials = if t.credentials != [ ] then
       map (c: { inherit (c) source mountPoint; }) t.credentials
     else null;
+    allowedDomains = if t.allowedDomains != [ ] then t.allowedDomains else null;
+    interceptDomains = if t.interceptDomains != [ ] then t.interceptDomains else null;
+    proxyBlockRegexes = if t.proxyBlockRegexes != [ ] then t.proxyBlockRegexes else null;
   };
   templatesJson = builtins.toJSON (lib.mapAttrs (_: cleanTemplate) templates);
   templateNames = lib.concatStringsSep " " (builtins.attrNames templates);
@@ -103,6 +107,11 @@ Create flags:
   --var-size <n>                  Override /var volume size in MB
   --copy-workspace                Copy workspace instead of sharing directly
   --hm-module <path>              Additional home-manager module (repeatable)
+  --network-mode <mode>           Network mode: default or restricted
+  --allowed-domains <d1,d2,...>   Domains allowed through proxy
+  --intercept-domains <d1,d2,...> Domains with TLS interception
+  --block-regex <regex>           URL regex to block (repeatable)
+  --allow-ssh                     Allow outbound SSH in restricted mode
 
 SSH flags:
   --tmux [session]                Start or attach to a tmux session
@@ -165,6 +174,11 @@ USAGE
     val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.copyWorkspace // empty')" && [ -n "$val" ] && copy_workspace="$val"
     val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.packages // []) | join(",")')" && [ -n "$val" ] && packages="$val"
     val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.credentials // []) | map(.source + ":" + .mountPoint) | join(" ")')" && [ -n "$val" ] && credentials="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.networkMode // empty')" && [ -n "$val" ] && network_mode="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.allowSSH // empty')" && [ -n "$val" ] && allow_ssh="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.allowedDomains // []) | join(",")')" && [ -n "$val" ] && allowed_domains="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.interceptDomains // []) | join(",")')" && [ -n "$val" ] && intercept_domains="$val"
+    val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.proxyBlockRegexes // []) | join(" ")')" && [ -n "$val" ] && block_regexes="$val"
   }
 
   cmd_create() {
@@ -180,6 +194,11 @@ USAGE
     local use_dotfiles="$DEFAULT_DOTFILES"
     local use_direnv="$DEFAULT_DIRENV"
     local hm_modules=""
+    local network_mode="default"
+    local allowed_domains=""
+    local intercept_domains=""
+    local block_regexes=""
+    local allow_ssh="false"
 
     while [ $# -gt 0 ]; do
       case "$1" in
@@ -198,6 +217,11 @@ USAGE
         --direnv) use_direnv="true"; shift ;;
         --no-direnv) use_direnv="false"; shift ;;
         --hm-module) hm_modules="$hm_modules $2"; shift 2 ;;
+        --network-mode) network_mode="$2"; shift 2 ;;
+        --allowed-domains) allowed_domains="$2"; shift 2 ;;
+        --intercept-domains) intercept_domains="$2"; shift 2 ;;
+        --block-regex) block_regexes="$block_regexes $2"; shift 2 ;;
+        --allow-ssh) allow_ssh="true"; shift ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
       esac
     done
@@ -218,6 +242,15 @@ USAGE
     sudo mkdir -p "$vm_dir/ssh-host-keys"
     sudo ${pkgs.openssh}/bin/ssh-keygen -t ed25519 -N "" -f "$vm_dir/ssh-host-keys/ssh_host_ed25519_key" -q
     echo "$ip" | sudo tee "$vm_dir/.ip" > /dev/null
+
+    # Generate proxy CA for restricted mode
+    if [ "$network_mode" = "restricted" ]; then
+      sudo mkdir -p "$vm_dir/proxy-ca"
+      sudo ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:4096 -nodes \
+        -keyout "$vm_dir/proxy-ca/ca-key.pem" \
+        -out "$vm_dir/proxy-ca/ca-cert.pem" \
+        -days 3650 -subj "/CN=agent-vm-$name Proxy CA" 2>/dev/null
+    fi
 
     # Build workspace share Nix expression
     local workspace_nix="null"
@@ -252,10 +285,47 @@ USAGE
     local keys_nix
     keys_nix="$(echo "$USER_KEYS" | ${pkgs.jq}/bin/jq -r 'map("\"" + . + "\"") | "[ " + join(" ") + " ]"')"
 
+    # Build allowedDomains Nix expression
+    local allowed_nix="[ ]"
+    if [ -n "$allowed_domains" ]; then
+      allowed_nix="["
+      IFS=',' read -ra dom_arr <<< "$allowed_domains"
+      for d in "''${dom_arr[@]}"; do
+        allowed_nix="$allowed_nix \"$d\""
+      done
+      allowed_nix="$allowed_nix ]"
+    fi
+
+    # Build interceptDomains Nix expression
+    local intercept_nix="[ ]"
+    if [ -n "$intercept_domains" ]; then
+      intercept_nix="["
+      IFS=',' read -ra dom_arr <<< "$intercept_domains"
+      for d in "''${dom_arr[@]}"; do
+        intercept_nix="$intercept_nix \"$d\""
+      done
+      intercept_nix="$intercept_nix ]"
+    fi
+
+    # Build proxyBlockRegexes Nix expression
+    local regexes_nix="[ ]"
+    if [ -n "$block_regexes" ]; then
+      regexes_nix="["
+      for r in $block_regexes; do
+        regexes_nix="$regexes_nix \"$r\""
+      done
+      regexes_nix="$regexes_nix ]"
+    fi
+
     # Copy vm-base.nix into the VM directory
     sudo tee "$vm_dir/vm-base.nix" > /dev/null <<'VMBASE'
 ${vmBaseContent}
 VMBASE
+
+    # Copy vm-network.nix into the VM directory
+    sudo tee "$vm_dir/vm-network.nix" > /dev/null <<'VMNETWORK'
+${vmNetworkContent}
+VMNETWORK
 
     # Copy claude credentials if claude is enabled
     if [ "$claude" = "true" ]; then
@@ -356,6 +426,11 @@ CLAUDEPKG
           dotfiles = $use_dotfiles;
           dotfilesDir = $dotfiles_dir_nix;
           direnv = $use_direnv;
+          networkMode = "$network_mode";
+          allowedDomains = $allowed_nix;
+          interceptDomains = $intercept_nix;
+          proxyBlockRegexes = $regexes_nix;
+          allowSSH = $allow_ssh;
           extraHomeModules = $hm_imports_nix;
         })
       ];
@@ -568,7 +643,7 @@ FLAKE
       prev="''${COMP_WORDS[COMP_CWORD-1]}"
 
       local commands="create start stop destroy list ssh edit templates"
-      local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module"
+      local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module --network-mode --allowed-domains --intercept-domains --block-regex --allow-ssh"
       local ssh_flags="--tmux"
 
       if [ "$COMP_CWORD" -eq 1 ]; then
@@ -606,6 +681,10 @@ FLAKE
               ;;
             --hm-module)
               COMPREPLY=( $(compgen -f -- "$cur") )
+              return
+              ;;
+            --network-mode)
+              COMPREPLY=( $(compgen -W "default restricted" -- "$cur") )
               return
               ;;
             --vcpu|--mem|--var-size|--packages|--credentials)
@@ -690,7 +769,12 @@ FLAKE
             '--dotfiles[Mount dotfiles]' \
             '--no-dotfiles[Disable dotfiles]' \
             '--copy-workspace[Copy workspace]' \
-            '*--hm-module[Home-manager module]:module:_files'
+            '*--hm-module[Home-manager module]:module:_files' \
+            '--network-mode[Network mode]:mode:(default restricted)' \
+            '--allowed-domains[Allowed domains]:domains:' \
+            '--intercept-domains[Intercept domains]:domains:' \
+            '*--block-regex[Block URL regex]:regex:' \
+            '--allow-ssh[Allow outbound SSH]'
           ;;
       esac
     }
