@@ -252,9 +252,13 @@ USAGE
     # Generate proxy CA for restricted mode
     if [ "$network_mode" = "restricted" ]; then
       sudo mkdir -p "$vm_dir/proxy-ca"
-      sudo ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:4096 -nodes \
-        -traditional \
-        -keyout "$vm_dir/proxy-ca/ca-key.pem" \
+      # Generate key in traditional RSA format (Squid rejects PKCS#8), then
+      # create self-signed cert. Two-step because `openssl req -newkey` always
+      # produces PKCS#8 and does not support -traditional.
+      sudo ${pkgs.openssl}/bin/openssl genrsa -traditional \
+        -out "$vm_dir/proxy-ca/ca-key.pem" 4096 2>/dev/null
+      sudo ${pkgs.openssl}/bin/openssl req -x509 -new \
+        -key "$vm_dir/proxy-ca/ca-key.pem" \
         -out "$vm_dir/proxy-ca/ca-cert.pem" \
         -days 3650 -subj "/CN=agent-vm-$name Proxy CA" 2>/dev/null
       # Key must be world-readable on host for virtiofs (no UID remapping —
