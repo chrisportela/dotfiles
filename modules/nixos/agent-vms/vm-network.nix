@@ -1,0 +1,276 @@
+# vm-network.nix
+# A function that takes network parameters and returns a NixOS module.
+# Configures unbound (DNS), nftables (firewall), and optionally Squid (L7 proxy).
+{
+  networkMode ? "default",
+  allowedDomains ? [ ],
+  interceptDomains ? [ ],
+  proxyBlockRegexes ? [ ],
+  allowSSH ? false,
+  upstreamDNS ? [ "1.1.1.1" "8.8.8.8" ],
+  claude ? false,
+  gatewayAddress,
+}:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  isRestricted = networkMode == "restricted";
+
+  # Merge Claude auto-defaults when claude + restricted
+  effectiveAllowedDomains = allowedDomains
+    ++ lib.optionals (claude && isRestricted) [
+      "api.anthropic.com"
+      "statsig.anthropic.com"
+      "sentry.io"
+    ];
+
+  effectiveInterceptDomains = interceptDomains
+    ++ lib.optionals (claude && isRestricted) [
+      "api.github.com"
+    ];
+
+  allDomains = effectiveAllowedDomains ++ effectiveInterceptDomains;
+
+  # Domain format transforms
+  # Unbound forward-zones: append trailing dot
+  unboundForwardZones = map (d: {
+    name = "${d}.";
+    forward-addr = map (dns: "${dns}@53") upstreamDNS;
+  }) allDomains;
+
+  # Squid dstdomain ACLs: prepend leading dot
+  squidAllowedDomains = map (d: ".${d}") effectiveAllowedDomains;
+  squidInterceptDomains = map (d: ".${d}") effectiveInterceptDomains;
+
+  # nftables upstream DNS set elements
+  upstreamDNSSet = lib.concatStringsSep ", " upstreamDNS;
+in
+{
+  # --- DNS: unbound ---
+  services.resolved.enable = false;
+  networking.nameservers = [ "127.0.0.1" ];
+
+  services.unbound = {
+    enable = true;
+    settings = {
+      server = {
+        interface = if isRestricted then [ "127.0.0.1" ] else [ "127.0.0.1" "::1" ];
+        access-control = if isRestricted
+          then [ "127.0.0.0/8 allow" ]
+          else [ "127.0.0.0/8 allow" "::1/128 allow" ];
+        hide-identity = true;
+        hide-version = true;
+      } // lib.optionalAttrs isRestricted {
+        local-zone = [ "\".\" refuse" ];
+      };
+      forward-zone = if isRestricted
+        then unboundForwardZones
+        else [{
+          name = ".";
+          forward-addr = map (dns: "${dns}@53") upstreamDNS;
+        }];
+    };
+  };
+
+  # --- Firewall: nftables ---
+  networking.nftables.enable = true;
+
+  networking.nftables.ruleset = if isRestricted then ''
+    table inet filter {
+      set upstream_dns {
+        type ipv4_addr
+        elements = { ${upstreamDNSSet} }
+      }
+
+      chain output {
+        type filter hook output priority 0; policy drop;
+
+        oif "lo" accept
+        ct state established,related accept
+
+        # ICMP — rate-limited to prevent tunneling
+        ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
+        ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
+
+        # DNS — only unbound can reach upstream resolvers
+        ip daddr @upstream_dns meta skuid "unbound" udp dport 53 accept
+        ip daddr @upstream_dns meta skuid "unbound" tcp dport 53 accept
+
+        # Local DNS — all processes can query unbound (redundant with oif lo, kept for clarity)
+        ip daddr 127.0.0.1 udp dport 53 accept
+        ip daddr 127.0.0.1 tcp dport 53 accept
+
+        # Block all other DNS (including DoT)
+        udp dport 53 drop
+        tcp dport 53 drop
+        tcp dport 853 drop
+
+        # HTTP/HTTPS — only squid
+        meta skuid "squid" tcp dport { 80, 443 } accept
+
+        ${lib.optionalString allowSSH ''
+        # SSH — opt-in outbound
+        tcp dport 22 accept
+        ''}
+
+        # Local proxy — all processes can reach squid (redundant with oif lo, kept for clarity)
+        ip daddr 127.0.0.1 tcp dport 3128 accept
+
+        log prefix "nft-blocked: " counter reject with icmp type admin-prohibited
+      }
+
+      chain input {
+        type filter hook input priority 0; policy drop;
+        iif "lo" accept
+        ct state established,related accept
+
+        # SSH — only from bridge gateway (host), not other VMs
+        ip saddr ${gatewayAddress} tcp dport 22 accept
+
+        # ICMP — rate-limited
+        ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
+        ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
+
+        log prefix "nft-input-blocked: " counter drop
+      }
+    }
+  '' else ''
+    table inet filter {
+      chain output {
+        type filter hook output priority 0; policy accept;
+
+        # Force DNS through local unbound (IPv4 + IPv6)
+        ip daddr != 127.0.0.1 meta skuid != "unbound" udp dport 53 drop
+        ip daddr != 127.0.0.1 meta skuid != "unbound" tcp dport 53 drop
+        ip6 daddr != ::1 meta skuid != "unbound" udp dport 53 drop
+        ip6 daddr != ::1 meta skuid != "unbound" tcp dport 53 drop
+        tcp dport 853 meta skuid != "unbound" drop
+
+        # Block outbound SMTP
+        tcp dport { 25, 587 } log prefix "nft-smtp-blocked: " counter drop
+
+        # Log unusual outbound
+        tcp dport { 6667, 6697 } log prefix "nft-irc-out: " counter
+      }
+
+      chain input {
+        type filter hook input priority 0; policy drop;
+        iif "lo" accept
+        ct state established,related accept
+
+        # SSH — only from bridge gateway (host), not other VMs
+        ip saddr ${gatewayAddress} tcp dport 22 accept
+
+        # ICMP — rate-limited
+        ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
+        ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
+        ip6 nexthdr icmpv6 icmpv6 type { echo-request, echo-reply } limit rate 10/second accept
+        ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, time-exceeded } accept
+
+        log prefix "nft-input-blocked: " counter drop
+      }
+    }
+  '';
+
+  # --- L7 Proxy: Squid with TLS interception (restricted mode only) ---
+  # NixOS does not have a built-in services.squid module.
+  # Configure manually via package + systemd service + config file.
+
+  environment.systemPackages = lib.mkIf isRestricted [ pkgs.squid ];
+
+  users.users.squid = lib.mkIf isRestricted {
+    isSystemUser = true;
+    group = "squid";
+    home = "/var/lib/squid";
+  };
+  users.groups.squid = lib.mkIf isRestricted { };
+
+  environment.etc."squid/squid.conf" = lib.mkIf isRestricted {
+    text = ''
+      http_port 127.0.0.1:3128 ssl-bump \
+        cert=/etc/squid/ca/ca-cert.pem \
+        key=/etc/squid/ca/ca-key.pem \
+        generate-host-certificates=on \
+        dynamic_cert_mem_cache_size=16MB
+
+      sslcrtd_program ${pkgs.squid}/libexec/security_file_certgen -s /var/lib/squid/certdb -M 16MB
+
+      acl localnet src 127.0.0.0/8
+      acl SSL_ports port 443
+      acl Safe_ports port 80 443
+      acl CONNECT method CONNECT
+
+      # Domain ACLs
+      acl allowed_domains dstdomain ${lib.concatStringsSep " " squidAllowedDomains}
+      acl intercept_domains dstdomain ${lib.concatStringsSep " " squidInterceptDomains}
+
+      ${lib.optionalString (proxyBlockRegexes != []) ''
+      acl blocked_urls url_regex ${lib.concatStringsSep " " proxyBlockRegexes}
+      ''}
+
+      # SSL bump policy
+      acl step1 at_step SslBump1
+      acl step2 at_step SslBump2
+      ssl_bump peek step1 all
+      ssl_bump bump step2 intercept_domains
+      ssl_bump splice step2 allowed_domains
+      ssl_bump terminate step2 all
+
+      # Access control
+      http_access deny !localnet
+      http_access deny !Safe_ports
+      http_access deny CONNECT !SSL_ports
+      ${lib.optionalString (proxyBlockRegexes != []) ''
+      http_access deny blocked_urls intercept_domains
+      ''}
+      http_access allow allowed_domains
+      http_access allow intercept_domains
+      http_access deny all
+
+      # ICAP hook point (future — uncomment when adapter available)
+      # icap_enable on
+      # icap_service req_mod reqmod_precache icap://127.0.0.1:1344/request
+      # adaptation_access req_mod allow intercept_domains
+
+      cache deny all
+      access_log stdio:/var/log/squid/access.log
+    '';
+  };
+
+  systemd.services.squid = lib.mkIf isRestricted {
+    description = "Squid Web Proxy";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" "vm-first-boot.service" ];
+    requires = [ "vm-first-boot.service" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.squid}/bin/squid --foreground -f /etc/squid/squid.conf";
+      ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+      User = "squid";
+      Group = "squid";
+      Restart = "on-failure";
+    };
+  };
+
+  # --- CA trust (restricted mode) ---
+  security.pki.certificateFiles = lib.mkIf isRestricted [
+    "/etc/squid/ca/ca-cert.pem"
+  ];
+
+  # --- Proxy environment variables (restricted mode) ---
+  environment.sessionVariables = lib.mkIf isRestricted {
+    http_proxy = "http://127.0.0.1:3128";
+    https_proxy = "http://127.0.0.1:3128";
+    HTTP_PROXY = "http://127.0.0.1:3128";
+    HTTPS_PROXY = "http://127.0.0.1:3128";
+    no_proxy = "localhost,127.0.0.1";
+    NO_PROXY = "localhost,127.0.0.1";
+  };
+
+  # --- IPv6: disable in restricted mode ---
+  networking.enableIPv6 = lib.mkIf isRestricted false;
+}
