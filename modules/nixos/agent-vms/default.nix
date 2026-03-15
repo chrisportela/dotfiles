@@ -63,6 +63,31 @@ let
         default = null;
         description = "Copy workspace instead of sharing directly";
       };
+      networkMode = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Network mode: default or restricted";
+      };
+      allowedDomains = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Domains allowed through proxy (spliced)";
+      };
+      interceptDomains = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Domains with TLS interception";
+      };
+      proxyBlockRegexes = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "URL regexes to block on intercepted traffic";
+      };
+      allowSSH = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Allow outbound SSH in restricted mode";
+      };
     };
   };
 
@@ -154,6 +179,31 @@ let
         default = [ ];
         description = "Additional home-manager modules for the VM user";
       };
+      networkMode = lib.mkOption {
+        type = lib.types.str;
+        default = "default";
+        description = "Network mode: default or restricted";
+      };
+      allowedDomains = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Domains allowed through proxy (spliced)";
+      };
+      interceptDomains = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Domains with TLS interception";
+      };
+      proxyBlockRegexes = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "URL regexes to block on intercepted traffic";
+      };
+      allowSSH = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Allow outbound SSH in restricted mode";
+      };
     };
   };
 
@@ -182,7 +232,8 @@ let
           inherit (cfg.user) uid gid authorizedKeys;
           sshHostKeyPath = "/var/lib/microvms/${name}/ssh-host-keys";
           homeManagerModule = inputs.home-manager.nixosModules.home-manager;
-          inherit (vmCfg) copyWorkspace claude dotfiles direnv extraHomeModules;
+          inherit (vmCfg) copyWorkspace claude dotfiles direnv extraHomeModules
+            networkMode allowedDomains interceptDomains proxyBlockRegexes allowSSH;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
           dotfilesDir = cfg.defaults.dotfilesDir;
         })
