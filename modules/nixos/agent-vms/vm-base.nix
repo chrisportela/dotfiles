@@ -223,7 +223,7 @@ in
   systemd.services."serial-getty@ttyS0".enable = true;
   # Default root password: "root" (change via console after first boot)
   # mkpasswd -m sha-512 root
-  users.users.root.hashedPassword = "$6$rounds=10000$saltsalt$Uf1Ue2eDPNJn0HLVgPCm5OGOwe5BWWWKP8YBpOsSJbMqPF8.1PgPHnjaaXVHfzJrfKbLG7jixHAdjPGnQfZm/.";
+  users.users.root.hashedPassword = "$6$nCrCZO5IaY62eTUl$jbuIxfRvau3dmFGLjcUESt2wu4YhB2jCt2GSaN4ZgnwA5RclPD.FHIfJEgYaUwhj9.oK4/OGl1c6LRsjgDOW91";
 
   users.groups.${userName} = {
     inherit gid;

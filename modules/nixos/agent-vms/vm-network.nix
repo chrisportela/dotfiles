@@ -26,12 +26,10 @@ let
       "api.anthropic.com"
       "statsig.anthropic.com"
       "sentry.io"
+      "github.com"
     ];
 
-  effectiveInterceptDomains = interceptDomains
-    ++ lib.optionals (claude && isRestricted) [
-      "api.github.com"
-    ];
+  effectiveInterceptDomains = interceptDomains;
 
   allDomains = effectiveAllowedDomains ++ effectiveInterceptDomains;
 
@@ -65,7 +63,15 @@ in
         hide-identity = true;
         hide-version = true;
       } // lib.optionalAttrs isRestricted {
-        local-zone = [ "\".\" refuse" ];
+        # Disable DNSSEC validation — the forwarder can't chase the delegation
+        # chain when parent zones (com., .) are refused. We trust our explicit
+        # upstream resolvers so this is safe.
+        module-config = ''"iterator"'';
+        # Refuse all DNS by default, then punch transparent holes for allowed domains.
+        # local-zone is checked before forward-zone, so without transparent overrides
+        # the root refuse would block everything — even domains with forward-zones.
+        local-zone = [ "\".\" refuse" ]
+          ++ map (d: "\"${d}.\" transparent") allDomains;
       };
       forward-zone = if isRestricted
         then unboundForwardZones
@@ -222,16 +228,18 @@ in
       ''}
 
       # SSL bump policy
+      # Splice allowed domains immediately at step1 (no TLS inspection).
+      # Only peek+bump intercept domains to read the full URL.
       acl step1 at_step SslBump1
       acl step2 at_step SslBump2
-      ssl_bump peek step1 all
+      ${lib.optionalString (squidAllowedDomains != []) ''
+      ssl_bump splice step1 allowed_domains
+      ''}
       ${lib.optionalString (squidInterceptDomains != []) ''
+      ssl_bump peek step1 intercept_domains
       ssl_bump bump step2 intercept_domains
       ''}
-      ${lib.optionalString (squidAllowedDomains != []) ''
-      ssl_bump splice step2 allowed_domains
-      ''}
-      ssl_bump terminate step2 all
+      ssl_bump terminate step1 all
 
       # Access control
       http_access deny !localnet
