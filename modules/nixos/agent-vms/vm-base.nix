@@ -249,6 +249,7 @@ in
     ripgrep
     curl
     fd
+    tree
     jq
     bash
   ] ++ lib.optionals claude [ pkgs.claude-code ] ++ packages;
@@ -288,7 +289,27 @@ in
   home-manager.users.${userName} = { pkgs, lib, ... }: {
     imports = extraHomeModules;
 
-    programs.zsh.enable = true;
+    programs.zsh = {
+      enable = true;
+      enableCompletion = true;
+      autocd = true;
+      history = {
+        extended = true;
+        ignoreDups = true;
+        ignoreSpace = true;
+      };
+    };
+
+    programs.fzf = {
+      enable = true;
+      enableZshIntegration = true;
+      defaultCommand = "fd --type f";
+      fileWidgetOptions = [ "--preview 'head {}'" ];
+      changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
+      historyWidgetOptions = [ "--sort" "--exact" ];
+      defaultOptions = [ "--height 40%" "--border" ];
+      tmux.enableShellIntegration = true;
+    };
 
     programs.tmux = {
       enable = true;
