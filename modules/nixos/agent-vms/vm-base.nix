@@ -93,6 +93,16 @@ let
         mountPoint = dotfilesDir;
       }
     ];
+
+  proxyCAShares =
+    lib.optionals (networkMode == "restricted") [
+      {
+        proto = "virtiofs";
+        tag = "proxy-ca";
+        source = "${sshHostKeyPath}/../proxy-ca";
+        mountPoint = "/etc/squid/ca";
+      }
+    ];
 in
 {
   microvm = {
@@ -134,6 +144,7 @@ in
       ++ credentialShares
       ++ claudeShares
       ++ dotfilesShares
+      ++ proxyCAShares
       ++ extraShares;
   };
 
@@ -149,14 +160,8 @@ in
       matchConfig.Name = "e*";
       addresses = [ { Address = "${ipAddress}/24"; } ];
       routes = [ { Gateway = gatewayAddress; } ];
-      dns = [
-        "8.8.8.8"
-        "1.1.1.1"
-      ];
-    };
+};
   };
-
-  services.resolved.enable = true;
 
   # --- OOM protection ---
   # Enable systemd-oomd for proactive cgroup-pressure-based OOM handling.
@@ -169,7 +174,6 @@ in
   };
 
   # Protect core system services from OOM (-900 = almost never killed)
-  systemd.services.systemd-resolved.serviceConfig.OOMScoreAdjust = -900;
   systemd.services.systemd-networkd.serviceConfig.OOMScoreAdjust = -900;
   systemd.services.nix-daemon.serviceConfig.OOMScoreAdjust = -800;
 
@@ -269,7 +273,14 @@ in
     "d /var/home/${userName} 0700 ${userName} ${userName} -"
   ];
 
-  imports = [ homeManagerModule ];
+  imports = [
+    homeManagerModule
+    ((import ./vm-network.nix) {
+      inherit networkMode allowedDomains interceptDomains
+              proxyBlockRegexes allowSSH upstreamDNS
+              claude gatewayAddress;
+    })
+  ];
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
@@ -376,9 +387,21 @@ in
           fi
         fi
       '';
+      squidInitScript = lib.optionalString (networkMode == "restricted") ''
+        # Initialize Squid certificate database
+        if [ ! -d /var/lib/squid/certdb ]; then
+          mkdir -p /var/lib/squid
+          ${pkgs.squid}/libexec/security_file_certgen -c -s /var/lib/squid/certdb -M 16MB
+          chown -R squid:squid /var/lib/squid
+        fi
+        # Create Squid log directory
+        mkdir -p /var/log/squid
+        chown squid:squid /var/log/squid
+      '';
     in ''
       ${copyWorkspaceScript}
       ${seedClaudeScript}
+      ${squidInitScript}
       mkdir -p /var/lib
       touch /var/lib/vm-initialized
     '';
