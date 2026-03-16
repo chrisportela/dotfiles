@@ -86,6 +86,7 @@ Commands:
   start <name>            Start a VM
   stop <name>             Stop a VM
   destroy <name>          Stop and remove a VM
+  update <name>           Update VM modules and rebuild (restarts if running)
   list                    List VMs with status and IP
   ssh <name> [ssh-args]   SSH into a VM
   console <name>          Root console via serial socket
@@ -528,6 +529,59 @@ FLAKE
     exec ${pkgs.socat}/bin/socat STDIO,raw,echo=0,escape=0x0f "UNIX-CONNECT:$sock"
   }
 
+  cmd_update() {
+    local name="$1"
+    local vm_dir="$MICROVMS_DIR/$name"
+    if [ ! -d "$vm_dir" ]; then
+      echo "Error: VM '$name' not found at $vm_dir" >&2
+      exit 1
+    fi
+
+    echo "Updating VM '$name' with latest module code..."
+
+    # Overwrite vm-base.nix and vm-network.nix with baked-in versions
+    sudo tee "$vm_dir/vm-base.nix" > /dev/null <<'VMBASE'
+${vmBaseContent}
+VMBASE
+    sudo tee "$vm_dir/vm-network.nix" > /dev/null <<'VMNETWORK'
+${vmNetworkContent}
+VMNETWORK
+
+    # Update claude-code package if present
+    if [ -d "$vm_dir/claude-code" ]; then
+      sudo tee "$vm_dir/claude-code/package.nix" > /dev/null <<'CLAUDEPKG'
+${claudeCodePkgContent}
+CLAUDEPKG
+      sudo cp ${claudeCodeLockfile} "$vm_dir/claude-code/package-lock.json"
+    fi
+
+    # Ensure correct ownership and commit
+    sudo chown -R microvm:kvm "$vm_dir"
+    sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" add -A
+    if sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" diff --cached --quiet; then
+      echo "No changes to apply."
+      return
+    fi
+    sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" \
+      -c user.name="agent-vm" -c user.email="agent-vm@localhost" \
+      commit -q -m "update modules"
+
+    # Rebuild
+    echo "Rebuilding..."
+    local build_result
+    build_result="$(cd "$vm_dir" && sudo -u microvm HOME="$vm_dir" ${pkgs.nix}/bin/nix build "$vm_dir#packages.x86_64-linux.default" --print-out-paths --no-link)"
+    sudo ln -sfT "$build_result" "$vm_dir/current"
+
+    # Restart if running
+    if systemctl is-active --quiet "microvm@$name" 2>/dev/null; then
+      echo "Restarting VM '$name'..."
+      sudo systemctl restart "microvm@$name"
+      echo "VM '$name' updated and restarted."
+    else
+      echo "VM '$name' updated. Start with: agent-vm start $name"
+    fi
+  }
+
   cmd_destroy() {
     local name="$1"
     local vm_dir="$MICROVMS_DIR/$name"
@@ -630,6 +684,10 @@ FLAKE
       [ $# -lt 1 ] && { echo "Error: name required" >&2; usage; exit 1; }
       cmd_destroy "$1"
       ;;
+    update)
+      [ $# -lt 1 ] && { echo "Error: name required" >&2; usage; exit 1; }
+      cmd_update "$1"
+      ;;
     list)
       cmd_list
       ;;
@@ -672,7 +730,7 @@ FLAKE
       cur="''${COMP_WORDS[COMP_CWORD]}"
       prev="''${COMP_WORDS[COMP_CWORD-1]}"
 
-      local commands="create start stop destroy list ssh console edit templates"
+      local commands="create start stop destroy update list ssh console edit templates"
       local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module --network-mode --allowed-domains --intercept-domains --block-regex --allow-ssh"
       local ssh_flags="--tmux"
 
@@ -686,7 +744,7 @@ FLAKE
       # Complete VM names for commands that take one
       if [ "$COMP_CWORD" -eq 2 ]; then
         case "$cmd" in
-          start|stop|destroy|ssh|console|edit)
+          start|stop|destroy|update|ssh|console|edit)
             local vms=""
             for dir in /var/lib/microvms/*/; do
               [ -d "$dir" ] || continue
@@ -758,6 +816,7 @@ FLAKE
         'start:Start a VM'
         'stop:Stop a VM'
         'destroy:Stop and remove a VM'
+        'update:Update VM modules and rebuild'
         'list:List VMs with status and IP'
         'ssh:SSH into a VM'
         'console:Root console via serial socket'
@@ -771,7 +830,7 @@ FLAKE
       fi
 
       case "''${words[2]}" in
-        start|stop|destroy|console|edit)
+        start|stop|destroy|update|console|edit)
           if (( CURRENT == 3 )); then
             _agent_vm_vms
           fi
