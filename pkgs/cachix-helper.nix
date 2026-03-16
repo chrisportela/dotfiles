@@ -11,7 +11,8 @@
     "dotfiles"
     "dev"
     "devops"
-    "react-native"
+    # Disabled: Requires too much space in cache (40gb+)
+    # "react-native"
   ],
 }:
 let
