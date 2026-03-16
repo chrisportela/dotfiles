@@ -93,6 +93,7 @@
           "terraform"
           "vault-bin"
           "claude-code"
+          "xcode"
         ];
 
         overlays = [
@@ -146,6 +147,8 @@
           // (nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
             cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
             peekaboo = pkgs.callPackage ./pkgs/peekaboo/default.nix { };
+            swift6 = pkgs.callPackage ./pkgs/swift6/default.nix { };
+            peekaboo-git = pkgs.pkgsUnstable.callPackage ./pkgs/peekaboo/git.nix { };
           });
 
           legacyPackages = {

@@ -2,78 +2,46 @@
   lib,
   stdenvNoCC,
   fetchFromGitHub,
-  swift6,
+  darwin,
   cacert,
   git,
 }:
 
 let
-  version = "3.0.0-beta3";
+  xcode = darwin.xcode_26_2_Apple_silicon;
+  developerDir = "${xcode}/Contents/Developer";
+  toolchain = "${developerDir}/Toolchains/XcodeDefault.xctoolchain";
+  sdkRoot = "${developerDir}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
+in
+stdenvNoCC.mkDerivation rec {
+  pname = "peekaboo-git";
+  version = "3.0.0-unstable-2026-03-14";
 
   src = fetchFromGitHub {
     owner = "steipete";
     repo = "Peekaboo";
-    rev = "v${version}";
-    hash = "sha256-9DS/9cJ0GTiWEKmGUj0gvDIx6sfrvXhfc3+GgnnI73w=";
+    rev = "590a94a5ee6dafb4bb4724717a9ccb2ae557c6db";
+    hash = "sha256-T6mkcKlBfEAqr+yg92oABaIUT7o7wZePMv+iH8UUhNc=";
     fetchSubmodules = true;
   };
 
-  # Fixed-output derivation to resolve SPM dependencies with network access.
-  spmDeps = stdenvNoCC.mkDerivation {
-    pname = "peekaboo-spm-deps";
-    inherit version src;
-
-    nativeBuildInputs = [
-      swift6
-      git
-      cacert
-    ];
-
-    # FOD: allow network access by specifying a fixed output hash.
-    outputHashAlgo = "sha256";
-    outputHashMode = "recursive";
-    outputHash = lib.fakeHash;
-
-    buildPhase = ''
-      export HOME=$TMPDIR
-      export SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt
-
-      cd Apps/CLI
-      swift package resolve
-    '';
-
-    installPhase = ''
-      mkdir -p $out
-      cp -r .build $out/
-    '';
-  };
-
-in
-stdenvNoCC.mkDerivation {
-  pname = "peekaboo-git";
-  inherit version src;
-
   nativeBuildInputs = [
-    swift6
     git
+    cacert
   ];
-
-  configurePhase = ''
-    runHook preConfigure
-
-    # Copy pre-resolved SPM dependencies into the build directory.
-    cd Apps/CLI
-    cp -r ${spmDeps}/.build .build
-    chmod -R u+w .build
-
-    runHook postConfigure
-  '';
 
   buildPhase = ''
     runHook preBuild
 
     export HOME=$TMPDIR
-    swift build -c release --skip-update
+    export SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt
+    export DEVELOPER_DIR=${developerDir}
+    export SDKROOT=${sdkRoot}
+    export PATH=${toolchain}/usr/bin:$PATH
+
+    cd Apps/CLI
+    swift package resolve --disable-sandbox
+    swift build -c release --disable-sandbox
 
     runHook postBuild
   '';

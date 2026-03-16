@@ -35,6 +35,14 @@ stdenvNoCC.mkDerivation rec {
     mkdir -p $out
     cp -r $src_dir/usr/* $out/
 
+    # The toolchain's lld doesn't support macOS linking.
+    # Swift's toolchain is designed to use Apple's system linker.
+    cat > $out/bin/ld << WRAPPER
+    #!/bin/sh
+    exec /usr/bin/ld "\$@"
+    WRAPPER
+    chmod +x $out/bin/ld
+
     runHook postInstall
   '';
 
