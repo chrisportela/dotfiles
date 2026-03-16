@@ -36,8 +36,8 @@ let
       "files.pythonhosted.org"
       # cargo
       "crates.io"
-      "static.crates.io"
-      "index.crates.io"
+      # CDN backends (CNAME targets for crates.io and pythonhosted.org)
+      "fastly.net"
     ];
 
   effectiveInterceptDomains = interceptDomains;
