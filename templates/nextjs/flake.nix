@@ -129,7 +129,7 @@
             curl
             jq
             nixd
-            nixfmt-rfc-style
+            nixfmt
             shellcheck
             shfmt
 

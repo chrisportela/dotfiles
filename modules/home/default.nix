@@ -70,8 +70,8 @@
         set nobackup
       '';
       plugins = with pkgs.vimPlugins; [
-        fugitive
-        surround
+        vim-fugitive
+        vim-surround
         vim-nix
       ];
     };

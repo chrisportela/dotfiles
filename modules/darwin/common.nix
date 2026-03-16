@@ -16,7 +16,7 @@ in
   config = lib.mkIf cfg.enable {
     environment.pathsToLink = [ "/share/nix-direnv" ];
     environment.systemPackages = with pkgs; [
-      nixfmt-rfc-style
+      nixfmt
       curl
       git
       ntfy-sh

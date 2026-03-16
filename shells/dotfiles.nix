@@ -5,7 +5,7 @@ pkgs.mkShellNoCC {
     [
       cachix
       nixd
-      nixfmt-rfc-style
+      nixfmt
       shellcheck
       shfmt
     ]
