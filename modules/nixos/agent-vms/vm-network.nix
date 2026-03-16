@@ -23,10 +23,21 @@ let
   # Merge Claude auto-defaults when claude + restricted
   effectiveAllowedDomains = allowedDomains
     ++ lib.optionals (claude && isRestricted) [
+      # Anthropic
       "api.anthropic.com"
       "statsig.anthropic.com"
       "sentry.io"
+      # Git
       "github.com"
+      # npm
+      "registry.npmjs.org"
+      # pip
+      "pypi.org"
+      "files.pythonhosted.org"
+      # cargo
+      "crates.io"
+      "static.crates.io"
+      "index.crates.io"
     ];
 
   effectiveInterceptDomains = interceptDomains;
