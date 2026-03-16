@@ -443,6 +443,44 @@ in
     '';
   };
 
+  # --- Claude config sync from host ---
+  # The host .claude-host mount is live (virtiofs). Sync changes from
+  # the host into the VM's .claude/ directory, picking up credential
+  # refreshes, settings changes, etc. Uses rsync --update to only
+  # overwrite files that are newer on the host.
+  systemd.services.claude-host-sync = lib.mkIf claude {
+    description = "Sync Claude config from host";
+    after = [ "local-fs.target" "vm-first-boot.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = userName;
+      Group = userName;
+    };
+    script = ''
+      src="/home/${userName}/.claude-host/"
+      dst="/home/${userName}/.claude/"
+      [ -d "$src" ] || exit 0
+      mkdir -p "$dst"
+      # Sync newer files from host, skip VM-local state (conversations, projects)
+      ${pkgs.rsync}/bin/rsync -a --update \
+        --exclude='projects/' \
+        --exclude='conversations/' \
+        --exclude='statsig/' \
+        --exclude='todos/' \
+        "$src" "$dst"
+    '';
+  };
+
+  systemd.timers.claude-host-sync = lib.mkIf claude {
+    description = "Periodically sync Claude config from host";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "1min";
+      OnUnitActiveSec = "5min";
+    };
+  };
+
   # Fast shutdown
   systemd.settings.Manager = {
     DefaultTimeoutStopSec = "5s";
