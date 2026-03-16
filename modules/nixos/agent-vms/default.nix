@@ -232,8 +232,18 @@ let
           inherit (cfg.user) uid gid authorizedKeys;
           sshHostKeyPath = "/var/lib/microvms/${name}/ssh-host-keys";
           homeManagerModule = inputs.home-manager.nixosModules.home-manager;
-          inherit (vmCfg) copyWorkspace claude dotfiles direnv extraHomeModules
-            networkMode allowedDomains interceptDomains proxyBlockRegexes allowSSH;
+          inherit (vmCfg)
+            copyWorkspace
+            claude
+            dotfiles
+            direnv
+            extraHomeModules
+            networkMode
+            allowedDomains
+            interceptDomains
+            proxyBlockRegexes
+            allowSSH
+            ;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
           dotfilesDir = cfg.defaults.dotfilesDir;
         })
@@ -400,9 +410,7 @@ in
               chown -R microvm:kvm "$VM_DIR"
             '') cfg.vms
           );
-          ipsContent = lib.concatStringsSep "\\n" (
-            lib.mapAttrsToList (_: vm: vm.ipAddress) cfg.vms
-          );
+          ipsContent = lib.concatStringsSep "\\n" (lib.mapAttrsToList (_: vm: vm.ipAddress) cfg.vms);
         in
         ''
           mkdir -p /var/lib/microvms
@@ -415,7 +423,12 @@ in
     environment.systemPackages = [
       (import ./agent-vm.nix {
         inherit pkgs lib inputs;
-        inherit (cfg) bridge defaults user templates;
+        inherit (cfg)
+          bridge
+          defaults
+          user
+          templates
+          ;
       })
     ];
   };

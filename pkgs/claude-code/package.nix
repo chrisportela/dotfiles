@@ -50,18 +50,19 @@ let
           lib.makeBinPath (
             [ procps ]
             ++ lib.optionals stdenv.hostPlatform.isLinux (
-              lib.optional (bubblewrap != null) bubblewrap
-              ++ lib.optional (socat != null) socat
+              lib.optional (bubblewrap != null) bubblewrap ++ lib.optional (socat != null) socat
             )
           )
         }
     '';
 
     doInstallCheck = versionCheckHook != null && writableTmpDirAsHomeHook != null;
-    nativeInstallCheckInputs = lib.optionals (versionCheckHook != null && writableTmpDirAsHomeHook != null) [
-      writableTmpDirAsHomeHook
-      versionCheckHook
-    ];
+    nativeInstallCheckInputs =
+      lib.optionals (versionCheckHook != null && writableTmpDirAsHomeHook != null)
+        [
+          writableTmpDirAsHomeHook
+          versionCheckHook
+        ];
     versionCheckKeepEnvironment = [ "HOME" ];
 
     meta = {

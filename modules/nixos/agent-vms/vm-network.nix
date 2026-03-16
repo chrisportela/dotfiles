@@ -7,7 +7,10 @@
   interceptDomains ? [ ],
   proxyBlockRegexes ? [ ],
   allowSSH ? false,
-  upstreamDNS ? [ "1.1.1.1" "8.8.8.8" ],
+  upstreamDNS ? [
+    "1.1.1.1"
+    "8.8.8.8"
+  ],
   claude ? false,
   gatewayAddress,
 }:
@@ -21,7 +24,8 @@ let
   isRestricted = networkMode == "restricted";
 
   # Merge Claude auto-defaults when claude + restricted
-  effectiveAllowedDomains = allowedDomains
+  effectiveAllowedDomains =
+    allowedDomains
     ++ lib.optionals (claude && isRestricted) [
       # Anthropic
       "api.anthropic.com"
@@ -67,13 +71,26 @@ in
     enable = true;
     settings = {
       server = {
-        interface = if isRestricted then [ "127.0.0.1" ] else [ "127.0.0.1" "::1" ];
-        access-control = if isRestricted
-          then [ "127.0.0.0/8 allow" ]
-          else [ "127.0.0.0/8 allow" "::1/128 allow" ];
+        interface =
+          if isRestricted then
+            [ "127.0.0.1" ]
+          else
+            [
+              "127.0.0.1"
+              "::1"
+            ];
+        access-control =
+          if isRestricted then
+            [ "127.0.0.0/8 allow" ]
+          else
+            [
+              "127.0.0.0/8 allow"
+              "::1/128 allow"
+            ];
         hide-identity = true;
         hide-version = true;
-      } // lib.optionalAttrs isRestricted {
+      }
+      // lib.optionalAttrs isRestricted {
         # Disable DNSSEC validation — the forwarder can't chase the delegation
         # chain when parent zones (com., .) are refused. We trust our explicit
         # upstream resolvers so this is safe.
@@ -81,15 +98,18 @@ in
         # Refuse all DNS by default, then punch transparent holes for allowed domains.
         # local-zone is checked before forward-zone, so without transparent overrides
         # the root refuse would block everything — even domains with forward-zones.
-        local-zone = [ "\".\" refuse" ]
-          ++ map (d: "\"${d}.\" transparent") allDomains;
+        local-zone = [ "\".\" refuse" ] ++ map (d: "\"${d}.\" transparent") allDomains;
       };
-      forward-zone = if isRestricted
-        then unboundForwardZones
-        else [{
-          name = ".";
-          forward-addr = map (dns: "${dns}@53") upstreamDNS;
-        }];
+      forward-zone =
+        if isRestricted then
+          unboundForwardZones
+        else
+          [
+            {
+              name = ".";
+              forward-addr = map (dns: "${dns}@53") upstreamDNS;
+            }
+          ];
     };
   };
 
@@ -99,102 +119,106 @@ in
   # (unbound, squid) that only exist inside the VM, not on the build host.
   networking.nftables.checkRuleset = false;
 
-  networking.nftables.ruleset = if isRestricted then ''
-    table inet filter {
-      set upstream_dns {
-        type ipv4_addr
-        elements = { ${upstreamDNSSet} }
-      }
+  networking.nftables.ruleset =
+    if isRestricted then
+      ''
+        table inet filter {
+          set upstream_dns {
+            type ipv4_addr
+            elements = { ${upstreamDNSSet} }
+          }
 
-      chain output {
-        type filter hook output priority 0; policy drop;
+          chain output {
+            type filter hook output priority 0; policy drop;
 
-        oif "lo" accept
-        ct state established,related accept
+            oif "lo" accept
+            ct state established,related accept
 
-        # ICMP — rate-limited to prevent tunneling
-        ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
-        ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
+            # ICMP — rate-limited to prevent tunneling
+            ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
+            ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
 
-        # DNS — only unbound can reach upstream resolvers
-        ip daddr @upstream_dns meta skuid "unbound" udp dport 53 accept
-        ip daddr @upstream_dns meta skuid "unbound" tcp dport 53 accept
+            # DNS — only unbound can reach upstream resolvers
+            ip daddr @upstream_dns meta skuid "unbound" udp dport 53 accept
+            ip daddr @upstream_dns meta skuid "unbound" tcp dport 53 accept
 
-        # Local DNS — all processes can query unbound (redundant with oif lo, kept for clarity)
-        ip daddr 127.0.0.1 udp dport 53 accept
-        ip daddr 127.0.0.1 tcp dport 53 accept
+            # Local DNS — all processes can query unbound (redundant with oif lo, kept for clarity)
+            ip daddr 127.0.0.1 udp dport 53 accept
+            ip daddr 127.0.0.1 tcp dport 53 accept
 
-        # Block all other DNS (including DoT)
-        udp dport 53 drop
-        tcp dport 53 drop
-        tcp dport 853 drop
+            # Block all other DNS (including DoT)
+            udp dport 53 drop
+            tcp dport 53 drop
+            tcp dport 853 drop
 
-        # HTTP/HTTPS — only squid
-        meta skuid "squid" tcp dport { 80, 443 } accept
+            # HTTP/HTTPS — only squid
+            meta skuid "squid" tcp dport { 80, 443 } accept
 
-        ${lib.optionalString allowSSH ''
-        # SSH — opt-in outbound
-        tcp dport 22 accept
-        ''}
+            ${lib.optionalString allowSSH ''
+              # SSH — opt-in outbound
+              tcp dport 22 accept
+            ''}
 
-        # Local proxy — all processes can reach squid (redundant with oif lo, kept for clarity)
-        ip daddr 127.0.0.1 tcp dport 3128 accept
+            # Local proxy — all processes can reach squid (redundant with oif lo, kept for clarity)
+            ip daddr 127.0.0.1 tcp dport 3128 accept
 
-        log prefix "nft-blocked: " counter reject with icmp type admin-prohibited
-      }
+            log prefix "nft-blocked: " counter reject with icmp type admin-prohibited
+          }
 
-      chain input {
-        type filter hook input priority 0; policy drop;
-        iif "lo" accept
-        ct state established,related accept
+          chain input {
+            type filter hook input priority 0; policy drop;
+            iif "lo" accept
+            ct state established,related accept
 
-        # SSH — only from bridge gateway (host), not other VMs
-        ip saddr ${gatewayAddress} tcp dport 22 accept
+            # SSH — only from bridge gateway (host), not other VMs
+            ip saddr ${gatewayAddress} tcp dport 22 accept
 
-        # ICMP — rate-limited
-        ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
-        ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
+            # ICMP — rate-limited
+            ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
+            ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
 
-        log prefix "nft-input-blocked: " counter drop
-      }
-    }
-  '' else ''
-    table inet filter {
-      chain output {
-        type filter hook output priority 0; policy accept;
+            log prefix "nft-input-blocked: " counter drop
+          }
+        }
+      ''
+    else
+      ''
+        table inet filter {
+          chain output {
+            type filter hook output priority 0; policy accept;
 
-        # Force DNS through local unbound (IPv4 + IPv6)
-        ip daddr != 127.0.0.1 meta skuid != "unbound" udp dport 53 drop
-        ip daddr != 127.0.0.1 meta skuid != "unbound" tcp dport 53 drop
-        ip6 daddr != ::1 meta skuid != "unbound" udp dport 53 drop
-        ip6 daddr != ::1 meta skuid != "unbound" tcp dport 53 drop
-        tcp dport 853 meta skuid != "unbound" drop
+            # Force DNS through local unbound (IPv4 + IPv6)
+            ip daddr != 127.0.0.1 meta skuid != "unbound" udp dport 53 drop
+            ip daddr != 127.0.0.1 meta skuid != "unbound" tcp dport 53 drop
+            ip6 daddr != ::1 meta skuid != "unbound" udp dport 53 drop
+            ip6 daddr != ::1 meta skuid != "unbound" tcp dport 53 drop
+            tcp dport 853 meta skuid != "unbound" drop
 
-        # Block outbound SMTP
-        tcp dport { 25, 587 } log prefix "nft-smtp-blocked: " counter drop
+            # Block outbound SMTP
+            tcp dport { 25, 587 } log prefix "nft-smtp-blocked: " counter drop
 
-        # Log unusual outbound
-        tcp dport { 6667, 6697 } log prefix "nft-irc-out: " counter
-      }
+            # Log unusual outbound
+            tcp dport { 6667, 6697 } log prefix "nft-irc-out: " counter
+          }
 
-      chain input {
-        type filter hook input priority 0; policy drop;
-        iif "lo" accept
-        ct state established,related accept
+          chain input {
+            type filter hook input priority 0; policy drop;
+            iif "lo" accept
+            ct state established,related accept
 
-        # SSH — only from bridge gateway (host), not other VMs
-        ip saddr ${gatewayAddress} tcp dport 22 accept
+            # SSH — only from bridge gateway (host), not other VMs
+            ip saddr ${gatewayAddress} tcp dport 22 accept
 
-        # ICMP — rate-limited
-        ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
-        ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
-        ip6 nexthdr icmpv6 icmpv6 type { echo-request, echo-reply } limit rate 10/second accept
-        ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, time-exceeded } accept
+            # ICMP — rate-limited
+            ip protocol icmp icmp type { echo-request, echo-reply } limit rate 10/second accept
+            ip protocol icmp icmp type { destination-unreachable, time-exceeded } accept
+            ip6 nexthdr icmpv6 icmpv6 type { echo-request, echo-reply } limit rate 10/second accept
+            ip6 nexthdr icmpv6 icmpv6 type { destination-unreachable, time-exceeded } accept
 
-        log prefix "nft-input-blocked: " counter drop
-      }
-    }
-  '';
+            log prefix "nft-input-blocked: " counter drop
+          }
+        }
+      '';
 
   # --- L7 Proxy: Squid with TLS interception (restricted mode only) ---
   # NixOS does not have a built-in services.squid module.
@@ -227,15 +251,15 @@ in
       acl CONNECT method CONNECT
 
       # Domain ACLs
-      ${lib.optionalString (squidAllowedDomains != []) ''
-      acl allowed_domains dstdomain ${lib.concatStringsSep " " squidAllowedDomains}
+      ${lib.optionalString (squidAllowedDomains != [ ]) ''
+        acl allowed_domains dstdomain ${lib.concatStringsSep " " squidAllowedDomains}
       ''}
-      ${lib.optionalString (squidInterceptDomains != []) ''
-      acl intercept_domains dstdomain ${lib.concatStringsSep " " squidInterceptDomains}
+      ${lib.optionalString (squidInterceptDomains != [ ]) ''
+        acl intercept_domains dstdomain ${lib.concatStringsSep " " squidInterceptDomains}
       ''}
 
-      ${lib.optionalString (proxyBlockRegexes != []) ''
-      acl blocked_urls url_regex ${lib.concatStringsSep " " proxyBlockRegexes}
+      ${lib.optionalString (proxyBlockRegexes != [ ]) ''
+        acl blocked_urls url_regex ${lib.concatStringsSep " " proxyBlockRegexes}
       ''}
 
       # SSL bump policy
@@ -243,12 +267,12 @@ in
       # Only peek+bump intercept domains to read the full URL.
       acl step1 at_step SslBump1
       acl step2 at_step SslBump2
-      ${lib.optionalString (squidAllowedDomains != []) ''
-      ssl_bump splice step1 allowed_domains
+      ${lib.optionalString (squidAllowedDomains != [ ]) ''
+        ssl_bump splice step1 allowed_domains
       ''}
-      ${lib.optionalString (squidInterceptDomains != []) ''
-      ssl_bump peek step1 intercept_domains
-      ssl_bump bump step2 intercept_domains
+      ${lib.optionalString (squidInterceptDomains != [ ]) ''
+        ssl_bump peek step1 intercept_domains
+        ssl_bump bump step2 intercept_domains
       ''}
       ssl_bump terminate step1 all
 
@@ -256,14 +280,14 @@ in
       http_access deny !localnet
       http_access deny !Safe_ports
       http_access deny CONNECT !SSL_ports
-      ${lib.optionalString (proxyBlockRegexes != [] && squidInterceptDomains != []) ''
-      http_access deny blocked_urls intercept_domains
+      ${lib.optionalString (proxyBlockRegexes != [ ] && squidInterceptDomains != [ ]) ''
+        http_access deny blocked_urls intercept_domains
       ''}
-      ${lib.optionalString (squidAllowedDomains != []) ''
-      http_access allow allowed_domains
+      ${lib.optionalString (squidAllowedDomains != [ ]) ''
+        http_access allow allowed_domains
       ''}
-      ${lib.optionalString (squidInterceptDomains != []) ''
-      http_access allow intercept_domains
+      ${lib.optionalString (squidInterceptDomains != [ ]) ''
+        http_access allow intercept_domains
       ''}
       http_access deny all
 
@@ -299,8 +323,15 @@ in
   systemd.services.squid = lib.mkIf isRestricted {
     description = "Squid Web Proxy";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" "vm-first-boot.service" "squid-ca-fixup.service" ];
-    requires = [ "vm-first-boot.service" "squid-ca-fixup.service" ];
+    after = [
+      "network.target"
+      "vm-first-boot.service"
+      "squid-ca-fixup.service"
+    ];
+    requires = [
+      "vm-first-boot.service"
+      "squid-ca-fixup.service"
+    ];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${pkgs.squid}/bin/squid --foreground -f /etc/squid/squid.conf";

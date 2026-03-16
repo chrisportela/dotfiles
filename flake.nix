@@ -333,63 +333,64 @@
             default = ./modules/darwin/default.nix;
           };
 
-          darwinConfigurations = {
-            lux = darwin.lib.darwinSystem {
-              system = "aarch64-darwin";
-              specialArgs = {
-                inherit inputs;
-                overlays = with self.overlays; [
-                  deploy-rs
-                  rust
-                  rustToolchain
-                ];
-                nixpkgs = inputs.nixpkgs-unstable;
-              };
-              modules = with self.darwinModules; [
-                default
-                ./hosts/darwin/mba.nix
-                # { nix.linux-builder.enable = true; }
-                inputs.nix-rosetta-builder.darwinModules.default
-                {
-                  nix-rosetta-builder = {
-                    enable = true;
-                    onDemand = true;
-                    # onDemandLingerMinutes = 180;
-                  };
-                }
-              ];
-            };
-            roxy = darwin.lib.darwinSystem {
-              system = "aarch64-darwin";
-              specialArgs = {
-                inherit inputs;
-                overlays = with self.overlays; [
-                  deploy-rs
-                  rust
-                  rustToolchain
-                ];
-                nixpkgs = inputs.nixpkgs-unstable.extend (
-                  final: prev: {
-                    nodejs = prev.nodejs.overrideAttrs (old: {
-                      doCheck = false;
-                    });
+          darwinConfigurations =
+            let
+              inherit (importedPkgs "aarch64-darwin") pkgs pkgsUnstable;
+            in
+            {
+              lux = darwin.lib.darwinSystem {
+                system = "aarch64-darwin";
+                specialArgs = {
+                  inherit inputs;
+                  overlays = with self.overlays; [
+                    deploy-rs
+                    rust
+                    rustToolchain
+                  ];
+                  nixpkgs = pkgsUnstable;
+                };
+                modules = with self.darwinModules; [
+                  default
+                  ./hosts/darwin/mba.nix
+                  # { nix.linux-builder.enable = true; }
+                  inputs.nix-rosetta-builder.darwinModules.default
+                  {
+                    nix-rosetta-builder = {
+                      enable = true;
+                      onDemand = true;
+                      # onDemandLingerMinutes = 180;
+                    };
                   }
-                );
+                ];
               };
-              modules = with self.darwinModules; [
-                default
-                ./hosts/darwin/mba.nix
-                ./hosts/darwin/roxy.nix
-                inputs.nix-rosetta-builder.darwinModules.default
-                {
-                  nix-rosetta-builder = {
-                    enable = true;
-                    onDemand = true;
-                  };
-                }
-              ];
+              roxy = darwin.lib.darwinSystem {
+                system = "aarch64-darwin";
+                specialArgs = {
+                  inherit inputs;
+                  overlays = with self.overlays; [
+                    deploy-rs
+                    rust
+                    rustToolchain
+                    (final: prev: {
+                      ntfy-sh = pkgs.ntfy-sh;
+                    })
+                  ];
+                  nixpkgs = pkgsUnstable;
+                };
+                modules = with self.darwinModules; [
+                  default
+                  ./hosts/darwin/mba.nix
+                  ./hosts/darwin/roxy.nix
+                  inputs.nix-rosetta-builder.darwinModules.default
+                  {
+                    nix-rosetta-builder = {
+                      enable = true;
+                      onDemand = true;
+                    };
+                  }
+                ];
+              };
             };
-          };
         }
       ))
     );

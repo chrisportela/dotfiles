@@ -3,12 +3,6 @@
 {
   ids.gids.nixbld = 350;
 
-  nixpkgs.overlays = [
-    (final: prev: {
-      nodejs = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.system}.nodejs_20;
-    })
-  ];
-
   nix = {
     registry.nixpkgs.flake = inputs.nixpkgs-unstable;
     registry.nixos.flake = inputs.nixpkgs;
@@ -22,5 +16,12 @@
       "nixos-unstable=${inputs.nixpkgs-unstable}"
       "/nix/var/nix/profiles/per-user/root/channels"
     ];
+
+    settings = {
+      extra-substituters = [ "https://virby-nix-darwin.cachix.org" ];
+      extra-trusted-public-keys = [
+        "virby-nix-darwin.cachix.org-1:z9GiEZeBU5bEeoDQjyfHPMGPBaIQJOOvYOOjGMKIlLo="
+      ];
+    };
   };
 }

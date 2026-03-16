@@ -29,11 +29,14 @@
   extraHomeModules ? [ ],
   # Network isolation
   networkMode ? "default", # "default" | "restricted"
-  allowedDomains ? [ ],    # Domains allowed through proxy (spliced — no TLS inspection)
-  interceptDomains ? [ ],  # Domains with TLS interception (bumped — full URL visibility)
+  allowedDomains ? [ ], # Domains allowed through proxy (spliced — no TLS inspection)
+  interceptDomains ? [ ], # Domains with TLS interception (bumped — full URL visibility)
   proxyBlockRegexes ? [ ], # URL regexes to block on intercepted traffic
-  allowSSH ? false,        # Allow outbound SSH (port 22) to whitelisted IPs
-  upstreamDNS ? [ "1.1.1.1" "8.8.8.8" ],
+  allowSSH ? false, # Allow outbound SSH (port 22) to whitelisted IPs
+  upstreamDNS ? [
+    "1.1.1.1"
+    "8.8.8.8"
+  ],
 }:
 {
   config,
@@ -44,15 +47,14 @@
 let
   workspaceMountPoint = if copyWorkspace then "${workspace}-ro" else workspace;
 
-  workspaceShares =
-    lib.optionals (workspace != null) [
-      {
-        proto = "virtiofs";
-        tag = "workspace";
-        source = workspace;
-        mountPoint = workspaceMountPoint;
-      }
-    ];
+  workspaceShares = lib.optionals (workspace != null) [
+    {
+      proto = "virtiofs";
+      tag = "workspace";
+      source = workspace;
+      mountPoint = workspaceMountPoint;
+    }
+  ];
 
   credentialShares = lib.imap0 (i: cred: {
     proto = "virtiofs";
@@ -74,35 +76,32 @@ let
   lastOctet = lib.toInt (lib.last (lib.splitString "." ipAddress));
   vsockCid = lastOctet + 3;
 
-  claudeShares =
-    lib.optionals (claude && claudeConfigDir != null) [
-      {
-        proto = "virtiofs";
-        tag = "claude-config";
-        source = claudeConfigDir;
-        mountPoint = "/home/${userName}/.claude-host";
-      }
-    ];
+  claudeShares = lib.optionals (claude && claudeConfigDir != null) [
+    {
+      proto = "virtiofs";
+      tag = "claude-config";
+      source = claudeConfigDir;
+      mountPoint = "/home/${userName}/.claude-host";
+    }
+  ];
 
-  dotfilesShares =
-    lib.optionals (dotfiles && dotfilesDir != null) [
-      {
-        proto = "virtiofs";
-        tag = "dotfiles";
-        source = dotfilesDir;
-        mountPoint = dotfilesDir;
-      }
-    ];
+  dotfilesShares = lib.optionals (dotfiles && dotfilesDir != null) [
+    {
+      proto = "virtiofs";
+      tag = "dotfiles";
+      source = dotfilesDir;
+      mountPoint = dotfilesDir;
+    }
+  ];
 
-  proxyCAShares =
-    lib.optionals (networkMode == "restricted") [
-      {
-        proto = "virtiofs";
-        tag = "proxy-ca";
-        source = "${sshHostKeyPath}/../proxy-ca";
-        mountPoint = "/etc/squid/ca";
-      }
-    ];
+  proxyCAShares = lib.optionals (networkMode == "restricted") [
+    {
+      proto = "virtiofs";
+      tag = "proxy-ca";
+      source = "${sshHostKeyPath}/../proxy-ca";
+      mountPoint = "/etc/squid/ca";
+    }
+  ];
 in
 {
   microvm = {
@@ -113,8 +112,14 @@ in
     # Route serial to a socket file for interactive root console access.
     # Overrides the default --serial tty; kernel console param must be
     # re-added manually since cloud-hypervisor drops it for non-tty serial.
-    cloud-hypervisor.extraArgs = [ "--serial" "socket=console.sock" ];
-    kernelParams = [ "earlyprintk=ttyS0" "console=ttyS0" ];
+    cloud-hypervisor.extraArgs = [
+      "--serial"
+      "socket=console.sock"
+    ];
+    kernelParams = [
+      "earlyprintk=ttyS0"
+      "console=ttyS0"
+    ];
 
     interfaces = [
       {
@@ -136,22 +141,21 @@ in
       }
     ];
 
-    shares =
-      [
-        {
-          proto = "virtiofs";
-          tag = "ro-store";
-          source = "/nix/store";
-          mountPoint = "/nix/.ro-store";
-        }
-      ]
-      ++ sshKeyShares
-      ++ workspaceShares
-      ++ credentialShares
-      ++ claudeShares
-      ++ dotfilesShares
-      ++ proxyCAShares
-      ++ extraShares;
+    shares = [
+      {
+        proto = "virtiofs";
+        tag = "ro-store";
+        source = "/nix/store";
+        mountPoint = "/nix/.ro-store";
+      }
+    ]
+    ++ sshKeyShares
+    ++ workspaceShares
+    ++ credentialShares
+    ++ claudeShares
+    ++ dotfilesShares
+    ++ proxyCAShares
+    ++ extraShares;
   };
 
   networking = {
@@ -242,7 +246,10 @@ in
 
   security.sudo.wheelNeedsPassword = lib.mkIf (networkMode != "restricted") false;
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   programs.zsh.enable = true;
   programs.neovim = {
@@ -255,19 +262,23 @@ in
 
   nixpkgs.config.allowUnfree = claude;
 
-  environment.systemPackages = with pkgs; [
-    git
-    tmux
-    neovim
-    nodejs
-    python3
-    ripgrep
-    curl
-    fd
-    tree
-    jq
-    bash
-  ] ++ lib.optionals claude [ pkgs.claude-code ] ++ packages;
+  environment.systemPackages =
+    with pkgs;
+    [
+      git
+      tmux
+      neovim
+      nodejs
+      python3
+      ripgrep
+      curl
+      fd
+      tree
+      jq
+      bash
+    ]
+    ++ lib.optionals claude [ pkgs.claude-code ]
+    ++ packages;
 
   # Ensure /bin/bash exists for scripts that expect it
   system.activationScripts.binbash = lib.stringAfter [ "stdio" ] ''
@@ -292,98 +303,113 @@ in
   imports = [
     homeManagerModule
     ((import ./vm-network.nix) {
-      inherit networkMode allowedDomains interceptDomains
-              proxyBlockRegexes allowSSH upstreamDNS
-              claude gatewayAddress;
+      inherit
+        networkMode
+        allowedDomains
+        interceptDomains
+        proxyBlockRegexes
+        allowSSH
+        upstreamDNS
+        claude
+        gatewayAddress
+        ;
     })
   ];
 
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
 
-  home-manager.users.${userName} = { pkgs, lib, ... }: {
-    imports = extraHomeModules;
+  home-manager.users.${userName} =
+    { pkgs, lib, ... }:
+    {
+      imports = extraHomeModules;
 
-    programs.zsh = {
-      enable = true;
-      enableCompletion = true;
-      autocd = true;
-      history = {
-        extended = true;
-        ignoreDups = true;
-        ignoreSpace = true;
+      programs.zsh = {
+        enable = true;
+        enableCompletion = true;
+        autocd = true;
+        history = {
+          extended = true;
+          ignoreDups = true;
+          ignoreSpace = true;
+        };
       };
-    };
 
-    programs.fzf = {
-      enable = true;
-      enableZshIntegration = true;
-      defaultCommand = "fd --type f";
-      fileWidgetOptions = [ "--preview 'head {}'" ];
-      changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
-      historyWidgetOptions = [ "--sort" "--exact" ];
-      defaultOptions = [ "--height 40%" "--border" ];
-      tmux.enableShellIntegration = true;
-    };
-
-    programs.tmux = {
-      enable = true;
-      terminal = "tmux-256color";
-      escapeTime = 0;
-      historyLimit = 50000;
-      mouse = true;
-      keyMode = "vi";
-      baseIndex = 1;
-      extraConfig = ''
-        set -g renumber-windows on
-        set -g set-titles on
-        set -g focus-events on
-        bind | split-window -h -c "#{pane_current_path}"
-        bind - split-window -v -c "#{pane_current_path}"
-        bind c new-window -c "#{pane_current_path}"
-      '';
-    };
-
-    programs.git = {
-      enable = true;
-      settings = {
-        user.name = userName;
-        user.email = "${userName}@${hostName}";
-        init.defaultBranch = "main";
-        pull.rebase = true;
+      programs.fzf = {
+        enable = true;
+        enableZshIntegration = true;
+        defaultCommand = "fd --type f";
+        fileWidgetOptions = [ "--preview 'head {}'" ];
+        changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
+        historyWidgetOptions = [
+          "--sort"
+          "--exact"
+        ];
+        defaultOptions = [
+          "--height 40%"
+          "--border"
+        ];
+        tmux.enableShellIntegration = true;
       };
-    };
 
-    programs.neovim = {
-      enable = true;
-      defaultEditor = true;
-      viAlias = true;
-      vimAlias = true;
-      initLua = ''
-        vim.opt.number = true
-        vim.opt.relativenumber = true
-        vim.opt.expandtab = true
-        vim.opt.shiftwidth = 2
-        vim.opt.tabstop = 2
-        vim.opt.smartindent = true
-        vim.opt.termguicolors = true
-        vim.opt.signcolumn = "yes"
-        vim.opt.clipboard = "unnamedplus"
-        vim.opt.undofile = true
-        vim.opt.ignorecase = true
-        vim.opt.smartcase = true
-        vim.opt.scrolloff = 8
-        vim.g.mapleader = " "
-      '';
-    };
+      programs.tmux = {
+        enable = true;
+        terminal = "tmux-256color";
+        escapeTime = 0;
+        historyLimit = 50000;
+        mouse = true;
+        keyMode = "vi";
+        baseIndex = 1;
+        extraConfig = ''
+          set -g renumber-windows on
+          set -g set-titles on
+          set -g focus-events on
+          bind | split-window -h -c "#{pane_current_path}"
+          bind - split-window -v -c "#{pane_current_path}"
+          bind c new-window -c "#{pane_current_path}"
+        '';
+      };
 
-    programs.direnv = lib.mkIf direnv {
-      enable = true;
-      nix-direnv.enable = true;
-    };
+      programs.git = {
+        enable = true;
+        settings = {
+          user.name = userName;
+          user.email = "${userName}@${hostName}";
+          init.defaultBranch = "main";
+          pull.rebase = true;
+        };
+      };
 
-    home.stateVersion = "25.11";
-  };
+      programs.neovim = {
+        enable = true;
+        defaultEditor = true;
+        viAlias = true;
+        vimAlias = true;
+        initLua = ''
+          vim.opt.number = true
+          vim.opt.relativenumber = true
+          vim.opt.expandtab = true
+          vim.opt.shiftwidth = 2
+          vim.opt.tabstop = 2
+          vim.opt.smartindent = true
+          vim.opt.termguicolors = true
+          vim.opt.signcolumn = "yes"
+          vim.opt.clipboard = "unnamedplus"
+          vim.opt.undofile = true
+          vim.opt.ignorecase = true
+          vim.opt.smartcase = true
+          vim.opt.scrolloff = 8
+          vim.g.mapleader = " "
+        '';
+      };
+
+      programs.direnv = lib.mkIf direnv {
+        enable = true;
+        nix-direnv.enable = true;
+      };
+
+      home.stateVersion = "25.11";
+    };
 
   # --- First-boot provisioning ---
   # All one-time setup (workspace copy, credential seeding) is gated behind
@@ -401,46 +427,48 @@ in
       Type = "oneshot";
       RemainAfterExit = true;
     };
-    script = let
-      copyWorkspaceScript = lib.optionalString (workspace != null && copyWorkspace) ''
-        # Copy workspace from RO virtiofs mount to writable location
-        if [ -d "${workspaceMountPoint}" ]; then
-          echo "Copying workspace to ${workspace}..."
-          ${pkgs.sudo}/bin/sudo -u ${userName} ${pkgs.rsync}/bin/rsync -a "${workspaceMountPoint}/" "${workspace}/"
-        fi
-      '';
-      seedClaudeScript = lib.optionalString claude ''
-        home="/home/${userName}"
-        # Seed .claude/ directory from host mount
-        if [ ! -d "$home/.claude" ] && [ -d "$home/.claude-host" ]; then
-          ${pkgs.sudo}/bin/sudo -u ${userName} cp -a "$home/.claude-host" "$home/.claude"
-        fi
-        # Seed .claude.json from latest backup
-        if [ ! -f "$home/.claude.json" ] && [ -d "$home/.claude-host/backups" ]; then
-          latest="$(ls -t "$home/.claude-host/backups/.claude.json."* 2>/dev/null | head -1)"
-          if [ -n "$latest" ]; then
-            ${pkgs.sudo}/bin/sudo -u ${userName} cp "$latest" "$home/.claude.json"
+    script =
+      let
+        copyWorkspaceScript = lib.optionalString (workspace != null && copyWorkspace) ''
+          # Copy workspace from RO virtiofs mount to writable location
+          if [ -d "${workspaceMountPoint}" ]; then
+            echo "Copying workspace to ${workspace}..."
+            ${pkgs.sudo}/bin/sudo -u ${userName} ${pkgs.rsync}/bin/rsync -a "${workspaceMountPoint}/" "${workspace}/"
           fi
-        fi
+        '';
+        seedClaudeScript = lib.optionalString claude ''
+          home="/home/${userName}"
+          # Seed .claude/ directory from host mount
+          if [ ! -d "$home/.claude" ] && [ -d "$home/.claude-host" ]; then
+            ${pkgs.sudo}/bin/sudo -u ${userName} cp -a "$home/.claude-host" "$home/.claude"
+          fi
+          # Seed .claude.json from latest backup
+          if [ ! -f "$home/.claude.json" ] && [ -d "$home/.claude-host/backups" ]; then
+            latest="$(ls -t "$home/.claude-host/backups/.claude.json."* 2>/dev/null | head -1)"
+            if [ -n "$latest" ]; then
+              ${pkgs.sudo}/bin/sudo -u ${userName} cp "$latest" "$home/.claude.json"
+            fi
+          fi
+        '';
+        squidInitScript = lib.optionalString (networkMode == "restricted") ''
+          # Initialize Squid certificate database
+          if [ ! -d /var/lib/squid/certdb ]; then
+            mkdir -p /var/lib/squid
+            ${pkgs.squid}/libexec/security_file_certgen -c -s /var/lib/squid/certdb -M 16MB
+            chown -R squid:squid /var/lib/squid
+          fi
+          # Create Squid log directory
+          mkdir -p /var/log/squid
+          chown squid:squid /var/log/squid
+        '';
+      in
+      ''
+        ${copyWorkspaceScript}
+        ${seedClaudeScript}
+        ${squidInitScript}
+        mkdir -p /var/lib
+        touch /var/lib/vm-initialized
       '';
-      squidInitScript = lib.optionalString (networkMode == "restricted") ''
-        # Initialize Squid certificate database
-        if [ ! -d /var/lib/squid/certdb ]; then
-          mkdir -p /var/lib/squid
-          ${pkgs.squid}/libexec/security_file_certgen -c -s /var/lib/squid/certdb -M 16MB
-          chown -R squid:squid /var/lib/squid
-        fi
-        # Create Squid log directory
-        mkdir -p /var/log/squid
-        chown squid:squid /var/log/squid
-      '';
-    in ''
-      ${copyWorkspaceScript}
-      ${seedClaudeScript}
-      ${squidInitScript}
-      mkdir -p /var/lib
-      touch /var/lib/vm-initialized
-    '';
   };
 
   # --- Claude config sync from host ---
@@ -450,7 +478,10 @@ in
   # overwrite files that are newer on the host.
   systemd.services.claude-host-sync = lib.mkIf claude {
     description = "Sync Claude config from host";
-    after = [ "local-fs.target" "vm-first-boot.service" ];
+    after = [
+      "local-fs.target"
+      "vm-first-boot.service"
+    ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       Type = "oneshot";

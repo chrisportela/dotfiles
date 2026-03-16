@@ -67,7 +67,9 @@ nixos.lib.nixosSystem {
           agent-vms = {
             enable = true;
             nat.externalInterface = "enp6s0";
-            user.authorizedKeys = (import ../../../lib/ssh-keys.nix).users.cmp ++ ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILsqpaOSjCbxoTry3oYRHElBMbnFvZVVa5sxjbTZO/lX cmp@ada"];
+            user.authorizedKeys = (import ../../../lib/ssh-keys.nix).users.cmp ++ [
+              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILsqpaOSjCbxoTry3oYRHElBMbnFvZVVa5sxjbTZO/lX cmp@ada"
+            ];
           };
         };
 
