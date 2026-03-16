@@ -149,7 +149,7 @@ tmpd() {
 
 # Use Git’s colored diff when available
 if hash git &>/dev/null ; then
-	diff() {
+	gdiff() {
 		git diff --no-index --color-words "$@"
 	}
 fi
@@ -255,11 +255,15 @@ gco () {
 }
 
 switch-darwin () {
-    darwin-rebuild switch --flake $HOME/src/dotfiles
+    local dotfiles=${DOTFILES_DIR:="$HOME/src/dotfiles"}
+
+    sudo darwin-rebuild switch --flake $dotfiles
 }
 
 switch-nix () {
-    sudo nixos-rebuild switch --flake $HOME/src/dotfiles
+    local dotfiles=${DOTFILES_DIR:="$HOME/src/dotfiles"}
+
+    sudo nixos-rebuild switch --flake $dotfiles
 }
 
 switch-home () {
@@ -268,7 +272,7 @@ switch-home () {
     home-manager switch -b backup --flake $dotfiles
 }
 
-which() {
+which-path() {
   local prog=$1
   local which_path=$(command which "$prog")
   if [ -L "$which_path" ]; then
