@@ -2,6 +2,7 @@
 { ... }:
 {
   imports = [
+    ./agent-vms
     ./nixpkgs.nix
     ./common.nix
     ./network.nix
