@@ -57,6 +57,9 @@ jobs:
       - name: Build home-manager
         run: nix build .#legacyPackages.x86_64-linux.homeConfigurations.cmp.activationPackage --no-link
 
+      - name: Eval React-Native Shell
+        run: nix eval .#devShells.x86_64-linux.react-native
+
       - name: Eval NixOS config (ada)
         run: nix eval .#nixosConfigurations.ada.config.system.build.toplevel
 
@@ -88,6 +91,9 @@ jobs:
             .#devShells.aarch64-darwin.dev \
             .#devShells.aarch64-darwin.devops \
             --no-link
+
+      - name: Eval React-Native Shell
+        run: nix eval .#devShells.aarch64-darwin.react-native
 
       - name: Eval darwin config (lux)
         run: nix eval .#darwinConfigurations.lux.config.system.build.toplevel
