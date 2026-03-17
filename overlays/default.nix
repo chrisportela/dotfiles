@@ -24,8 +24,35 @@
   );
 
   claude-code = (
-    final: prev: {
-      claude-code = self.packages.${final.stdenv.system}.claude-code;
+    final: prev:
+    let
+      ours = self.packages.${final.stdenv.system}.claude-code;
+    in
+    {
+      claude-code =
+        if prev ? claude-code && prev.lib.versionAtLeast prev.claude-code.version ours.version then
+          prev.claude-code
+        else
+          ours;
+    }
+  );
+
+  openclaw = (
+    final: prev:
+    let
+      ours = self.packages.${final.stdenv.system}.openclaw;
+      base =
+        if prev ? openclaw && prev.lib.versionAtLeast prev.openclaw.version ours.version then
+          prev.openclaw
+        else
+          ours;
+    in
+    {
+      openclaw = base.overrideAttrs (p: {
+        meta = p.meta // {
+          knownVulnerabilities = [ ];
+        };
+      });
     }
   );
 

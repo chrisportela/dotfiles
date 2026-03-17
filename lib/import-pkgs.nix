@@ -20,6 +20,8 @@ let
       deploy-rs
       terraform
       setup-envrc
+      claude-code
+      openclaw
       opencode-cursor
       cliclick
       peekaboo

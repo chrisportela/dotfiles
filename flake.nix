@@ -139,9 +139,7 @@
 
             opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
 
-            claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix {
-              upstreamClaudeCode = pkgs.pkgsUnstable.claude-code;
-            };
+            claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
 
             setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
 

@@ -8,25 +8,21 @@
   bubblewrap ? null,
   procps,
   socat ? null,
-  # Callers can pass the upstream nixpkgs claude-code for version comparison.
-  # Named to avoid callPackage auto-filling from pkgs.claude-code, which would
-  # cause infinite recursion when this package IS pkgs.claude-code via an overlay.
-  upstreamClaudeCode ? null,
 }:
 
 let
-  version = "2.1.76";
+  version = "2.1.77";
 
-  fromSource = buildNpmPackage (finalAttrs: {
+in  buildNpmPackage (finalAttrs: {
     pname = "claude-code";
     inherit version;
 
     src = fetchzip {
       url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${finalAttrs.version}.tgz";
-      hash = "sha256-kjzPTG32f35eN6S85gGLUCmsNwH70Sq5rruEs/0hioM=";
+      hash = "sha256-3bsFS3EZYbU8htlO7QtA9Qs8xlm0ZPz02bJ3ROZaugY=";
     };
 
-    npmDepsHash = "sha256-sk1RdPMgZD+Ejd6JdKWcK24AdfasnwWATQkwAx5MjmY=";
+    npmDepsHash = "sha256-spxAd9PEGRQFiGjaNRqGCu23PdmfwmBQyhT+gwTiTMs=";
 
     strictDeps = true;
 
@@ -64,6 +60,9 @@ let
           versionCheckHook
         ];
     versionCheckKeepEnvironment = [ "HOME" ];
+  passthru = {
+    updateScript = ./update.sh;
+  };
 
     meta = {
       description = "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster";
@@ -71,16 +70,4 @@ let
       license = lib.licenses.unfree;
       mainProgram = "claude";
     };
-  });
-
-  base =
-    if upstreamClaudeCode != null && lib.versionAtLeast upstreamClaudeCode.version version then
-      upstreamClaudeCode
-    else
-      fromSource;
-in
-base.overrideAttrs (prev: {
-  passthru = (prev.passthru or { }) // {
-    updateScript = ./update.sh;
-  };
-})
+  })
