@@ -59,6 +59,11 @@
       url = "github:microvm-nix/microvm.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    virby = {
+      url = "github:quinneden/virby-nix-darwin/be170bd7ef21ce9773e7daa646d43f5405a1bdb2";
+      # url = "github:quinneden/virby-nix-darwin";
+      # inputs.nixpkgs.follows = "nixpkgs";
+    };
     android-nixpkgs = {
       url = "github:tadfisher/android-nixpkgs/stable";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -382,10 +387,23 @@
                   ./hosts/darwin/mba.nix
                   ./hosts/darwin/roxy.nix
                   inputs.nix-rosetta-builder.darwinModules.default
+                  inputs.virby.darwinModules.default
                   {
                     nix-rosetta-builder = {
                       enable = true;
                       onDemand = true;
+                    };
+
+                    services.virby = {
+                      enable = true;
+                      # supportDeterminateNix = false;
+                      onDemand = {
+                        enable = true;
+                        # ttl = 180; # minutes
+                      };
+                      rosetta = true;
+                      # debug = true;
+                      # allowUserSsh = true;
                     };
                   }
                 ];
