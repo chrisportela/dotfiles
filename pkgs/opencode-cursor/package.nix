@@ -7,7 +7,7 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "opencode-cursor";
-  version = "2.3.18-unstable-2026-03-16";
+  version = "2.3.19-unstable-2026-03-16";
 
   src = fetchFromGitHub {
     owner = "Nomadcxx";
@@ -16,7 +16,11 @@ buildNpmPackage (finalAttrs: {
     hash = "sha256-Pv/aY1PYU18dVzC2las70souhKW3XAZBdtiApWn3Qzk=";
   };
 
-  npmDepsHash = "sha256-Zpx5MYQeUMcM/TwGdrYTJ0H+16D906lRnT0RzB/K1OY=";
+  postPatch = ''
+    cp ${./package-lock.json} package-lock.json
+  '';
+
+  npmDepsHash = "sha256-BNBQhBnXg04ZD3Y9yyeufJpwg8vL0T/npield2cnt+c=";
 
   nativeBuildInputs = [ bun ];
 
@@ -51,7 +55,7 @@ buildNpmPackage (finalAttrs: {
     runHook postInstall
   '';
 
-  passthru.updateScript = ./opencode-cursor-update.sh;
+  passthru.updateScript = ./update.sh;
 
   meta = {
     description = "Use Cursor Pro models in OpenCode via HTTP proxy with OAuth";

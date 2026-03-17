@@ -137,7 +137,7 @@
               inherit (pkgs.pkgsUnstable) openclaw;
             };
 
-            opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor.nix { };
+            opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
 
             claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix {
               upstreamClaudeCode = pkgs.pkgsUnstable.claude-code;
