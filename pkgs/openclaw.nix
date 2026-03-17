@@ -1,12 +1,11 @@
 {
-  lib,
-  openclaw,
+  upstreamOpenclaw,
 }:
 
 let
   version = "2026.3.13-1";
 in
-openclaw.overrideAttrs (
+upstreamOpenclaw.overrideAttrs (
   finalAttrs: prev: {
     inherit version;
 
@@ -19,6 +18,10 @@ openclaw.overrideAttrs (
 
     passthru = prev.passthru // {
       updateScript = ./openclaw-update.sh;
+    };
+
+    meta = prev.meta // {
+      knownVulnerabilities = [ ];
     };
   }
 )

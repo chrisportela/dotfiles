@@ -38,21 +38,8 @@
   );
 
   openclaw = (
-    final: prev:
-    let
-      ours = self.packages.${final.stdenv.system}.openclaw;
-      base =
-        if prev ? openclaw && prev.lib.versionAtLeast prev.openclaw.version ours.version then
-          prev.openclaw
-        else
-          ours;
-    in
-    {
-      openclaw = base.overrideAttrs (p: {
-        meta = p.meta // {
-          knownVulnerabilities = [ ];
-        };
-      });
+    final: prev: {
+      openclaw = self.packages.${final.stdenv.system}.openclaw;
     }
   );
 

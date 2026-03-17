@@ -107,9 +107,15 @@
           })
         ];
       };
+      simpleHomeConfig = (import ./lib/simple-home-config.nix) inputs;
+      supportedSystems = with flake-utils.lib.system; [
+        x86_64-linux
+        aarch64-linux
+        aarch64-darwin
+      ];
     in
     (
-      flake-utils.lib.eachDefaultSystem (
+      flake-utils.lib.eachSystem supportedSystems (
         system:
         let
           inherit (importedPkgs system) pkgs pkgsUnstable;
@@ -126,288 +132,260 @@
               program = "${self.packages.${system}.update}/bin/update";
             };
           };
-          packages = {
-            terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
 
-            cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
-
-            rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
-
-            openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix {
-              inherit (pkgs.pkgsUnstable) openclaw;
-            };
-
-            opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
-
-            claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
-
-            setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
-
-            update = pkgs.callPackage ./pkgs/update.nix { };
-
-            pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
-
-            default = legacyPackages.homeConfigurations.cmp.activationPackage;
-          }
-          // (nixpkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
-            cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
-            peekaboo = pkgs.callPackage ./pkgs/peekaboo/default.nix { };
-            swift6 = pkgs.callPackage ./pkgs/swift6/default.nix { };
-            peekaboo-git = pkgs.pkgsUnstable.callPackage ./pkgs/peekaboo/git.nix { };
-          });
+          packages = builtins.foldl' (acc: attrs: acc // attrs) { } [
+            {
+              terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
+              cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
+              rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
+              openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix {
+                upstreamOpenclaw = nixpkgs-unstable.legacyPackages.${system}.openclaw;
+              };
+              opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
+              claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
+              setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
+              update = pkgs.callPackage ./pkgs/update.nix { };
+              pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
+              default = legacyPackages.homeConfigurations.cmp.activationPackage;
+            }
+            (nixpkgs.lib.optionalAttrs (system == flake-utils.lib.system.aarch64-darwin) {
+              cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
+              peekaboo = pkgs.callPackage ./pkgs/peekaboo/default.nix { };
+              peekaboo-git = pkgs.pkgsUnstable.callPackage ./pkgs/peekaboo/git.nix { };
+              swift6 = pkgs.callPackage ./pkgs/swift6/default.nix { };
+            })
+          ];
 
           legacyPackages = {
             installer-iso = self.nixosConfigurations.installer.config.system.build.isoImage;
-            homeConfigurations = {
-              cmp = home-manager.lib.homeManagerConfiguration {
-                pkgs = pkgsUnstable;
+            homeConfigurations = builtins.foldl' (acc: attrs: acc // attrs) { } [
+              {
+                cmp = home-manager.lib.homeManagerConfiguration {
+                  pkgs = pkgsUnstable;
+                  modules = [
+                    ./modules/home/nixpkgs.nix
+                    ./modules/home/default.nix
+                    {
+                      allowedUnfree = [
+                        "vault-bin"
+                        "terraform"
+                      ];
+                      home.username = "cmp";
+                    }
+                  ];
+                };
 
-                modules = [
-                  ./modules/home/nixpkgs.nix
-                  ./modules/home/default.nix
-                  {
-                    allowedUnfree = [
-                      "vault-bin"
-                      "terraform"
-                    ];
-                    home.username = "cmp";
-                  }
-                ];
-              };
-              nixos = home-manager.lib.homeManagerConfiguration {
-                pkgs = pkgsUnstable;
-
-                modules = [
-                  ./modules/home/nixpkgs.nix
-                  ./modules/home/default.nix
-                  {
-                    allowedUnfree = [
-                      "vault-bin"
-                      "terraform"
-                    ];
-                    home.username = "nixos";
-                    chrisportela.coding-agents.enable = true;
-                  }
-                ];
-              };
-            };
+              }
+              (pkgs.lib.optionalAttrs (system == flake-utils.lib.system.x86_64-linux) {
+                nixos = home-manager.lib.homeManagerConfiguration {
+                  pkgs = pkgsUnstable;
+                  modules = [
+                    ./modules/home/nixpkgs.nix
+                    ./modules/home/default.nix
+                    {
+                      allowedUnfree = [
+                        "vault-bin"
+                        "terraform"
+                      ];
+                      home.username = "nixos";
+                      chrisportela.coding-agents.enable = true;
+                    }
+                  ];
+                };
+                "cmp@ada" = simpleHomeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager;
+                  options.chrisportela = {
+                    desktop.enable = true;
+                    experiment.enable = true;
+                    coding-agents.enable = true;
+                  };
+                };
+                "cmp@flamme" = simpleHomeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager;
+                  options.chrisportela = {
+                    desktop.enable = true;
+                    experiment.enable = true;
+                    coding-agents.enable = true;
+                  };
+                };
+                "deck@steamdeck" = simpleHomeConfig {
+                  inherit pkgs;
+                  home-manager = inputs.home-manager;
+                  username = "deck";
+                  options.chrisportela = {
+                    desktop.enable = false;
+                    experiment.enable = false;
+                    coding-agents.enable = false;
+                  };
+                };
+              })
+              (pkgs.lib.optionalAttrs (system == flake-utils.lib.system.aarch64-darwin) {
+                "cmp@roxy" = simpleHomeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager;
+                  options.chrisportela = {
+                    coding-agents.enable = true;
+                  };
+                };
+              })
+            ];
           };
 
-          devShells = (
-            let
-              inherit (importedPkgs system) pkgs;
-            in
-            rec {
-              default = dotfiles;
+          devShells = rec {
+            default = dotfiles;
+            dotfiles = pkgs.callPackage ./shells/dotfiles.nix { };
+            dev = pkgs.callPackage ./shells/dev.nix { };
+            devops = pkgs.callPackage ./shells/devops.nix { };
+          }
+          // (nixpkgs.lib.optionalAttrs (system != flake-utils.lib.system.aarch64-linux) {
+            react-native =
+              let
+                androidPkgs =
+                  (importPkgs {
+                    inherit
+                      self
+                      nixpkgs
+                      nixpkgs-unstable
+                      inputs
+                      ;
+                    config.android_sdk.accept_license = true;
+                    allowUnfreePredicate = _: true;
+                  } system).pkgs;
+              in
+              androidPkgs.pkgsUnstable.callPackage ./shells/react-native.nix {
+                inherit (inputs) android-nixpkgs;
+              };
+          });
 
-              dotfiles = pkgs.callPackage ./shells/dotfiles.nix { };
-
-              dev = pkgs.callPackage ./shells/dev.nix { };
-
-              devops = pkgs.callPackage ./shells/devops.nix { };
-
-              react-native =
-                let
-                  pkgs =
-                    (importPkgs {
-                      inherit
-                        self
-                        nixpkgs
-                        nixpkgs-unstable
-                        inputs
-                        ;
-
-                      config = {
-                        android_sdk.accept_license = true;
-                      };
-
-                      allowUnfreePredicate = pkg: true;
-                    } system).pkgs;
-                in
-                pkgs.pkgsUnstable.callPackage ./shells/react-native.nix {
-                  inherit (inputs) android-nixpkgs;
-                };
-            }
-          );
-          devShell = self.devShells.${system}.default;
-
-          # for `nix fmt`
+          devShell = devShells.default;
           formatter = treefmt-eval.config.build.wrapper;
-
           checks = {
             formatting = treefmt-eval.config.build.check self;
           };
         }
       )
-      // (flake-utils.lib.eachDefaultSystemPassThrough (
-        system:
-        let
-          inherit (importedPkgs system) pkgs pkgsUnstable;
-          simpleHomeConfig = (import ./lib/simple-home-config.nix) inputs;
-        in
-        {
-          homeConfigurations = {
-            "cmp@flamme" = simpleHomeConfig {
-              pkgs = pkgsUnstable;
-              home-manager = inputs.home-manager;
-              options.chrisportela = {
-                desktop.enable = true;
-                experiment.enable = true;
-                coding-agents.enable = true;
-              };
-            };
-            "cmp@ada" = simpleHomeConfig {
-              pkgs = pkgsUnstable;
-              home-manager = inputs.home-manager;
-              options.chrisportela = {
-                desktop.enable = true;
-                experiment.enable = true;
-                coding-agents.enable = true;
-              };
-            };
-            "cmp@roxy" =
-              let
-                darwinPkgs = importedPkgs "aarch64-darwin";
-              in
-              simpleHomeConfig {
-                pkgs = darwinPkgs.pkgsUnstable;
-                home-manager = inputs.home-manager;
-                options.chrisportela = {
-                  coding-agents.enable = true;
-                };
-              };
+      // {
 
-            "deck@steamdeck" = simpleHomeConfig {
-              inherit pkgs;
-              home-manager = inputs.home-manager;
-              username = "deck";
-              options.chrisportela = {
-                desktop.enable = false;
-                experiment.enable = false;
-                coding-agents.enable = false;
-              };
-            };
+        # Project templates: nix flake new <path> -t <flake>#<template>
+        templates = {
+          nextjs = {
+            description = "Next.js + pnpm with TypeScript, Prisma 7, Better Auth, Vitest, Playwright";
+            path = ./templates/nextjs;
           };
-
-          # Project templates: nix flake new <path> -t <flake>#<template>
-          templates = {
-            nextjs = {
-              description = "Next.js + pnpm with TypeScript, Prisma 7, Better Auth, Vitest, Playwright";
-              path = ./templates/nextjs;
-            };
-            react-native = {
-              description = "React Native (bare) + pnpm with TypeScript, React Navigation, Jest";
-              path = ./templates/react-native;
-            };
+          react-native = {
+            description = "React Native (bare) + pnpm with TypeScript, React Navigation, Jest";
+            path = ./templates/react-native;
           };
+        };
 
-          overlays = overlaysSet;
+        overlays = overlaysSet;
 
-          nixosModules = (import ./modules/nixos/default.nix);
+        nixosModules = (import ./modules/nixos/default.nix);
 
-          nixosConfigurations = {
-            installer = (import ./hosts/nixos/installer.nix) {
-              inherit inputs self;
-              nixos = inputs.nixpkgs-unstable;
-              nixpkgs = inputs.nixpkgs;
-            };
-            rpi4 = (import ./hosts/nixos/rpi4-image.nix) {
-              inherit inputs self nixpkgs;
-            };
-            ada = (import ./hosts/nixos/ada/default.nix) {
-              inherit inputs;
-              nixos = inputs.nixpkgs-unstable;
-              nixosModules = self.nixosModules;
-              overlays = [
-                (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
+        nixosConfigurations = {
+          installer = (import ./hosts/nixos/installer.nix) {
+            inherit inputs self;
+            nixos = inputs.nixpkgs-unstable;
+            nixpkgs = inputs.nixpkgs;
+          };
+          rpi4 = (import ./hosts/nixos/rpi4-image.nix) {
+            inherit inputs self nixpkgs;
+          };
+          ada = (import ./hosts/nixos/ada/default.nix) {
+            inherit inputs;
+            nixos = inputs.nixpkgs-unstable;
+            nixosModules = self.nixosModules;
+            overlays = [
+              (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
 
+            ];
+          };
+          flamme = (import ./hosts/nixos/flamme/default.nix) {
+            inherit inputs;
+            nixos = inputs.nixpkgs-unstable;
+            nixosModules = self.nixosModules;
+          };
+        };
+
+        darwinModules = {
+          common = ./modules/darwin/common.nix;
+          nixpkgs = ./modules/darwin/nixpkgs.nix;
+          default = ./modules/darwin/default.nix;
+        };
+
+        darwinConfigurations =
+          let
+            inherit (importedPkgs "aarch64-darwin") pkgs pkgsUnstable;
+          in
+          {
+            lux = darwin.lib.darwinSystem {
+              system = "aarch64-darwin";
+              specialArgs = {
+                inherit inputs;
+                overlays = with self.overlays; [
+                  deploy-rs
+                  rust
+                  rustToolchain
+                ];
+                nixpkgs = pkgsUnstable;
+              };
+              modules = with self.darwinModules; [
+                default
+                ./hosts/darwin/mba.nix
+                # { nix.linux-builder.enable = true; }
+                inputs.nix-rosetta-builder.darwinModules.default
+                {
+                  nix-rosetta-builder = {
+                    enable = true;
+                    onDemand = true;
+                    # onDemandLingerMinutes = 180;
+                  };
+                }
               ];
             };
-            flamme = (import ./hosts/nixos/flamme/default.nix) {
-              inherit inputs;
-              nixos = inputs.nixpkgs-unstable;
-              nixosModules = self.nixosModules;
+            roxy = darwin.lib.darwinSystem {
+              system = "aarch64-darwin";
+              specialArgs = {
+                inherit inputs;
+                overlays = with self.overlays; [
+                  deploy-rs
+                  rust
+                  rustToolchain
+                  (final: prev: {
+                    ntfy-sh = pkgs.ntfy-sh;
+                  })
+                ];
+                nixpkgs = pkgsUnstable;
+              };
+              modules = with self.darwinModules; [
+                default
+                ./hosts/darwin/mba.nix
+                ./hosts/darwin/roxy.nix
+                inputs.nix-rosetta-builder.darwinModules.default
+                inputs.virby.darwinModules.default
+                {
+                  nix-rosetta-builder = {
+                    enable = true;
+                    onDemand = true;
+                  };
+
+                  services.virby = {
+                    enable = true;
+                    # supportDeterminateNix = false;
+                    onDemand = {
+                      enable = true;
+                      # ttl = 180; # minutes
+                    };
+                    rosetta = true;
+                    # debug = true;
+                    # allowUserSsh = true;
+                  };
+                }
+              ];
             };
           };
-
-          darwinModules = {
-            common = ./modules/darwin/common.nix;
-            nixpkgs = ./modules/darwin/nixpkgs.nix;
-            default = ./modules/darwin/default.nix;
-          };
-
-          darwinConfigurations =
-            let
-              inherit (importedPkgs "aarch64-darwin") pkgs pkgsUnstable;
-            in
-            {
-              lux = darwin.lib.darwinSystem {
-                system = "aarch64-darwin";
-                specialArgs = {
-                  inherit inputs;
-                  overlays = with self.overlays; [
-                    deploy-rs
-                    rust
-                    rustToolchain
-                  ];
-                  nixpkgs = pkgsUnstable;
-                };
-                modules = with self.darwinModules; [
-                  default
-                  ./hosts/darwin/mba.nix
-                  # { nix.linux-builder.enable = true; }
-                  inputs.nix-rosetta-builder.darwinModules.default
-                  {
-                    nix-rosetta-builder = {
-                      enable = true;
-                      onDemand = true;
-                      # onDemandLingerMinutes = 180;
-                    };
-                  }
-                ];
-              };
-              roxy = darwin.lib.darwinSystem {
-                system = "aarch64-darwin";
-                specialArgs = {
-                  inherit inputs;
-                  overlays = with self.overlays; [
-                    deploy-rs
-                    rust
-                    rustToolchain
-                    (final: prev: {
-                      ntfy-sh = pkgs.ntfy-sh;
-                    })
-                  ];
-                  nixpkgs = pkgsUnstable;
-                };
-                modules = with self.darwinModules; [
-                  default
-                  ./hosts/darwin/mba.nix
-                  ./hosts/darwin/roxy.nix
-                  inputs.nix-rosetta-builder.darwinModules.default
-                  inputs.virby.darwinModules.default
-                  {
-                    nix-rosetta-builder = {
-                      enable = true;
-                      onDemand = true;
-                    };
-
-                    services.virby = {
-                      enable = true;
-                      # supportDeterminateNix = false;
-                      onDemand = {
-                        enable = true;
-                        # ttl = 180; # minutes
-                      };
-                      rosetta = true;
-                      # debug = true;
-                      # allowUserSsh = true;
-                    };
-                  }
-                ];
-              };
-            };
-        }
-      ))
+      }
     );
 }
