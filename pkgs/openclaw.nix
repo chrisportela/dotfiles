@@ -4,7 +4,7 @@
 }:
 
 let
-  version = "2026.3.11";
+  version = "2026.3.13-1";
 in
 let
   base =
@@ -17,10 +17,10 @@ let
 
           src = prev.src.override {
             tag = "v${finalAttrs.version}";
-            hash = "sha256-wsbuMKROlL/jqp7RZH6cLdn4H6yc4QmjWc01rsLbGlQ=";
+            hash = "sha256-OUPUKDfvKQezDhbpfrKw+4q2qssIVN7eAjS044Z2KJg=";
           };
 
-          pnpmDepsHash = "sha256-YnMjA0pD5X4pXU3A7Yab2U9RJ8g31i98S+atGk8J3CQ=";
+          pnpmDepsHash = "sha256-p6Lfpo5X9epJInKhcpRutIktnsou5TAptyI/Q/Wwqz4=";
         }
       );
 in
