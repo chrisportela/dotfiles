@@ -11,7 +11,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@6
+      - uses: actions/checkout@v6
 
       - uses: cachix/install-nix-action@v31
         with:
@@ -80,10 +80,10 @@ jobs:
       - name: Build devShells
         run: |
           nix build \
-            .#devShells.aarch64-darwin.cliclick \
-            .#devShells.aarch64-darwin.claude-code \
-            .#devShells.aarch64-darwin.peekaboo \
-            .#devShells.aarch64-darwin.swift6 \
+            .#packages.aarch64-darwin.cliclick \
+            .#packages.aarch64-darwin.claude-code \
+            .#packages.aarch64-darwin.peekaboo \
+            .#packages.aarch64-darwin.swift6 \
             .#devShells.aarch64-darwin.default \
             .#devShells.aarch64-darwin.dev \
             .#devShells.aarch64-darwin.devops \
