@@ -33,6 +33,8 @@
   interceptDomains ? [ ], # Domains with TLS interception (bumped — full URL visibility)
   proxyBlockRegexes ? [ ], # URL regexes to block on intercepted traffic
   allowSSH ? false, # Allow outbound SSH (port 22) to whitelisted IPs
+  parentRepoPath ? null,    # Absolute host path to parent repo root (null if not a worktree)
+  parentRepoMode ? "commit", # "history" | "commit" | "full" | "none"
   upstreamDNS ? [
     "1.1.1.1"
     "8.8.8.8"
@@ -102,6 +104,20 @@ let
       mountPoint = "/etc/squid/ca";
     }
   ];
+
+  parentRepoShares =
+    if parentRepoPath == null || parentRepoMode == "none" then [ ]
+    else if parentRepoMode == "history" then [
+      { proto = "virtiofs"; tag = "parent-repo"; source = parentRepoPath; mountPoint = parentRepoPath; }
+    ]
+    else if parentRepoMode == "commit" then [
+      { proto = "virtiofs"; tag = "parent-repo";     source = parentRepoPath;           mountPoint = parentRepoPath; }
+      { proto = "virtiofs"; tag = "parent-repo-git"; source = "${parentRepoPath}/.git"; mountPoint = "${parentRepoPath}/.git"; }
+    ]
+    else if parentRepoMode == "full" then [
+      { proto = "virtiofs"; tag = "parent-repo"; source = parentRepoPath; mountPoint = parentRepoPath; }
+    ]
+    else [ ];
 in
 {
   microvm = {
@@ -155,6 +171,7 @@ in
     ++ claudeShares
     ++ dotfilesShares
     ++ proxyCAShares
+    ++ parentRepoShares
     ++ extraShares;
   };
 
@@ -292,6 +309,17 @@ in
     device = "/var/home/${userName}";
     fsType = "none";
     options = [ "bind" ];
+  };
+
+  # Enforce read-only on parent working tree for history and commit modes.
+  # microvm.nix generates a virtiofs fileSystems entry from the share; this
+  # overrides its options to add "ro". lib.mkForce wins over microvm.nix's
+  # normal-priority definition.
+  fileSystems = lib.mkIf (
+    parentRepoPath != null &&
+    (parentRepoMode == "history" || parentRepoMode == "commit")
+  ) {
+    "${parentRepoPath}".options = lib.mkForce [ "ro" ];
   };
 
   # Ensure the backing directory exists with correct ownership before the
