@@ -88,6 +88,11 @@ let
         default = null;
         description = "Allow outbound SSH in restricted mode";
       };
+      parentRepoMode = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Parent repo access mode when workspace is a worktree: history | commit | full | none";
+      };
     };
   };
 
@@ -204,6 +209,16 @@ let
         default = false;
         description = "Allow outbound SSH in restricted mode";
       };
+      parentRepoPath = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Host path to parent repo root. Set automatically for worktree workspaces via agent-vm create.";
+      };
+      parentRepoMode = lib.mkOption {
+        type = lib.types.str;
+        default = "commit";
+        description = "Parent repo access mode: history | commit | full | none";
+      };
     };
   };
 
@@ -243,6 +258,8 @@ let
             interceptDomains
             proxyBlockRegexes
             allowSSH
+            parentRepoPath
+            parentRepoMode
             ;
           claudeConfigDir = cfg.defaults.claudeConfigDir;
           dotfilesDir = cfg.defaults.dotfilesDir;
