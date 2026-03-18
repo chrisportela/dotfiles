@@ -55,6 +55,7 @@ let
         copyWorkspace
         networkMode
         allowSSH
+        parentRepoMode
         ;
       packages = if t.packages != [ ] then t.packages else null;
       credentials =
@@ -193,6 +194,7 @@ let
         val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.credentials // []) | map(.source + ":" + .mountPoint) | join(" ")')" && [ -n "$val" ] && credentials="$val"
         val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.networkMode // empty')" && [ -n "$val" ] && network_mode="$val"
         val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.allowSSH // empty')" && [ -n "$val" ] && allow_ssh="$val"
+        val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '.parentRepoMode // empty')" && [ -n "$val" ] && parent_repo_mode="$val"
         val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.allowedDomains // []) | join(",")')" && [ -n "$val" ] && allowed_domains="$val"
         val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.interceptDomains // []) | join(",")')" && [ -n "$val" ] && intercept_domains="$val"
         val="$(echo "$tpl" | ${pkgs.jq}/bin/jq -r '(.proxyBlockRegexes // []) | join(" ")')" && [ -n "$val" ] && block_regexes="$val"
@@ -216,6 +218,8 @@ let
         local intercept_domains=""
         local block_regexes=""
         local allow_ssh="false"
+        local parent_repo_path=""
+        local parent_repo_mode="commit"
 
         while [ $# -gt 0 ]; do
           case "$1" in
@@ -239,6 +243,7 @@ let
             --intercept-domains) intercept_domains="$2"; shift 2 ;;
             --block-regex) block_regexes="$block_regexes $2"; shift 2 ;;
             --allow-ssh) allow_ssh="true"; shift ;;
+            --parent-repo-mode) parent_repo_mode="$2"; shift 2 ;;
             *) echo "Unknown flag: $1" >&2; exit 1 ;;
           esac
         done
@@ -246,6 +251,41 @@ let
         if [ "$network_mode" != "default" ] && [ "$network_mode" != "restricted" ]; then
           echo "Error: --network-mode must be 'default' or 'restricted'" >&2
           exit 1
+        fi
+
+        if [ "$parent_repo_mode" != "history" ] && \
+           [ "$parent_repo_mode" != "commit" ] && \
+           [ "$parent_repo_mode" != "full" ] && \
+           [ "$parent_repo_mode" != "none" ]; then
+          echo "Error: --parent-repo-mode must be 'history', 'commit', 'full', or 'none'" >&2
+          exit 1
+        fi
+
+        # Detect git worktree and auto-mount parent repo.
+        # Skip detection entirely if mode is "none" — user explicitly opted out.
+        if [ "$parent_repo_mode" != "none" ] && [ -n "$workspace" ] && [ -f "$workspace/.git" ]; then
+          local gitdir_raw
+          gitdir_raw="$(${pkgs.gnugrep}/bin/grep '^gitdir:' "$workspace/.git" | head -1 | ${pkgs.gnused}/bin/sed 's/^gitdir: *//')"
+          if [ -n "$gitdir_raw" ]; then
+            local gitdir_abs
+            if [[ "$gitdir_raw" = /* ]]; then
+              gitdir_abs="$gitdir_raw"
+            else
+              gitdir_abs="$(${pkgs.coreutils}/bin/realpath -m "$workspace/$gitdir_raw")"
+            fi
+            if echo "$gitdir_abs" | ${pkgs.gnugrep}/bin/grep -qE '/\.git/worktrees/[^/]+$'; then
+              local parent_git="''${gitdir_abs%/worktrees/*}"
+              local detected_parent="''${parent_git%/.git}"
+              if [[ "$workspace" == "$detected_parent"/* ]]; then
+                echo "Warning: workspace is nested inside parent repo — parent repo mount not supported in this layout" >&2
+              else
+                parent_repo_path="$detected_parent"
+                echo "Warning: workspace is a git worktree of $detected_parent (parent-repo-mode: $parent_repo_mode)" >&2
+              fi
+            else
+              echo "Warning: workspace .git points to an unexpected path '$gitdir_raw'; skipping parent repo mount" >&2
+            fi
+          fi
         fi
 
         local vm_dir="$MICROVMS_DIR/$name"
@@ -403,6 +443,12 @@ let
           dotfiles_dir_nix="\"$DEFAULT_DOTFILES_DIR\""
         fi
 
+        # Build parent repo path Nix expression
+        local parent_repo_path_nix="null"
+        if [ -n "$parent_repo_path" ]; then
+          parent_repo_path_nix="\"$parent_repo_path\""
+        fi
+
         # Generate flake.nix
         sudo tee "$vm_dir/flake.nix" > /dev/null <<FLAKE
     {
@@ -462,6 +508,8 @@ let
               interceptDomains = $intercept_nix;
               proxyBlockRegexes = $regexes_nix;
               allowSSH = $allow_ssh;
+              parentRepoPath = $parent_repo_path_nix;
+              parentRepoMode = "$parent_repo_mode";
               extraHomeModules = $hm_imports_nix;
             })
           ];
