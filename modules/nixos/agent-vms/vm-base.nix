@@ -319,7 +319,7 @@ in
     parentRepoPath != null &&
     (parentRepoMode == "history" || parentRepoMode == "commit")
   ) {
-    "${parentRepoPath}".options = lib.mkForce [ "ro" ];
+    "${parentRepoPath}".options = lib.mkForce [ "defaults" "x-systemd.requires=systemd-modules-load.service" "ro" ];
   };
 
   # Ensure the backing directory exists with correct ownership before the
