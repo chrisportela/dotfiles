@@ -130,6 +130,7 @@ let
       --intercept-domains <d1,d2,...> Domains with TLS interception
       --block-regex <regex>           URL regex to block (repeatable)
       --allow-ssh                     Allow outbound SSH in restricted mode
+      --parent-repo-mode <mode>       Parent repo access: history|commit|full|none (default: commit)
 
     SSH flags:
       --tmux [session]                Start or attach to a tmux session
@@ -794,7 +795,7 @@ let
       prev="''${COMP_WORDS[COMP_CWORD-1]}"
 
       local commands="create start stop destroy update list ssh console edit templates"
-      local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module --network-mode --allowed-domains --intercept-domains --block-regex --allow-ssh"
+      local create_flags="-t --template --workspace --packages --credentials --vcpu --mem --var-size --claude --no-claude --direnv --no-direnv --dotfiles --no-dotfiles --copy-workspace --hm-module --network-mode --allowed-domains --intercept-domains --block-regex --allow-ssh --parent-repo-mode"
       local ssh_flags="--tmux"
 
       if [ "$COMP_CWORD" -eq 1 ]; then
@@ -836,6 +837,10 @@ let
               ;;
             --network-mode)
               COMPREPLY=( $(compgen -W "default restricted" -- "$cur") )
+              return
+              ;;
+            --parent-repo-mode)
+              COMPREPLY=( $(compgen -W "history commit full none" -- "$cur") )
               return
               ;;
             --vcpu|--mem|--var-size|--packages|--credentials)
@@ -924,6 +929,7 @@ let
             '--copy-workspace[Copy workspace]' \
             '*--hm-module[Home-manager module]:module:_files' \
             '--network-mode[Network mode]:mode:(default restricted)' \
+            '--parent-repo-mode[Parent repo access mode]:mode:(history commit full none)' \
             '--allowed-domains[Allowed domains]:domains:' \
             '--intercept-domains[Intercept domains]:domains:' \
             '*--block-regex[Block URL regex]:regex:' \
