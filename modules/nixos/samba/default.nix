@@ -93,6 +93,24 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Implemented in subsequent tasks
+    assertions =
+      [
+        {
+          assertion = cfg.passwordFile != null;
+          message = "chrisportela.samba.passwordFile must be set when samba is enabled.";
+        }
+      ]
+      ++ lib.mapAttrsToList (name: share: {
+        assertion = share.type != "private" || share.users != [ ];
+        message = "chrisportela.samba.shares.${name}: private shares must specify a non-empty users list.";
+      }) cfg.shares
+      ++ lib.mapAttrsToList (name: share: {
+        assertion = !share.timeMachine || share.type == "backup";
+        message = "chrisportela.samba.shares.${name}: timeMachine is only valid on backup type shares.";
+      }) cfg.shares
+      ++ lib.optional (lib.any (s: s.timeMachine) (lib.attrValues cfg.shares)) {
+        assertion = config.chrisportela.network.mDNS;
+        message = "chrisportela.network.mDNS must be enabled when any share has timeMachine = true.";
+      };
   };
 }
