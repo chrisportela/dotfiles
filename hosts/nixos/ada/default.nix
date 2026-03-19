@@ -62,6 +62,12 @@ nixos.lib.nixosSystem {
             directory = "/mnt/tank/photo-dump";
             domain = "ftp.ada.i.cafecito.cloud";
           };
+          samba = {
+            enable = false; # Enable after creating agenix secret (Task 8)
+            openFirewall = true;
+            users = [ "cmp" ];
+            # passwordFile = config.age.secrets.samba-passwords.path;
+          };
           gaming.enable = true;
           local-llm.enable = true;
           agent-vms = {
