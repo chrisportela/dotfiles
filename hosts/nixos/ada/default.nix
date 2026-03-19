@@ -360,6 +360,18 @@ nixos.lib.nixosSystem {
           "aarch64-linux"
           "armv6l-linux"
         ];
+        # Speed up aarch64 emulation: -cpu max enables all ISA extensions for better TCG codegen;
+        # -tb-size raises the translation block cache from 32 MB to 512 MB to reduce recompilation
+        # overhead in large builds. The binfmt-p-wrapper mechanism (argv[0] preservation) is kept
+        # intact by wrapping via wrapQemuBinfmtP.
+        boot.binfmt.registrations."aarch64-linux".interpreter =
+          let
+            fastQemu = pkgs.writeShellScript "qemu-aarch64-fast" ''
+              exec ${pkgs.qemu-user}/bin/qemu-aarch64 -cpu max -tb-size 536870912 "$@"
+            '';
+            wrapper = pkgs.wrapQemuBinfmtP "qemu-aarch64-binfmt-P-fast" fastQemu;
+          in
+          "${wrapper}/bin/qemu-aarch64-binfmt-P-fast";
         nix.settings.trusted-users = [
           "root"
           "cmp"
