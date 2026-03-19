@@ -236,5 +236,31 @@ in
           "d ${share.path} ${mode} ${owner} users -";
       in
       lib.mapAttrsToList mkRule shareRules;
+
+    # Avahi service advertisement for Time Machine
+    services.avahi.extraServiceFiles = lib.mkIf (lib.any (s: s.timeMachine) (lib.attrValues cfg.shares)) {
+      smb = ''
+        <?xml version="1.0" standalone='no'?>
+        <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+        <service-group>
+          <name replace-wildcards="yes">%h</name>
+          <service>
+            <type>_smb._tcp</type>
+            <port>445</port>
+          </service>
+          <service>
+            <type>_adisk._tcp</type>
+            <txt-record>sys=waMa=0,adVF=0x100</txt-record>
+            ${
+              lib.concatStringsSep "\n          " (
+                lib.imap0 (
+                  i: name: "<txt-record>dk${toString i}=adVN=${name},adVF=0x82</txt-record>"
+                ) (lib.attrNames (lib.filterAttrs (_: s: s.timeMachine) cfg.shares))
+              )
+            }
+          </service>
+        </service-group>
+      '';
+    };
   };
 }
