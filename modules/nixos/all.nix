@@ -12,5 +12,6 @@
     ./cafecitocloud
     ./local-llm
     ./nginx-cloudflare.nix
+    ./samba
   ];
 }
