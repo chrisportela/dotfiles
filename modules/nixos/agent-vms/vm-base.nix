@@ -33,7 +33,7 @@
   interceptDomains ? [ ], # Domains with TLS interception (bumped — full URL visibility)
   proxyBlockRegexes ? [ ], # URL regexes to block on intercepted traffic
   allowSSH ? false, # Allow outbound SSH (port 22) to whitelisted IPs
-  parentRepoPath ? null,    # Absolute host path to parent repo root (null if not a worktree)
+  parentRepoPath ? null, # Absolute host path to parent repo root (null if not a worktree)
   parentRepoMode ? "commit", # "history" | "commit" | "full" | "none"
   upstreamDNS ? [
     "1.1.1.1"
@@ -106,18 +106,43 @@ let
   ];
 
   parentRepoShares =
-    if parentRepoPath == null || parentRepoMode == "none" then [ ]
-    else if parentRepoMode == "history" then [
-      { proto = "virtiofs"; tag = "parent-repo"; source = parentRepoPath; mountPoint = parentRepoPath; }
-    ]
-    else if parentRepoMode == "commit" then [
-      { proto = "virtiofs"; tag = "parent-repo";     source = parentRepoPath;           mountPoint = parentRepoPath; }
-      { proto = "virtiofs"; tag = "parent-repo-git"; source = "${parentRepoPath}/.git"; mountPoint = "${parentRepoPath}/.git"; }
-    ]
-    else if parentRepoMode == "full" then [
-      { proto = "virtiofs"; tag = "parent-repo"; source = parentRepoPath; mountPoint = parentRepoPath; }
-    ]
-    else [ ];
+    if parentRepoPath == null || parentRepoMode == "none" then
+      [ ]
+    else if parentRepoMode == "history" then
+      [
+        {
+          proto = "virtiofs";
+          tag = "parent-repo";
+          source = parentRepoPath;
+          mountPoint = parentRepoPath;
+        }
+      ]
+    else if parentRepoMode == "commit" then
+      [
+        {
+          proto = "virtiofs";
+          tag = "parent-repo";
+          source = parentRepoPath;
+          mountPoint = parentRepoPath;
+        }
+        {
+          proto = "virtiofs";
+          tag = "parent-repo-git";
+          source = "${parentRepoPath}/.git";
+          mountPoint = "${parentRepoPath}/.git";
+        }
+      ]
+    else if parentRepoMode == "full" then
+      [
+        {
+          proto = "virtiofs";
+          tag = "parent-repo";
+          source = parentRepoPath;
+          mountPoint = parentRepoPath;
+        }
+      ]
+    else
+      [ ];
 in
 {
   microvm = {
@@ -315,12 +340,15 @@ in
   # microvm.nix generates a virtiofs fileSystems entry from the share; this
   # overrides its options to add "ro". lib.mkForce wins over microvm.nix's
   # normal-priority definition.
-  fileSystems = lib.mkIf (
-    parentRepoPath != null &&
-    (parentRepoMode == "history" || parentRepoMode == "commit")
-  ) {
-    "${parentRepoPath}".options = lib.mkForce [ "defaults" "x-systemd.requires=systemd-modules-load.service" "ro" ];
-  };
+  fileSystems =
+    lib.mkIf (parentRepoPath != null && (parentRepoMode == "history" || parentRepoMode == "commit"))
+      {
+        "${parentRepoPath}".options = lib.mkForce [
+          "defaults"
+          "x-systemd.requires=systemd-modules-load.service"
+          "ro"
+        ];
+      };
 
   # Ensure the backing directory exists with correct ownership before the
   # bind mount is attempted
