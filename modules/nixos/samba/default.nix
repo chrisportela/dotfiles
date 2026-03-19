@@ -217,5 +217,24 @@ in
         done < ${cfg.passwordFile}
       '';
     };
+
+    # Create share directories via tmpfiles
+    systemd.tmpfiles.rules =
+      let
+        shareRules = lib.filterAttrs (_: s: s.createDir) cfg.shares;
+
+        mkRule = _name: share:
+          let
+            isUserScoped = share.type == "backup" || share.type == "private";
+            owner =
+              if share.users != [ ] then
+                builtins.head share.users
+              else
+                "root";
+            mode = if isUserScoped then "0770" else "0775";
+          in
+          "d ${share.path} ${mode} ${owner} users -";
+      in
+      lib.mapAttrsToList mkRule shareRules;
   };
 }
