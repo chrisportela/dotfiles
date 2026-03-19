@@ -199,5 +199,23 @@ in
         }
         // lib.mapAttrs resolveShare cfg.shares;
     };
+
+    # Ensure system users exist for samba users
+    users.users = lib.genAttrs cfg.users (user: {
+      isNormalUser = lib.mkDefault true;
+    });
+
+    # Provision samba passwords from agenix-decrypted file
+    system.activationScripts.sambaPasswords = {
+      deps = [ "users" ];
+      text = ''
+        while IFS=: read -r user pass; do
+          # Skip empty lines and comments
+          [ -z "$user" ] && continue
+          [[ "$user" == \#* ]] && continue
+          printf '%s\n%s\n' "$pass" "$pass" | ${pkgs.samba}/bin/smbpasswd -a -s "$user" 2>/dev/null
+        done < ${cfg.passwordFile}
+      '';
+    };
   };
 }
