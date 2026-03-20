@@ -3,14 +3,15 @@
 }:
 
 let
-  version = "2026.3.13-1";
+  version = "2026.3.13";
+  tagVersion = "2026.3.13-1";
 in
 upstreamOpenclaw.overrideAttrs (
   finalAttrs: prev: {
     inherit version;
 
     src = prev.src.override {
-      tag = "v${finalAttrs.version}";
+      tag = "v${tagVersion}";
       hash = "sha256-OUPUKDfvKQezDhbpfrKw+4q2qssIVN7eAjS044Z2KJg=";
     };
 
