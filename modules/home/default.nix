@@ -39,6 +39,7 @@
       nixd
       klog-time-tracker
       setup-envrc
+      wt
     ];
   };
 

@@ -5,11 +5,13 @@
 - Modules must live in their own directory with a `default.nix` and a `README.md` that explains
   purpose, options, and dependencies. Refer to the module's README for details rather than
   duplicating documentation here.
+- Packages in `pkgs/` must live in their own directory (e.g. `pkgs/wt/default.nix`, not `pkgs/wt.nix`).
 
 ## Commands
 
 ```bash
 nix build .                    # Test full config builds
+nix build .#<pkg>              # Build a single package (e.g. .#wt)
 nix run . -- -b backup         # Apply home-manager config
 nix build .#nixosConfigurations.ada.config.system.build.toplevel  # Build NixOS for ada
 nix build .#darwinConfigurations.roxy.system                      # Build Darwin for roxy
@@ -34,8 +36,10 @@ nix build .#darwinConfigurations.roxy.system                      # Build Darwin
 - `lib/simple-home-config.nix` wraps home-manager with feature flags.
 - Unfree packages explicitly allowed: terraform, vault-bin, claude-code, xcode.
 - Supports x86_64-linux, aarch64-linux, aarch64-darwin.
+- New packages: add `callPackage` in `flake.nix` packages, then add to `modules/home/default.nix` packages list.
 
 ## Gotchas
 
 - `nix-rosetta-builder` is needed on Darwin hosts for cross-compilation.
 - `result-*` symlinks in the root are build artifacts that keep built results from being garbage collected by Nix. They are not tracked in git.
+- New files must be `git add`ed before `nix build` — flake evaluation can't see untracked files.

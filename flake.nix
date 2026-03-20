@@ -148,6 +148,7 @@
               claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
+              wt = pkgs.callPackage ./pkgs/wt/default.nix { };
               pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
               default = legacyPackages.homeConfigurations.cmp.activationPackage;
             }
