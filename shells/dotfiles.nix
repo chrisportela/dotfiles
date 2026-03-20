@@ -8,6 +8,7 @@ pkgs.mkShellNoCC {
       nixfmt
       shellcheck
       shfmt
+      agenix
     ]
   );
 }

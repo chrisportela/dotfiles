@@ -105,6 +105,9 @@
           (final: prev: {
             ntfy-sh = nixpkgs.legacyPackages.${final.stdenv.system}.ntfy-sh;
           })
+          (final: prev: {
+            agenix = inputs.agenix.packages.${final.stdenv.system}.default;
+          })
         ];
       };
       simpleHomeConfig = (import ./lib/simple-home-config.nix) inputs;
