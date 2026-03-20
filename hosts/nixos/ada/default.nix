@@ -57,6 +57,7 @@ nixos.lib.nixosSystem {
               enable = true;
               ssh = true;
             };
+            mDNS = true;
           };
           ftp = {
             enable = false;
@@ -68,6 +69,26 @@ nixos.lib.nixosSystem {
             openFirewall = true;
             users = [ "cmp" ];
             passwordFile = config.age.secrets.ada-samba-passwords.path;
+
+            shares = {
+              home-shared = {
+                type = "private";
+                browseable = true;
+                path = "/home/cmp/shared";
+                users = [ "cmp" ];
+              };
+              tank-shared = {
+                type = "private";
+                browseable = true;
+                path = "/mnt/tank/shared";
+                users = [ "cmp" ];
+              };
+              tank-public = {
+                type = "public";
+                path = "/mnt/tank/public";
+                users = [ "cmp" ];
+              };
+            };
           };
           gaming.enable = true;
           local-llm.enable = true;

@@ -31,7 +31,8 @@ let
     };
   };
 
-  resolveShare = name: share:
+  resolveShare =
+    name: share:
     let
       defaults = typeDefaults.${share.type};
       readOnly = if share.readOnly != null then share.readOnly else defaults.readOnly;
@@ -68,7 +69,12 @@ let
   shareSubmodule = lib.types.submodule {
     options = {
       type = lib.mkOption {
-        type = lib.types.enum [ "media" "backup" "public" "private" ];
+        type = lib.types.enum [
+          "media"
+          "backup"
+          "public"
+          "private"
+        ];
         description = "Share type. Sets default values for readOnly, guest, browseable, and extra smb.conf parameters.";
       };
 
@@ -144,7 +150,11 @@ in
     };
 
     encryption = lib.mkOption {
-      type = lib.types.enum [ "off" "desired" "required" ];
+      type = lib.types.enum [
+        "off"
+        "desired"
+        "required"
+      ];
       default = "required";
       description = "SMB transport encryption. 'required' enforces SMB3 encryption for all clients.";
     };
@@ -163,54 +173,51 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions =
-      [
-        {
-          assertion = cfg.passwordFile != null;
-          message = "chrisportela.samba.passwordFile must be set when samba is enabled.";
-        }
-      ]
-      ++ lib.mapAttrsToList (name: share: {
-        assertion = share.type != "private" || share.users != [ ];
-        message = "chrisportela.samba.shares.${name}: private shares must specify a non-empty users list.";
-      }) cfg.shares
-      ++ lib.mapAttrsToList (name: share: {
-        assertion = !share.timeMachine || share.type == "backup";
-        message = "chrisportela.samba.shares.${name}: timeMachine is only valid on backup type shares.";
-      }) cfg.shares
-      ++ lib.optional (lib.any (s: s.timeMachine) (lib.attrValues cfg.shares)) {
-        assertion = config.chrisportela.network.mDNS;
-        message = "chrisportela.network.mDNS must be enabled when any share has timeMachine = true.";
-      };
+    assertions = [
+      {
+        assertion = cfg.passwordFile != null;
+        message = "chrisportela.samba.passwordFile must be set when samba is enabled.";
+      }
+    ]
+    ++ lib.mapAttrsToList (name: share: {
+      assertion = share.type != "private" || share.users != [ ];
+      message = "chrisportela.samba.shares.${name}: private shares must specify a non-empty users list.";
+    }) cfg.shares
+    ++ lib.mapAttrsToList (name: share: {
+      assertion = !share.timeMachine || share.type == "backup";
+      message = "chrisportela.samba.shares.${name}: timeMachine is only valid on backup type shares.";
+    }) cfg.shares
+    ++ lib.optional (lib.any (s: s.timeMachine) (lib.attrValues cfg.shares)) {
+      assertion = config.chrisportela.network.mDNS;
+      message = "chrisportela.network.mDNS must be enabled when any share has timeMachine = true.";
+    };
 
     services.samba = {
       enable = true;
       openFirewall = cfg.openFirewall;
 
-      settings =
-        {
-          global =
-            {
-              "server role" = "standalone";
-              "server min protocol" = "SMB2";
-              "server max protocol" = "SMB3";
-              "vfs objects" = "fruit catia streams_xattr";
-              "fruit:metadata" = "stream";
-              "fruit:model" = "MacSamba";
-              "map to guest" = "Bad User";
-              "load printers" = "no";
-              printing = "bsd";
-              "printcap name" = "/dev/null";
-              "disable spoolss" = "yes";
-              "unix charset" = "UTF-8";
-              "dos charset" = "CP850";
-              "server smb encrypt" = cfg.encryption;
-              logging = "syslog";
-              "log level" = "1";
-            }
-            // cfg.extraGlobalConfig;
+      settings = {
+        global = {
+          "server role" = "standalone";
+          "server min protocol" = "SMB2";
+          "server max protocol" = "SMB3";
+          "vfs objects" = "fruit catia streams_xattr";
+          "fruit:metadata" = "stream";
+          "fruit:model" = "MacSamba";
+          "map to guest" = "Bad User";
+          "load printers" = "no";
+          printing = "bsd";
+          "printcap name" = "/dev/null";
+          "disable spoolss" = "yes";
+          "unix charset" = "UTF-8";
+          "dos charset" = "CP850";
+          "server smb encrypt" = cfg.encryption;
+          logging = "syslog";
+          "log level" = "1";
         }
-        // lib.mapAttrs resolveShare cfg.shares;
+        // cfg.extraGlobalConfig;
+      }
+      // lib.mapAttrs resolveShare cfg.shares;
     };
 
     # Ensure system users exist for samba users
@@ -236,14 +243,11 @@ in
       let
         shareRules = lib.filterAttrs (_: s: s.createDir) cfg.shares;
 
-        mkRule = _name: share:
+        mkRule =
+          _name: share:
           let
             isUserScoped = share.type == "backup" || share.type == "private";
-            owner =
-              if share.users != [ ] then
-                builtins.head share.users
-              else
-                "root";
+            owner = if share.users != [ ] then builtins.head share.users else "root";
             mode = if isUserScoped then "0770" else "0775";
           in
           "d ${share.path} ${mode} ${owner} users -";
@@ -265,17 +269,15 @@ in
           timeMachineShares = lib.attrNames (lib.filterAttrs (_: s: s.timeMachine) cfg.shares);
           adiskService = lib.optionalString hasTimeMachine ''
 
-          <service>
-            <type>_adisk._tcp</type>
-            <txt-record>sys=waMa=0,adVF=0x100</txt-record>
-            ${
-              lib.concatStringsSep "\n          " (
+            <service>
+              <type>_adisk._tcp</type>
+              <txt-record>sys=waMa=0,adVF=0x100</txt-record>
+              ${lib.concatStringsSep "\n          " (
                 lib.imap0 (
                   i: name: "<txt-record>dk${toString i}=adVN=${name},adVF=0x82</txt-record>"
                 ) timeMachineShares
-              )
-            }
-          </service>'';
+              )}
+            </service>'';
         in
         ''
           <?xml version="1.0" standalone='no'?>

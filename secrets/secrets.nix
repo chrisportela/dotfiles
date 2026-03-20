@@ -5,5 +5,8 @@ let
 in
 {
   "example.age".publicKeys = sshKeys.secrets ++ [ ];
-  "ada-samba-passwords.age".publicKeys = sshKeys.secrets ++ [ ada adaHost ];
+  "ada-samba-passwords.age".publicKeys = sshKeys.secrets ++ [
+    ada
+    adaHost
+  ];
 }
