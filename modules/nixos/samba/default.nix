@@ -143,6 +143,12 @@ in
       description = "Enable WS-Discovery daemon for Windows 10+ and Linux host discovery.";
     };
 
+    encryption = lib.mkOption {
+      type = lib.types.enum [ "off" "desired" "required" ];
+      default = "required";
+      description = "SMB transport encryption. 'required' enforces SMB3 encryption for all clients.";
+    };
+
     extraGlobalConfig = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = { };
@@ -198,6 +204,7 @@ in
               "disable spoolss" = "yes";
               "unix charset" = "UTF-8";
               "dos charset" = "CP850";
+              "server smb encrypt" = cfg.encryption;
               logging = "syslog";
               "log level" = "1";
             }
