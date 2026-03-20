@@ -37,7 +37,7 @@ let
       defaults = typeDefaults.${share.type};
       readOnly = if share.readOnly != null then share.readOnly else defaults.readOnly;
       guest = if share.guest != null then share.guest else defaults.guest;
-      browseable = defaults.browseable;
+      browseable = if share.browseable != null then share.browseable else defaults.browseable;
     in
     {
       path = share.path;
@@ -93,6 +93,12 @@ let
         type = lib.types.nullOr lib.types.bool;
         default = null;
         description = "Allow guest access. Defaults: media/public=true, backup/private=false.";
+      };
+
+      browseable = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = "Show share in browse lists. Defaults: private=false, others=true.";
       };
 
       users = lib.mkOption {
