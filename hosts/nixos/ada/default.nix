@@ -15,6 +15,7 @@ nixos.lib.nixosSystem {
   };
 
   modules = [
+    inputs.agenix.nixosModules.default
     inputs.disko.nixosModules.disko
     inputs.vscode-server.nixosModules.default
     ./hardware.nix
@@ -63,10 +64,10 @@ nixos.lib.nixosSystem {
             domain = "ftp.ada.i.cafecito.cloud";
           };
           samba = {
-            enable = false; # Enable after creating agenix secret (Task 8)
+            enable = true;
             openFirewall = true;
             users = [ "cmp" ];
-            # passwordFile = config.age.secrets.samba-passwords.path;
+            passwordFile = config.age.secrets.ada-samba-passwords.path;
           };
           gaming.enable = true;
           local-llm.enable = true;
@@ -78,6 +79,8 @@ nixos.lib.nixosSystem {
             ];
           };
         };
+
+        age.secrets.ada-samba-passwords.file = ../../../secrets/ada-samba-passwords.age;
 
         security.sudo.wheelNeedsPassword = false;
 
