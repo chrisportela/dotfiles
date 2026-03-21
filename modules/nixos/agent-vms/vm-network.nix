@@ -23,9 +23,19 @@
 let
   isRestricted = networkMode == "restricted";
 
+  # Nix binary caches — needed for any restricted VM doing Nix builds
+  nixCacheDomains = lib.optionals isRestricted [
+    "cache.nixos.org"
+    "nix-community.cachix.org"
+    "chrisportela-dotfiles.cachix.org"
+    # CDN backends (Fastly serves cache.nixos.org and cachix)
+    "fastly.net"
+  ];
+
   # Merge Claude auto-defaults when claude + restricted
-  effectiveAllowedDomains =
+  effectiveAllowedDomains = lib.unique (
     allowedDomains
+    ++ nixCacheDomains
     ++ lib.optionals (claude && isRestricted) [
       # Anthropic
       "api.anthropic.com"
@@ -42,7 +52,8 @@ let
       "crates.io"
       # CDN backends (CNAME targets for crates.io and pythonhosted.org)
       "fastly.net"
-    ];
+    ]
+  );
 
   effectiveInterceptDomains = interceptDomains;
 
