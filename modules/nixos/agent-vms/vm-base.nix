@@ -330,25 +330,26 @@ in
 
   # Persist /home/${userName} on the /var volume so user data survives reboots.
   # The tmpfs rootfs is ephemeral — without this, home is wiped on every start.
-  fileSystems."/home/${userName}" = {
-    device = "/var/home/${userName}";
-    fsType = "none";
-    options = [ "bind" ];
-  };
-
-  # Enforce read-only on parent working tree for history and commit modes.
+  #
+  # Also enforce read-only on parent working tree for history and commit modes.
   # microvm.nix generates a virtiofs fileSystems entry from the share; this
   # overrides its options to add "ro". lib.mkForce wins over microvm.nix's
   # normal-priority definition.
   fileSystems =
-    lib.mkIf (parentRepoPath != null && (parentRepoMode == "history" || parentRepoMode == "commit"))
-      {
-        "${parentRepoPath}".options = lib.mkForce [
-          "defaults"
-          "x-systemd.requires=systemd-modules-load.service"
-          "ro"
-        ];
+    {
+      "/home/${userName}" = {
+        device = "/var/home/${userName}";
+        fsType = "none";
+        options = [ "bind" ];
       };
+    }
+    // lib.optionalAttrs (parentRepoPath != null && (parentRepoMode == "history" || parentRepoMode == "commit")) {
+      "${parentRepoPath}".options = lib.mkForce [
+        "defaults"
+        "x-systemd.requires=systemd-modules-load.service"
+        "ro"
+      ];
+    };
 
   # Ensure the backing directory exists with correct ownership before the
   # bind mount is attempted
@@ -497,6 +498,14 @@ in
           # Seed .claude/ directory from host mount
           if [ ! -d "$home/.claude" ] && [ -d "$home/.claude-host" ]; then
             ${pkgs.sudo}/bin/sudo -u ${userName} cp -a "$home/.claude-host" "$home/.claude"
+            # Strip refresh token from seeded credentials — VMs must not
+            # refresh tokens; the host keepalive service owns that.
+            creds="$home/.claude/.credentials.json"
+            if [ -f "$creds" ]; then
+              ${pkgs.sudo}/bin/sudo -u ${userName} \
+                ${pkgs.jq}/bin/jq '.claudeAiOauth |= del(.refreshToken)' "$creds" > "$creds.tmp"
+              ${pkgs.sudo}/bin/sudo -u ${userName} mv "$creds.tmp" "$creds"
+            fi
           fi
           # Seed .claude.json from latest backup
           if [ ! -f "$home/.claude.json" ] && [ -d "$home/.claude-host/backups" ]; then
@@ -528,10 +537,9 @@ in
   };
 
   # --- Claude config sync from host ---
-  # The host .claude-host mount is live (virtiofs). Sync changes from
-  # the host into the VM's .claude/ directory, picking up credential
-  # refreshes, settings changes, etc. Uses rsync --update to only
-  # overwrite files that are newer on the host.
+  # The host .claude-host mount is live (virtiofs). Sync settings and
+  # config from host into the VM's .claude/ directory.
+  # Credentials are handled separately — see claude-creds-sync below.
   systemd.services.claude-host-sync = lib.mkIf claude {
     description = "Sync Claude config from host";
     after = [
@@ -549,12 +557,13 @@ in
       dst="/home/${userName}/.claude/"
       [ -d "$src" ] || exit 0
       mkdir -p "$dst"
-      # Sync newer files from host, skip VM-local state (conversations, projects)
+      # Sync newer files from host, skip VM-local state and credentials
       ${pkgs.rsync}/bin/rsync -a --update \
         --exclude='projects/' \
         --exclude='conversations/' \
         --exclude='statsig/' \
         --exclude='todos/' \
+        --exclude='.credentials.json' \
         "$src" "$dst"
     '';
   };
@@ -565,6 +574,61 @@ in
     timerConfig = {
       OnBootSec = "1min";
       OnUnitActiveSec = "5min";
+    };
+  };
+
+  # --- Claude credential sync (access token only) ---
+  # Copies credentials from the host RO mount but strips the refresh
+  # token so VMs never attempt token refresh. The host keepalive
+  # service owns the refresh cycle; VMs are pure consumers.
+  systemd.services.claude-creds-sync = lib.mkIf claude {
+    description = "Sync Claude credentials from host (access token only)";
+    after = [
+      "local-fs.target"
+      "vm-first-boot.service"
+    ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = userName;
+      Group = userName;
+    };
+    path = [ pkgs.jq ];
+    script = ''
+      src="/home/${userName}/.claude-host/.credentials.json"
+      dst="/home/${userName}/.claude/.credentials.json"
+
+      [ -f "$src" ] || exit 0
+      mkdir -p "/home/${userName}/.claude"
+
+      # Only update if host credentials are newer
+      if [ -f "$dst" ] && [ ! "$src" -nt "$dst" ]; then
+        exit 0
+      fi
+
+      # Copy credentials but strip the refresh token
+      jq '.claudeAiOauth |= del(.refreshToken)' "$src" > "$dst.tmp"
+      mv "$dst.tmp" "$dst"
+      chmod 600 "$dst"
+    '';
+  };
+
+  systemd.timers.claude-creds-sync = lib.mkIf claude {
+    description = "Periodically sync Claude credentials from host";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "30s";
+      OnUnitActiveSec = "2min";
+    };
+  };
+
+  # Also trigger credential sync when the host file changes (virtiofs
+  # supports inotify). This gives near-instant pickup after host refresh.
+  systemd.paths.claude-creds-sync = lib.mkIf claude {
+    description = "Watch host credentials for changes";
+    wantedBy = [ "paths.target" ];
+    pathConfig = {
+      PathChanged = "/home/${userName}/.claude-host/.credentials.json";
     };
   };
 
