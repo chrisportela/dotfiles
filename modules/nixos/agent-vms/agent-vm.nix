@@ -93,6 +93,34 @@ let
       DEFAULT_DIRENV="${lib.boolToString defaults.direnv}"
       TEMPLATES_JSON='${templatesJson}'
 
+      # Write .gitignore to a VM directory — keeps runtime artifacts out of git.
+      # Called during create and before every update commit.
+      write_gitignore() {
+        local vm_dir="$1"
+        ${pkgs.gnused}/bin/sed 's/^ *//' <<'GITIGNORE' | sudo tee "$vm_dir/.gitignore" > /dev/null
+        # Runtime state
+        var.img
+        current
+        booted
+        supervisord.log
+        supervisord.pid
+
+        # Nix caches
+        .cache/
+
+        # Virtiofs sockets and PIDs
+        *.sock
+        *.sock.pid
+
+        # Metadata managed outside git
+        .ip
+
+        # Secrets (managed by activation scripts)
+        ssh-host-keys/
+        proxy-ca/
+    GITIGNORE
+      }
+
       usage() {
         cat <<'USAGE'
     Usage: agent-vm <command> [args]
@@ -525,6 +553,10 @@ let
         # microvm.nix services run as microvm:kvm — they need write access
         sudo chown -R microvm:kvm "$vm_dir"
 
+        # Write .gitignore before init so runtime artifacts are never tracked
+        write_gitignore "$vm_dir"
+        sudo chown microvm:kvm "$vm_dir/.gitignore"
+
         # Init git repo so Nix recognises the directory as a flake
         sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" init -q
         sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" add -A
@@ -619,8 +651,15 @@ let
           sudo cp ${claudeCodeLockfile} "$vm_dir/claude-code/package-lock.json"
         fi
 
+        # Ensure .gitignore is up-to-date and remove any previously tracked artifacts
+        write_gitignore "$vm_dir"
+
         # Ensure correct ownership and commit
         sudo chown -R microvm:kvm "$vm_dir"
+        sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" rm -r --cached --ignore-unmatch \
+          var.img current booted supervisord.log supervisord.pid \
+          .cache .ip 'ssh-host-keys' 'proxy-ca' \
+          '*.sock' '*.sock.pid' -q 2>/dev/null || true
         sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" add -A
         if sudo -u microvm ${pkgs.git}/bin/git -C "$vm_dir" diff --cached --quiet; then
           echo "No changes to apply."
@@ -762,7 +801,7 @@ let
             echo "Error: VM '$1' not found or missing flake.nix" >&2
             exit 1
           fi
-          exec "''${EDITOR:-vi}" "$vm_dir/flake.nix"
+          exec sudo -u microvm "''${EDITOR:-vi}" "$vm_dir/flake.nix"
           ;;
         templates)
           echo "Available templates:"
