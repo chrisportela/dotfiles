@@ -20,7 +20,7 @@
       set -g window-status-bell-style 'fg=red,bold'
 
       bind a send-keys C-b;
-      bind s choose-tree -sF '#{?session_alerts, #[fg=red bold](!),} (#{session_windows} windows)';
+      bind s choose-tree -sF '#{?session_alerts,#[fg=red bold](!), }(#{session_windows} windows)';
     '';
     # plugins = with pkgs.tmuxPlugins; [ ];
   };
