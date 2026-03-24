@@ -4,7 +4,7 @@
     enable = true;
     shortcut = "a";
     keyMode = "vi";
-    baseIndex = 0;
+    baseIndex = 1;
     clock24 = true;
     newSession = true;
     secureSocket = false;
@@ -15,6 +15,12 @@
     historyLimit = 30000;
     extraConfig = ''
       set-option -g allow-passthrough on;
+
+      set -g monitor-bell on;
+      set -g window-status-bell-style 'fg=red,bold'
+
+      bind a send-keys C-b;
+      bind s choose-tree -sF '#{?session_alerts, #[fg=red bold](!),} (#{session_windows} windows)';
     '';
     # plugins = with pkgs.tmuxPlugins; [ ];
   };
