@@ -141,7 +141,7 @@
               terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
               cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
               rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
-              openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw.nix {
+              openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw/default.nix {
                 upstreamOpenclaw = nixpkgs-unstable.legacyPackages.${system}.openclaw;
               };
               opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
