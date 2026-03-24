@@ -436,6 +436,97 @@ in
         '';
     };
 
+    # --- OAuth token keepalive ---
+    # Periodically refresh the Claude OAuth token on the host so VMs always
+    # have a valid access token available via the virtiofs mount.
+    # The host is the single owner of the refresh token — VMs only get
+    # access tokens (refresh token stripped by vm-base.nix sync service).
+    systemd.services.claude-token-keepalive = lib.mkIf cfg.defaults.claude {
+      description = "Refresh Claude OAuth token before expiry";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = cfg.user.name;
+        Group = cfg.user.name;
+      };
+      path = [
+        pkgs.curl
+        pkgs.jq
+        pkgs.coreutils
+      ];
+      script = ''
+        CREDS_FILE="/home/${cfg.user.name}/.claude/.credentials.json"
+
+        if [ ! -f "$CREDS_FILE" ]; then
+          echo "No credentials file found, skipping"
+          exit 0
+        fi
+
+        REFRESH_TOKEN=$(jq -r '.claudeAiOauth.refreshToken // empty' "$CREDS_FILE")
+        if [ -z "$REFRESH_TOKEN" ]; then
+          echo "No refresh token found, skipping"
+          exit 0
+        fi
+
+        # Check if token is within 2 hours of expiry
+        EXPIRES_AT=$(jq -r '.claudeAiOauth.expiresAt // 0' "$CREDS_FILE")
+        NOW_MS=$(date +%s)000
+        THRESHOLD=$((2 * 60 * 60 * 1000))
+        REMAINING=$((EXPIRES_AT - NOW_MS))
+
+        if [ "$REMAINING" -gt "$THRESHOLD" ]; then
+          echo "Token valid for $((REMAINING / 1000 / 60)) more minutes, skipping"
+          exit 0
+        fi
+
+        echo "Token expires in $((REMAINING / 1000 / 60)) minutes, refreshing..."
+
+        SCOPES=$(jq -r '.claudeAiOauth.scopes // [] | join(" ")' "$CREDS_FILE")
+
+        RESPONSE=$(curl -s -f -X POST "https://platform.claude.com/v1/oauth/token" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "grant_type=refresh_token" \
+          -d "refresh_token=$REFRESH_TOKEN" \
+          -d "client_id=9d1c250a-e61b-44d9-88ed-5944d1962f5e" \
+          --data-urlencode "scope=$SCOPES")
+
+        NEW_ACCESS=$(echo "$RESPONSE" | jq -r '.access_token // empty')
+        NEW_REFRESH=$(echo "$RESPONSE" | jq -r '.refresh_token // empty')
+        EXPIRES_IN=$(echo "$RESPONSE" | jq -r '.expires_in // empty')
+
+        if [ -z "$NEW_ACCESS" ] || [ -z "$NEW_REFRESH" ] || [ -z "$EXPIRES_IN" ]; then
+          echo "Refresh failed: $(echo "$RESPONSE" | jq -c '.' 2>/dev/null || echo "$RESPONSE")" >&2
+          exit 1
+        fi
+
+        NEW_EXPIRES_AT=$(( $(date +%s) * 1000 + EXPIRES_IN * 1000 ))
+
+        # Update credentials atomically — preserve all existing fields
+        TEMP=$(mktemp "$CREDS_FILE.XXXXXX")
+        jq --arg at "$NEW_ACCESS" \
+           --arg rt "$NEW_REFRESH" \
+           --argjson ea "$NEW_EXPIRES_AT" \
+           '.claudeAiOauth.accessToken = $at |
+            .claudeAiOauth.refreshToken = $rt |
+            .claudeAiOauth.expiresAt = $ea' \
+           "$CREDS_FILE" > "$TEMP"
+        mv "$TEMP" "$CREDS_FILE"
+        chmod 600 "$CREDS_FILE"
+
+        echo "Token refreshed, new expiry in $((EXPIRES_IN / 60)) minutes"
+      '';
+    };
+
+    systemd.timers.claude-token-keepalive = lib.mkIf cfg.defaults.claude {
+      description = "Periodically refresh Claude OAuth token";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "1h";
+      };
+    };
+
     # Add agent-vm CLI tool
     environment.systemPackages = [
       (import ./agent-vm.nix {
