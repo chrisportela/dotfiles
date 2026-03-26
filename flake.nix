@@ -288,30 +288,44 @@
 
         nixosModules = (import ./modules/nixos/default.nix);
 
-        nixosConfigurations = {
-          installer = (import ./hosts/nixos/installer.nix) {
-            inherit inputs self;
-            nixos = inputs.nixpkgs-unstable;
-            nixpkgs = inputs.nixpkgs;
+        nixosConfigurations =
+          let
+            mkHost = (import ./lib/nixos-host.nix) {
+              nixos = inputs.nixpkgs-unstable;
+              nixosModules = [
+                inputs.agenix.nixosModules.default
+                inputs.disko.nixosModules.disko
+                inputs.vscode-server.nixosModules.default
+                self.nixosModules.default
+              ];
+              specialArgs = { inherit inputs; };
+            };
+          in
+          {
+            installer = (import ./hosts/nixos/installer.nix) {
+              inherit inputs self;
+              nixos = inputs.nixpkgs-unstable;
+              nixpkgs = inputs.nixpkgs;
+            };
+            rpi4 = (import ./hosts/nixos/rpi4-image.nix) {
+              inherit inputs self nixpkgs;
+            };
+            ada = mkHost {
+              hostName = "ada";
+              stateVersion = "25.05";
+              overlays = [
+                (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
+              ];
+              hardwareConfig = ./hosts/nixos/ada/hardware.nix;
+              config = ./hosts/nixos/ada;
+            };
+            flamme = mkHost {
+              hostName = "flamme";
+              stateVersion = "24.05";
+              hardwareConfig = ./hosts/nixos/flamme/hardware.nix;
+              config = ./hosts/nixos/flamme;
+            };
           };
-          rpi4 = (import ./hosts/nixos/rpi4-image.nix) {
-            inherit inputs self nixpkgs;
-          };
-          ada = (import ./hosts/nixos/ada/default.nix) {
-            inherit inputs;
-            nixos = inputs.nixpkgs-unstable;
-            nixosModules = self.nixosModules;
-            overlays = [
-              (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
-
-            ];
-          };
-          flamme = (import ./hosts/nixos/flamme/default.nix) {
-            inherit inputs;
-            nixos = inputs.nixpkgs-unstable;
-            nixosModules = self.nixosModules;
-          };
-        };
 
         darwinModules = {
           common = ./modules/darwin/common.nix;
