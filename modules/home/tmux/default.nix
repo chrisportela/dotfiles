@@ -19,6 +19,7 @@
       set -g monitor-bell on;
       set -g window-status-bell-style 'fg=red,bold'
 
+      bind C-a send-keys C-b;
       bind a send-keys C-b;
       bind s choose-tree -sF '#{?session_alerts,#[fg=red bold](!), }(#{session_windows} windows)';
     '';
