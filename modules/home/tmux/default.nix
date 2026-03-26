@@ -21,7 +21,7 @@
 
       bind C-a send-keys C-b;
       bind a send-keys C-b;
-      bind s choose-tree -sF '#{?session_alerts,#[fg=red bold](!), }(#{session_windows} windows)';
+      bind s choose-tree -sF '#{?window_id,#{?window_bell_flag,#[fg=red bold],}#{window_index}: #{window_name}#{window_flags},#{?session_alerts,#[fg=red bold](!), }(#{session_windows} windows)}';
     '';
     # plugins = with pkgs.tmuxPlugins; [ ];
   };
