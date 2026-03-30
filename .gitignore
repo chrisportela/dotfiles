@@ -18,4 +18,8 @@ result-*
 __pycache__
 **.pyc
 
+.env
+!.envrc
+!.env.example
+
 .worktrees
