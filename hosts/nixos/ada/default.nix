@@ -134,7 +134,7 @@
     };
     docker = {
       enable = true;
-      storageDriver = "zfs";
+      # storageDriver = "zfs";
     };
     oci-containers.backend = "docker";
   };
