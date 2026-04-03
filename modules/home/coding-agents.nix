@@ -16,6 +16,7 @@ in
   config = lib.mkIf cfg.enable {
     allowedUnfree = [
       "cursor"
+      "cursor-agent"
       "cursor-cli"
       "codex"
       "claude-code"
@@ -35,8 +36,10 @@ in
         claude-code
         claude-monitor
       ]
+      ++ [
+        cursor-agent
+      ]
       ++ lib.optionals pkgs.stdenv.isLinux [
-        cursor-cli
         code-cursor-fhs
       ];
 

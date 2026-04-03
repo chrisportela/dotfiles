@@ -37,6 +37,34 @@
     }
   );
 
+  cursor-agent = (
+    final: prev:
+    let
+      ours = self.packages.${final.stdenv.system}.cursor-agent;
+    in
+    {
+      cursor-agent =
+        if prev ? cursor-agent && prev.lib.versionAtLeast prev.cursor-agent.version ours.version then
+          prev.cursor-agent
+        else
+          ours;
+    }
+  );
+
+  opencode = (
+    final: prev:
+    let
+      ours = self.packages.${final.stdenv.system}.opencode;
+    in
+    {
+      opencode =
+        if prev ? opencode && prev.lib.versionAtLeast prev.opencode.version ours.version then
+          prev.opencode
+        else
+          ours;
+    }
+  );
+
   openclaw = (
     final: prev: {
       openclaw = self.packages.${final.stdenv.system}.openclaw;

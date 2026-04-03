@@ -21,6 +21,8 @@ let
       terraform
       setup-envrc
       claude-code
+      cursor-agent
+      opencode
       openclaw
       opencode-cursor
       cliclick

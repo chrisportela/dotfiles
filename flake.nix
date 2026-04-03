@@ -98,6 +98,7 @@
           "terraform"
           "vault-bin"
           "claude-code"
+          "cursor-agent"
           "xcode"
         ];
 
@@ -146,6 +147,10 @@
               };
               opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
               claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
+              cursor-agent = pkgs.pkgsUnstable.callPackage ./pkgs/cursor-agent/package.nix { };
+              opencode = pkgs.pkgsUnstable.callPackage ./pkgs/opencode/package.nix {
+                upstreamOpencode = nixpkgs-unstable.legacyPackages.${system}.opencode;
+              };
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
               wt = pkgs.callPackage ./pkgs/wt/default.nix { };
