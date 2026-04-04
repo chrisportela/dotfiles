@@ -208,6 +208,10 @@
                     desktop.enable = true;
                     experiment.enable = true;
                     coding-agents.enable = true;
+                    direnv.plugins = {
+                      postgres.enable = true;
+                      plane.enable = true;
+                    };
                   };
                 };
                 "cmp@flamme" = simpleHomeConfig {
