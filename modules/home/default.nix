@@ -13,6 +13,7 @@
     ./desktop.nix
     ./shell
     ./tmux
+    ./direnv
   ];
 
   home = {
