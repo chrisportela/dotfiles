@@ -146,6 +146,7 @@
               };
               opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
               claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
+              plane-mcp-server = pkgs.pkgsUnstable.callPackage ./pkgs/plane-mcp-server/default.nix { };
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
               wt = pkgs.callPackage ./pkgs/wt/default.nix { };
