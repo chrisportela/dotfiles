@@ -51,6 +51,20 @@
     }
   );
 
+  llmfit = (
+    final: prev:
+    let
+      ours = self.packages.${final.stdenv.system}.llmfit;
+    in
+    {
+      llmfit =
+        if prev ? llmfit && prev.lib.versionAtLeast prev.llmfit.version ours.version then
+          prev.llmfit
+        else
+          ours;
+    }
+  );
+
   opencode = (
     final: prev:
     let
