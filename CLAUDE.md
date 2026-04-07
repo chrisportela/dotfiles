@@ -5,7 +5,7 @@
 - Modules must live in their own directory with a `default.nix` and a `README.md` that explains
   purpose, options, and dependencies. Refer to the module's README for details rather than
   duplicating documentation here.
-- Packages in `pkgs/` must live in their own directory (e.g. `pkgs/wt/default.nix`, not `pkgs/wt.nix`).
+- Packages in `pkgs/` must live in their own directory. Source builds use `default.nix` (e.g. `pkgs/wt/default.nix`); pre-built binary wrappers use `package.nix` (see `pkgs/cursor-agent/`).
 
 ## Commands
 
@@ -43,3 +43,5 @@ nix build .#darwinConfigurations.roxy.system                      # Build Darwin
 - `nix-rosetta-builder` is needed on Darwin hosts for cross-compilation.
 - `result-*` symlinks in the root are build artifacts that keep built results from being garbage collected by Nix. They are not tracked in git.
 - New files must be `git add`ed before `nix build` — flake evaluation can't see untracked files.
+- `nix fmt` may rewrite unrelated files with pre-existing formatter drift; do NOT include those in a feature commit, address drift separately.
+- Package `update.sh` scripts use `#!/usr/bin/env nix` + an explicit `#!nix shell --ignore-environment nixpkgs#<deps> --command bash` line. Use `pkgs/cursor-agent/update.sh` as the canonical reference (notable deps: `gawk`, `gnused`, `gnugrep`, `coreutils`, `curl`, `cacert`).
