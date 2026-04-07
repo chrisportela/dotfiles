@@ -155,6 +155,7 @@
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
               wt = pkgs.callPackage ./pkgs/wt/default.nix { };
+              llmfit = pkgs.callPackage ./pkgs/llmfit/package.nix { };
               pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
               default = legacyPackages.homeConfigurations.cmp.activationPackage;
             }

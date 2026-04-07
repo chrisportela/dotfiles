@@ -7,10 +7,9 @@ let
   pluginsCfg = config.chrisportela.direnv.plugins;
 
   # Substitute the credentials file path into the plane.sh template
-  planeScript = builtins.replaceStrings
-    [ "@credentialsFile@" ]
-    [ pluginsCfg.plane.credentialsFile ]
-    (builtins.readFile ./lib/plane.sh);
+  planeScript = builtins.replaceStrings [ "@credentialsFile@" ] [ pluginsCfg.plane.credentialsFile ] (
+    builtins.readFile ./lib/plane.sh
+  );
 in
 {
   options.chrisportela.direnv.plugins = {

@@ -335,21 +335,23 @@ in
   # microvm.nix generates a virtiofs fileSystems entry from the share; this
   # overrides its options to add "ro". lib.mkForce wins over microvm.nix's
   # normal-priority definition.
-  fileSystems =
-    {
-      "/home/${userName}" = {
-        device = "/var/home/${userName}";
-        fsType = "none";
-        options = [ "bind" ];
-      };
-    }
-    // lib.optionalAttrs (parentRepoPath != null && (parentRepoMode == "history" || parentRepoMode == "commit")) {
-      "${parentRepoPath}".options = lib.mkForce [
-        "defaults"
-        "x-systemd.requires=systemd-modules-load.service"
-        "ro"
-      ];
+  fileSystems = {
+    "/home/${userName}" = {
+      device = "/var/home/${userName}";
+      fsType = "none";
+      options = [ "bind" ];
     };
+  }
+  //
+    lib.optionalAttrs
+      (parentRepoPath != null && (parentRepoMode == "history" || parentRepoMode == "commit"))
+      {
+        "${parentRepoPath}".options = lib.mkForce [
+          "defaults"
+          "x-systemd.requires=systemd-modules-load.service"
+          "ro"
+        ];
+      };
 
   # Ensure the backing directory exists with correct ownership before the
   # bind mount is attempted
