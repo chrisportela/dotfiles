@@ -114,14 +114,14 @@
             # Node.js and pnpm
             nodejs_24
             _pnpm
-            nodePackages.typescript
-            nodePackages.typescript-language-server
+            typescript
+            typescript-language-server
 
             # Database
             postgresql_18
 
             # Prisma (use Nix-provided binaries for consistent deployment)
-            nodePackages.prisma
+            prisma
             prisma-engines
 
             # Development tools

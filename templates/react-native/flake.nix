@@ -52,7 +52,7 @@
             with pkgs;
             [
               nodejs
-              nodePackages.pnpm
+              pnpm
               watchman
               jdk
               androidSdk

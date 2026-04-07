@@ -22,26 +22,31 @@
       if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}"
     );
     stateVersion = lib.mkDefault "22.11";
-    packages = with pkgs; ([
-      curl
-      doggo
-      dust
-      ripgrep
+    packages =
+      with pkgs;
+      (
+        [
+          curl
+          doggo
+          dust
+          ripgrep
 
-      nixfmt
-      nixpkgs-review
-      glow
-      nix-output-monitor
+          nixfmt
+          nixpkgs-review
+          glow
+          nix-output-monitor
 
-      git-annex
-      gnupg
-      ntfy-sh
-      rclone
-      git-annex-remote-rclone
-      nixd
-      klog-time-tracker
-      setup-envrc
-    ] ++ lib.optionals stdenv.isLinux [ wt ]);
+          git-annex
+          gnupg
+          ntfy-sh
+          rclone
+          git-annex-remote-rclone
+          nixd
+          klog-time-tracker
+          setup-envrc
+        ]
+        ++ lib.optionals stdenv.isLinux [ wt ]
+      );
   };
 
   programs = {

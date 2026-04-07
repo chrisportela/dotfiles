@@ -2,6 +2,7 @@
   writeShellApplication,
   git,
   coreutils,
+  lib,
 }:
 
 writeShellApplication {

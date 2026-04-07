@@ -51,7 +51,7 @@ pkgs.mkShellNoCC {
     [
       # Node.js environment
       nodejs'
-      nodePackages.yarn
+      yarn
 
       # For file watching
       watchman
