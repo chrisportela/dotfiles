@@ -12,6 +12,10 @@ writeShellApplication {
     coreutils
   ];
 
+  meta = with lib; {
+    platforms = platforms.unix ++ platforms.darwin;
+  };
+
   text = ''
     WORKTREE_DIR=".worktrees"
 

@@ -22,7 +22,7 @@
       if pkgs.stdenv.isDarwin then "/Users/${config.home.username}" else "/home/${config.home.username}"
     );
     stateVersion = lib.mkDefault "22.11";
-    packages = with pkgs; [
+    packages = with pkgs; ([
       curl
       doggo
       dust
@@ -41,8 +41,7 @@
       nixd
       klog-time-tracker
       setup-envrc
-      wt
-    ];
+    ] ++ lib.optionals stdenv.isLinux [ wt ]);
   };
 
   programs = {

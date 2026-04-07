@@ -401,15 +401,15 @@
                   };
 
                   services.virby = {
-                    enable = true;
+                    enable = false;
                     # supportDeterminateNix = false;
                     onDemand = {
                       enable = true;
-                      # ttl = 180; # minutes
+                      ttl = 180; # minutes
                     };
                     rosetta = true;
-                    # debug = true;
-                    # allowUserSsh = true;
+                    debug = true;
+                    allowUserSsh = true;
                   };
                 }
               ];

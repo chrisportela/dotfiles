@@ -67,6 +67,6 @@ in
     description = "Setup and approve .envrc file in git repositories";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ "chrisportela" ];
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.unix ++ lib.platforms.darwin;
   };
 }
