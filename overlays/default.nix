@@ -61,4 +61,10 @@
       peekaboo = self.packages.${final.stdenv.system}.peekaboo;
     }
   );
+
+  plane-mcp-server = (
+    final: prev: {
+      plane-mcp-server = self.packages.${final.stdenv.system}.plane-mcp-server;
+    }
+  );
 }
