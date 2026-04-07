@@ -27,6 +27,7 @@ let
       opencode-cursor
       cliclick
       peekaboo
+      plane-mcp-server
     ]);
   unfreePredicate =
     if allowUnfreePredicate == null then

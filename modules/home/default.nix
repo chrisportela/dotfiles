@@ -14,6 +14,7 @@
     ./shell
     ./tmux
     ./direnv
+    ./mcp-servers
   ];
 
   home = {
