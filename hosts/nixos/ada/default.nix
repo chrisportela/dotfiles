@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}:
 {
   allowedUnfree = [
     "ookla-speedtest"
@@ -220,7 +225,10 @@
     in
     "${wrapper}/bin/qemu-aarch64-binfmt-P-fast";
 
-  nix.settings.trusted-users = [ "root" "cmp" ];
+  nix.settings.trusted-users = [
+    "root"
+    "cmp"
+  ];
 
   users.users.cmp.extraGroups = [
     "networkmanager"

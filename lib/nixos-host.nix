@@ -28,7 +28,8 @@ nixos.lib.nixosSystem {
   specialArgs = {
     inherit system overlays;
     nixpkgs = nixos;
-  } // specialArgs;
+  }
+  // specialArgs;
 
   modules =
     nixosModules
@@ -40,7 +41,12 @@ nixos.lib.nixosSystem {
     ++ [
       # Common defaults shared by all hosts
       (
-        { config, lib, pkgs, ... }:
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         {
           allowedUnfree = [
             "1password"
