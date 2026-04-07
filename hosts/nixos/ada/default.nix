@@ -30,6 +30,13 @@
       users = [ "cmp" ];
       passwordFile = config.age.secrets.ada-samba-passwords.path;
       shares = {
+        photography = {
+          type = "private";
+          browseable = true;
+          path = "/home/cmp/tank/photography";
+          users = [ "cmp" ];
+          createDir = false;
+        };
         home-shared = {
           type = "private";
           browseable = true;
