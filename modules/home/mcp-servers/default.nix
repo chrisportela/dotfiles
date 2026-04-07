@@ -51,7 +51,11 @@ let
         serverName: srv:
         lib.mapAttrsToList (envName: secretPath: ''
           if [ ! -r ${lib.escapeShellArg secretPath} ]; then
-            echo "mcp-servers: secret file not readable: ${secretPath}" >&2
+            echo "mcp-servers: secret file not readable: "${lib.escapeShellArg secretPath} >&2
+            exit 1
+          fi
+          if [ ! -s ${lib.escapeShellArg secretPath} ]; then
+            echo "mcp-servers: secret file is empty: "${lib.escapeShellArg secretPath} >&2
             exit 1
           fi
           declarative=$(${pkgs.jq}/bin/jq \

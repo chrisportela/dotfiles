@@ -53,6 +53,9 @@ chrisportela.mcp-servers = {
   before injection.
 - Existing entries in `mcpServers` that are not `_nixManaged` are preserved, so
   servers added with `claude mcp add` continue to work alongside declared ones.
+- If a declared server's name collides with an existing manual entry in
+  `~/.claude.json`, the declared definition takes precedence on the next
+  activation (the manual entry is overwritten and tagged `_nixManaged`).
 - Removing a server from the Nix configuration drops it from `~/.claude.json`
   on the next home-manager activation.
 - The activation script falls back to an empty config if `~/.claude.json` is
