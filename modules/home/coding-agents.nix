@@ -26,6 +26,8 @@ in
       enable = true;
     };
 
+    chrisportela.mcp-servers.enable = lib.mkDefault true;
+
     home.packages =
       with pkgs;
       [
