@@ -1,4 +1,5 @@
 {
+  lib,
   python3Packages,
   fetchPypi,
 }:
@@ -50,6 +51,8 @@ python3Packages.buildPythonApplication rec {
   meta = {
     description = "Model Context Protocol server for Plane project management integration";
     homepage = "https://pypi.org/project/plane-mcp-server/";
+    license = lib.licenses.mit;
     mainProgram = "plane-mcp-server";
+    platforms = lib.platforms.unix;
   };
 }
