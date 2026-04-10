@@ -20,6 +20,7 @@ let
       deploy-rs
       terraform
       setup-envrc
+      wt
       claude-code
       cursor-agent
       opencode

@@ -23,6 +23,12 @@
     }
   );
 
+  wt = (
+    final: prev: {
+      wt = self.packages.${final.stdenv.system}.wt;
+    }
+  );
+
   claude-code = (
     final: prev:
     let
