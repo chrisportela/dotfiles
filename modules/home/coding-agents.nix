@@ -33,6 +33,7 @@ in
       with pkgs;
       [
         codex
+        context7
         opencode
         opencode-cursor
         claude-code
@@ -44,6 +45,11 @@ in
       ++ lib.optionals pkgs.stdenv.isLinux [
         code-cursor-fhs
       ];
+
+    chrisportela.mcp-servers.servers.context7 = {
+      type = "stdio";
+      command = "${pkgs.context7}/bin/context7-mcp";
+    };
 
     # OpenCode Cursor plugin: symlink so OpenCode loads it from ~/.config/opencode/plugin/.
     # Add "cursor-acp" to the plugin array in ~/.config/opencode/opencode.json and the

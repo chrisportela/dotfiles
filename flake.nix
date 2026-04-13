@@ -151,6 +151,7 @@
               opencode = pkgs.pkgsUnstable.callPackage ./pkgs/opencode/package.nix {
                 upstreamOpencode = nixpkgs-unstable.legacyPackages.${system}.opencode;
               };
+              context7 = pkgs.pkgsUnstable.callPackage ./pkgs/context7/default.nix { };
               plane-mcp-server = pkgs.pkgsUnstable.callPackage ./pkgs/plane-mcp-server/default.nix { };
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
