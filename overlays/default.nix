@@ -115,4 +115,10 @@
       plane-mcp-server = self.packages.${final.stdenv.system}.plane-mcp-server;
     }
   );
+
+  context7 = (
+    final: prev: {
+      context7 = self.packages.${final.stdenv.system}.context7;
+    }
+  );
 }

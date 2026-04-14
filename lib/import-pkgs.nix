@@ -29,6 +29,7 @@ let
       cliclick
       peekaboo
       plane-mcp-server
+      context7
     ]);
   unfreePredicate =
     if allowUnfreePredicate == null then
