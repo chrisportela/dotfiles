@@ -44,6 +44,16 @@ let
         git rev-parse --show-toplevel
       }
 
+      upstream_gone() {
+        # $1 = branch name
+        # Returns 0 iff the branch has an upstream tracking ref that is now gone.
+        # This is the typical state after a GitHub squash-/rebase-merge where
+        # the PR branch was auto-deleted on the remote.
+        local track
+        track=$(git for-each-ref --format='%(upstream:track)' "refs/heads/$1")
+        [[ "$track" == *"[gone]"* ]]
+      }
+
       cmd_init() {
         ensure_git_repo
         local root

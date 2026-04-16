@@ -20,3 +20,11 @@ single `.worktrees/` directory at the repo root.
 - `coreutils` — basic shell utilities
 
 Shell completions are installed for bash, zsh, fish, and nushell.
+
+## Testing
+
+Run the upstream-gone behavior test standalone:
+
+```
+bash pkgs/wt/tests/test-upstream-gone.sh
+```
