@@ -197,13 +197,27 @@ let
         else
           # Branch not fully merged
           if [ "$merged" = false ]; then
-            echo "Branch '$branch' is not fully merged."
-            read -r -p "Force delete branch? [y/N] " answer
-            if [[ "$answer" =~ ^[Yy]$ ]]; then
-              git branch -D "$branch"
-              echo "Force deleted branch '$branch'."
+            if upstream_gone "$branch"; then
+              echo "Branch '$branch' is not fully merged locally, but its upstream"
+              echo "tracking branch is gone. This usually means it was squash- or"
+              echo "rebase-merged on the remote and then deleted (common on GitHub"
+              echo "PR merge). Recommending force delete."
+              read -r -p "Force delete branch? [Y/n] " answer
+              if [[ "''${answer:-Y}" =~ ^[Nn]$ ]]; then
+                echo "Keeping branch '$branch'."
+              else
+                git branch -D "$branch"
+                echo "Force deleted branch '$branch'."
+              fi
             else
-              echo "Keeping branch '$branch'."
+              echo "Branch '$branch' is not fully merged."
+              read -r -p "Force delete branch? [y/N] " answer
+              if [[ "$answer" =~ ^[Yy]$ ]]; then
+                git branch -D "$branch"
+                echo "Force deleted branch '$branch'."
+              else
+                echo "Keeping branch '$branch'."
+              fi
             fi
           fi
         fi
