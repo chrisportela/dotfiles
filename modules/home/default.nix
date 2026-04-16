@@ -44,8 +44,8 @@
           nixd
           klog-time-tracker
           setup-envrc
+          wt
         ]
-        ++ lib.optionals stdenv.isLinux [ wt ]
       );
   };
 
