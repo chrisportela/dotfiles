@@ -1,2 +1,49 @@
 #compdef wt
-# wt(1) zsh completion — populated in Task 3
+
+_wt_branches() {
+  local -a branches
+  branches=(
+    ${(@f)"$(git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)"}
+    ${(@f)"$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes 2>/dev/null)"}
+  )
+  # Drop 'HEAD' entries (from refs/remotes/<remote>/HEAD)
+  branches=(${branches:#HEAD})
+  _describe 'branch' branches
+}
+
+_wt_worktrees() {
+  local root
+  root=$(git rev-parse --show-toplevel 2>/dev/null) || return
+  [[ -d "$root/.worktrees" ]] || return
+  local -a wts
+  wts=("$root/.worktrees"/*(/N:t))
+  (( ${#wts} )) || return
+  _describe 'worktree' wts
+}
+
+_wt() {
+  local state
+
+  _arguments -C \
+    '1: :->command' \
+    '*:: :->args'
+
+  case $state in
+    command)
+      _values 'subcommand' \
+        'init[setup .worktrees and exclude]' \
+        'add[create a worktree]' \
+        'ls[list active worktrees]' \
+        'rm[remove a worktree]' \
+        'help[show help]'
+      ;;
+    args)
+      case $words[1] in
+        add) _wt_branches ;;
+        rm)  _wt_worktrees ;;
+      esac
+      ;;
+  esac
+}
+
+_wt "$@"
