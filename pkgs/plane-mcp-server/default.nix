@@ -7,12 +7,12 @@
 let
   plane-sdk = python3Packages.buildPythonPackage rec {
     pname = "plane_sdk";
-    version = "0.2.8";
+    version = "0.2.9";
     pyproject = true;
 
     src = fetchPypi {
       inherit pname version;
-      hash = "sha256-qMSKvwV6yiSPtpE/5ucmPbMsFrXqwyjS2LnZvio+ots=";
+      hash = "sha256-zqaFazKknj1vgPC4mKVlT3N3gLJG0cRX1xRUOF3hJjw=";
     };
 
     build-system = [ python3Packages.setuptools ];
@@ -45,6 +45,8 @@ python3Packages.buildPythonApplication rec {
   ];
 
   pythonRelaxDeps = true;
+
+  passthru.updateScript = ./update.sh;
 
   pythonImportsCheck = [ "plane_mcp" ];
 

@@ -3,6 +3,7 @@
   stdenv,
   buildNpmPackage,
   fetchzip,
+  autoPatchelfHook,
   versionCheckHook ? null,
   writableTmpDirAsHomeHook ? null,
   bubblewrap ? null,
@@ -11,7 +12,7 @@
 }:
 
 let
-  version = "2.1.91";
+  version = "2.1.116";
 
 in
 buildNpmPackage (finalAttrs: {
@@ -20,17 +21,20 @@ buildNpmPackage (finalAttrs: {
 
   src = fetchzip {
     url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${finalAttrs.version}.tgz";
-    hash = "sha256-u7jdM6hTYN05ZLPz630Yj7gI0PeCSArg4O6ItQRAMy4=";
+    hash = "sha256-GJm/wjxhFdPcSpQbRhWXen/j6UrVzspXJodnsvqz4KM=";
   };
 
-  npmDepsHash = "sha256-0ppKP+XMgTzVVZtL7GDsOjgvSPUDrUa7SoG048RLaNg=";
+  npmDepsHash = "sha256-EP/4wXhq10O9zA3o8szTVKiaNY+Qq3xqy8T1eilKwFA=";
+
+  nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
+
+  # npm installs both glibc and musl native binaries; ignore the musl one
+  autoPatchelfIgnoreMissingDeps = [ "libc.musl-*" ];
 
   strictDeps = true;
 
   postPatch = ''
     cp ${./package-lock.json} package-lock.json
-    substituteInPlace cli.js \
-      --replace-fail '#!/bin/sh' '#!/usr/bin/env sh'
   '';
 
   dontNpmBuild = true;
@@ -38,7 +42,10 @@ buildNpmPackage (finalAttrs: {
   env.AUTHORIZED = "1";
 
   postInstall = ''
-    wrapProgram $out/bin/claude \
+    # npmInstallHook creates a Node.js shim for bin/claude, but claude-code
+    # is now a native binary. Replace the shim with a direct wrapper.
+    rm $out/bin/claude
+    makeWrapper $out/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe $out/bin/claude \
       --set DISABLE_AUTOUPDATER 1 \
       --set-default FORCE_AUTOUPDATE_PLUGINS 1 \
       --set DISABLE_INSTALLATION_CHECKS 1 \

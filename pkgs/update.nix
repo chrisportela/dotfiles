@@ -29,21 +29,35 @@ writeShellApplication {
 
     get_update_script() {
       local pkg="$1"
-      nix eval --raw ".#packages.$SYSTEM.$pkg.passthru.updateScript"
+      nix eval --json ".#packages.$SYSTEM.$pkg.passthru.updateScript"
     }
 
     run_update() {
       local pkg="$1"
-      local store_path
-      store_path="$(get_update_script "$pkg")"
+      local script_json
+      script_json="$(get_update_script "$pkg")"
+
+      # updateScript can be a string (store path) or a list of strings (command + args)
+      local script_type
+      script_type="$(echo "$script_json" | jq -r 'type')"
+
+      local cmd_args=()
+      if [ "$script_type" = "array" ]; then
+        mapfile -t cmd_args < <(echo "$script_json" | jq -r '.[]')
+      else
+        cmd_args=("$(echo "$script_json" | jq -r '.')")
+      fi
+
       local tmp
       tmp="$(mktemp)"
-      cp "$store_path" "$tmp"
+      cp "''${cmd_args[0]}" "$tmp"
       chmod +x "$tmp"
+      cmd_args[0]="$tmp"
+
       echo "==> Updating $pkg"
       UPDATE_NIX_ATTR_PATH="$pkg" \
       UPDATE_NIX_PNAME="$pkg" \
-        "$tmp"
+        "''${cmd_args[@]}"
       rm -f "$tmp"
       echo "==> Done updating $pkg"
     }
