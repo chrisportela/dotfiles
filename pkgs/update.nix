@@ -17,6 +17,8 @@ writeShellApplication {
   text = ''
     SYSTEM="$(nix eval --raw --impure --expr 'builtins.currentSystem')"
     TARGET="''${1:-}"
+    BUILD_LOG_DIR="$(mktemp -d -t pkg-update-logs.XXXXXX)"
+    FAILED_PKGS=()
 
     get_packages() {
       nix eval --json ".#packages.$SYSTEM" --apply 'pkgs: builtins.attrNames pkgs' | jq -r '.[]'
@@ -59,7 +61,19 @@ writeShellApplication {
       UPDATE_NIX_PNAME="$pkg" \
         "''${cmd_args[@]}"
       rm -f "$tmp"
-      echo "==> Done updating $pkg"
+
+      # Stage changes so flake eval can see updated files
+      git add -A
+
+      echo "==> Verifying $pkg builds..."
+      local log_file="$BUILD_LOG_DIR/$pkg-build.log"
+      if nix build --no-link ".#packages.$SYSTEM.$pkg" 2>&1 | tee "$log_file"; then
+        echo "==> $pkg updated and verified successfully"
+        rm -f "$log_file"
+      else
+        echo "==> ERROR: $pkg build failed! Logs saved to: $log_file" >&2
+        FAILED_PKGS+=("$pkg")
+      fi
     }
 
     if [ -n "$TARGET" ]; then
@@ -77,6 +91,17 @@ writeShellApplication {
           run_update "$pkg"
         fi
       done
+    fi
+
+    if [ ''${#FAILED_PKGS[@]} -gt 0 ]; then
+      echo ""
+      echo "=============================="
+      echo "BUILD FAILURES: ''${FAILED_PKGS[*]}"
+      echo "Build logs: $BUILD_LOG_DIR"
+      echo "=============================="
+      exit 1
+    else
+      rm -rf "$BUILD_LOG_DIR"
     fi
   '';
 }

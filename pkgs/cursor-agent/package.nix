@@ -3,6 +3,7 @@
   fetchurl,
   stdenv,
   autoPatchelfHook,
+  zlib,
 }:
 
 let
@@ -35,7 +36,11 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = lib.optionals hostPlatform.isLinux [
     autoPatchelfHook
+  ];
+
+  buildInputs = lib.optionals hostPlatform.isLinux [
     stdenv.cc.cc.lib
+    zlib
   ];
 
   installPhase = ''
