@@ -60,11 +60,44 @@
     systemd-boot.consoleMode = "max";
   };
 
+  boot.kernel.sysctl = {
+    "vm.swappiness" = 133;
+
+    # Overcommit mode 2: strict accounting. malloc fails with ENOMEM instead of
+    # letting the system exhaust all memory and having the kernel OOM-kill
+    # critical services (systemd, dbus, tmux).
+    "vm.overcommit_memory" = 2;
+    "vm.overcommit_ratio" = 95;
+  };
+
   zramSwap = {
     enable = true;
     priority = 5;
     algorithm = "zstd";
-    memoryPercent = 25;
+    memoryPercent = 50;
+  };
+
+  # systemd-oomd: userspace OOM killer using PSI (pressure stall) metrics.
+  # Acts on cgroup-level pressure before the kernel OOM killer fires.
+  systemd.oomd = {
+    enable = true;
+    enableRootSlice = true;
+    enableUserSlices = true;
+    enableSystemSlice = true;
+  };
+
+  # Protect critical system services from OOM
+  systemd.services.dbus.serviceConfig.ManagedOOMPreference = "avoid";
+  systemd.services.systemd-journald.serviceConfig.ManagedOOMPreference = "avoid";
+
+  # Limit nix-daemon builds to prevent runaway memory consumption.
+  # MemoryHigh triggers systemd-oomd to kill within this cgroup.
+  # MemoryMax is a hard ceiling enforced by the kernel.
+  systemd.services.nix-daemon.serviceConfig = {
+    ManagedOOMMemoryPressure = "kill";
+    ManagedOOMMemoryPressureLimit = "80%";
+    MemoryMax = "14G";
+    MemoryHigh = "12G";
   };
 
   # Enable OpenGL

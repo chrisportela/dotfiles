@@ -12,11 +12,15 @@
   cafecitocloud.enable = true;
 
   chrisportela = {
-    network.speedtest-utils = true;
+    network = {
+      speedtest-utils = true;
+      mDNS = true;
+    };
     gaming.enable = true;
     agent-vms = {
       enable = true;
       nat.externalInterface = "eno1";
+      defaults.claude = true;
       user.authorizedKeys = (import ../../../lib/ssh-keys.nix).users.cmp;
     };
   };
@@ -39,11 +43,37 @@
   services.logind.lidSwitchExternalPower = "ignore";
   services.flatpak.enable = true;
 
+  # Virtualization
+  virtualisation = {
+    libvirtd = {
+      enable = true;
+      qemu = {
+        package = pkgs.qemu_kvm;
+        swtpm.enable = true;
+      };
+    };
+    docker.enable = true;
+  };
+  programs.virt-manager.enable = true;
+
+  # Cross-compilation
+  boot.binfmt.emulatedSystems = [
+    "aarch64-linux"
+    "armv6l-linux"
+  ];
+
+  nix.settings.trusted-users = [
+    "root"
+    "cmp"
+  ];
+
   users.users.cmp = {
     extraGroups = [
       "networkmanager"
       "wheel"
       "tss"
+      "libvirtd"
+      "docker"
     ];
     packages = with pkgs; [ firefox ];
   };
