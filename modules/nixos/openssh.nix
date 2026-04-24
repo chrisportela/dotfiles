@@ -13,27 +13,26 @@ in
         PermitRootLogin = lib.mkDefault "no";
         PasswordAuthentication = lib.mkDefault false;
         KexAlgorithms = [
+          "mlkem768x25519-sha256" # Post-quantum hybrid (OpenSSH 9.9+)
+          "sntrup761x25519-sha512" # Post-quantum hybrid (OpenSSH 9.0+)
           "curve25519-sha256"
           "curve25519-sha256@libssh.org"
-          "diffie-hellman-group-exchange-sha256"
-          "ecdh-sha2-nistp256"
+        ];
+        Ciphers = [
+          "chacha20-poly1305@openssh.com"
+          "aes256-gcm@openssh.com"
+          "aes128-gcm@openssh.com"
+        ];
+        Macs = [
+          "hmac-sha2-512-etm@openssh.com"
+          "hmac-sha2-256-etm@openssh.com"
         ];
       };
 
       hostKeys = [
         {
-          type = "rsa";
-          bits = 4096;
-          path = "/etc/ssh/ssh_host_rsa_key";
-        }
-        {
           type = "ed25519";
           path = "/etc/ssh/ssh_host_ed25519_key";
-        }
-        {
-          type = "ecdsa";
-          bits = 256;
-          path = "/etc/ssh/ssh_host_ecdsa_key";
         }
       ];
 
