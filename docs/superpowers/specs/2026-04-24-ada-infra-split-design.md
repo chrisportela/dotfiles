@@ -160,7 +160,9 @@ Keep (baseline):
 
 ## What infra absorbs (out of scope, for reference)
 
-The work on the infra side, which the user does separately:
+The work on the infra side, which the user does separately. **All infra-side
+changes must happen in a worktree created with `wt add <branchname>` — not
+on `main` or in the root of `~/src/infra`.**
 
 - Copy `modules/nixos/{agent-vms, samba, local-llm}` and `modules/nixos/ftp.nix`
   from dotfiles into infra's `modules/nixos/`.
@@ -189,8 +191,9 @@ The deploy sequencing is the only critical bit:
 
 Recommended order:
 
-1. **Infra side first** (out of scope here): add modules, host config, and
-   re-encrypted secret; build infra's ada; verify build.
+1. **Infra side first** (out of scope here, done in a `wt add`-created
+   worktree of `~/src/infra`): add modules, host config, and re-encrypted
+   secret; build infra's ada; verify build.
 2. **Dotfiles side** (this PR): apply the strip; verify
    `nix build .#nixosConfigurations.ada.config.system.build.toplevel`
    still builds.
