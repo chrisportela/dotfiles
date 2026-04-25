@@ -40,23 +40,24 @@ Two flakes, each with a `nixosConfigurations.ada`:
 │   (BASELINE — buildable, not          │     extraModules = [
 │    deployed to real machine)          │       dotfiles.nixosConfigurations
 │                                       │         .ada (or modules + host)
-└── modules/nixos/                      │       ./modules/nixos/agent-vms
-    ├── (kept) common, network,         │       ./modules/nixos/samba
-    │   openssh, gaming, nginx-         │       ./modules/nixos/ftp
-    │   cloudflare, hardware/, disko/,  │       ./modules/nixos/local-llm
-    │   nixpkgs, cafecitocloud (trust   │       ./modules/nixos/cafecitocloud-acme
-    │   only)                           │     ];
-    └── (gone) agent-vms, ftp,          │   };
-        local-llm, samba                │
+└── modules/nixos/                      │       ./modules/nixos/samba
+    ├── (kept) common, network,         │       ./modules/nixos/ftp
+    │   openssh, gaming, nginx-         │       ./modules/nixos/local-llm
+    │   cloudflare, hardware/, disko/,  │       ./modules/nixos/cafecitocloud-acme
+    │   nixpkgs, agent-vms,             │     ];
+    │   cafecitocloud (trust only)      │   };
+    └── (gone) ftp, local-llm, samba    │
                                         └── secrets/ada-samba-passwords.age
                                             (re-encrypted with infra keyring)
 ```
 
 ## Module split
 
-Modules and their host-config usage **move together** when private-flavored.
-The cafecitocloud module is the one exception: it splits in two so all hosts
-keep CA trust without leaking infra details.
+Modules and their host-config usage **move together** when private-flavored
+**and the module has only one consumer (ada)**. Modules with consumers besides
+ada (e.g. `agent-vms`, also used by flamme) stay in dotfiles; only ada's
+invocation moves. The cafecitocloud module splits in two so all hosts keep CA
+trust without leaking infra details.
 
 | Module                | Where         | Notes                                       |
 |-----------------------|---------------|---------------------------------------------|
@@ -68,9 +69,9 @@ keep CA trust without leaking infra details.
 | `nginx-cloudflare`    | dotfiles      | unchanged                                   |
 | `hardware/`           | dotfiles      | unchanged (rpi4 profile)                    |
 | `disko/`              | dotfiles      | unchanged                                   |
+| `agent-vms/`          | dotfiles      | **stays** — flamme uses it; ada's invocation moves to infra |
 | `cafecitocloud`       | dotfiles      | **trimmed** to CA trust only                |
 | `cafecitocloud-acme`  | infra         | **new**, carved out of `cafecitocloud`      |
-| `agent-vms/`          | infra         | move whole directory                        |
 | `ftp.nix`             | infra         | move file (infra can promote to a dir)      |
 | `local-llm/`          | infra         | move whole directory                        |
 | `samba/`              | infra         | move whole directory                        |
@@ -82,10 +83,13 @@ Improving infra to match this layout fully is out of scope for this work.
 ## Dotfiles changes (this worktree's scope)
 
 ### `modules/nixos/` — removed
-- `agent-vms/` (whole directory)
 - `ftp.nix`
 - `local-llm/` (whole directory)
 - `samba/` (whole directory)
+
+`agent-vms/` stays in dotfiles — flamme also uses it. Only the ada-side
+invocation of `chrisportela.agent-vms` moves to infra. Infra consumes the
+agent-vms module via the dotfiles flake input.
 
 ### `modules/nixos/cafecitocloud/default.nix` — trimmed
 Drop the `enableACME` option and the `security.acme.defaults` block. Keep
@@ -95,11 +99,12 @@ more. All hosts (lux, roxy, flamme, ada baseline) can flip
 `cafecitocloud.enable = true`.
 
 ### `modules/nixos/default.nix` — updated
-Remove the `agent-vms`, `ftp`, `local-llm`, and `samba` keys from the
-returned attrset.
+Remove the `ftp` and `local-llm` keys from the returned attrset (`agent-vms`
+and `samba` are not in this attrset today). The `agent-vms` key stays.
 
 ### `modules/nixos/all.nix` — updated
-Remove the four corresponding paths from the `imports` list.
+Remove `./ftp.nix`, `./local-llm`, and `./samba` from the `imports` list.
+`./agent-vms` stays.
 
 ### `hosts/nixos/ada/default.nix` — stripped
 
@@ -112,7 +117,6 @@ Remove:
   `users.users.nginx.extraGroups` line
 - `users.users.coder-provisioner` and `users.groups.coder-provisioner`
 - `age.secrets.ada-samba-passwords` line
-- The `agent-vms` SSH-key reference (gone with the module)
 - `elasticsearch` from `allowedUnfree`
 
 Keep (baseline):
@@ -164,8 +168,9 @@ The work on the infra side, which the user does separately. **All infra-side
 changes must happen in a worktree created with `wt add <branchname>` — not
 on `main` or in the root of `~/src/infra`.**
 
-- Copy `modules/nixos/{agent-vms, samba, local-llm}` and `modules/nixos/ftp.nix`
-  from dotfiles into infra's `modules/nixos/`.
+- Copy `modules/nixos/{samba, local-llm}` and `modules/nixos/ftp.nix` from
+  dotfiles into infra's `modules/nixos/`. `agent-vms` stays in dotfiles
+  (flamme uses it); infra consumes it via the dotfiles flake input.
 - Create `modules/nixos/cafecitocloud-acme/` in infra holding the
   `security.acme.defaults` block (server, dnsResolver, email, validMinDays,
   renewInterval) plus an `enable` option.
@@ -186,7 +191,8 @@ The deploy sequencing is the only critical bit:
 
 > **Do not deploy dotfiles' baseline ada to the real machine before infra's
 > ada is wired up.** A deploy from dotfiles after the strip would remove
-> samba, agent-vms, ftp, local-llm, the kibana stack, and the
+> samba, ftp, local-llm, agent-vms (the *invocation*; the module is still
+> imported but `enable` defaults to `false`), the kibana stack, and the
 > coder-provisioner user from the running host.
 
 Recommended order:
