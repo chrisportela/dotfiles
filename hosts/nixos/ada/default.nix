@@ -213,9 +213,6 @@
   # NVIDIA + Docker
   hardware.nvidia-container-toolkit.enable = true;
 
-
-
-
   # Cross-compilation
   boot.binfmt.emulatedSystems = [
     "aarch64-linux"
