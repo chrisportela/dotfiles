@@ -7,7 +7,6 @@
 {
   allowedUnfree = [
     "ookla-speedtest"
-    "elasticsearch"
     "claude-code"
     "nvidia-persistenced"
     "nvidia-settings"
@@ -214,50 +213,8 @@
   # NVIDIA + Docker
   hardware.nvidia-container-toolkit.enable = true;
 
-  # Elasticsearch (disabled)
-  services.elasticsearch = {
-    enable = false;
-    listenAddress = "127.0.0.1";
-    port = 9200;
-    single_node = true;
-    extraConf = ''
-      xpack.security.enabled: true
-      xpack.security.authc.api_key.enabled: true
-    '';
-  };
 
-  virtualisation.oci-containers.containers.kibana-test = {
-    autoStart = false;
-    image = "docker.elastic.co/kibana/kibana:7.17.24";
-    volumes = [
-      "${config.users.users.cmp.home}/.config/kibana/:/usr/share/kibana/config/"
-      "${config.users.users.cmp.home}/.local/share/kibana:/usr/share/kibana/data"
-    ];
-    extraOptions = [
-      "--network=host"
-      "--add-host=host.containers.internal:host-gateway"
-    ];
-    environment = {
-      SERVER_NAME = "kibana-test.ada.i.cafecito.cloud";
-      ELASTICSEARCH_HOSTS = "http://127.0.0.1:9200";
-    };
-  };
 
-  services.nginx = {
-    enable = true;
-    clientMaxBodySize = "20m";
-    virtualHosts."kibana.ada.i.cafecito.cloud" = {
-      forceSSL = true;
-      enableACME = true;
-      locations."/".proxyPass = "http://127.0.0.1:5601";
-      locations."/".recommendedProxySettings = true;
-      extraConfig = ''
-        access_log /var/log/nginx/kiabana-cafeito_cloud.access.log;
-        error_log /var/log/nginx/kibana-cafeito_cloud.error.log;
-      '';
-    };
-  };
-  users.users.nginx.extraGroups = [ "acme" ];
 
   # Cross-compilation
   boot.binfmt.emulatedSystems = [
