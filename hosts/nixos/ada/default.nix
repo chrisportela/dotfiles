@@ -239,15 +239,4 @@
     "ddc"
     "docker"
   ];
-
-  users.users.coder-provisioner = {
-    isSystemUser = true;
-    group = "coder-provisioner";
-    extraGroups = [ "docker" ];
-    shell = "/run/current-system/sw/bin/bash";
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM0/KO6AYY+MfMRT78hhkPX9DOg+luwfObZ6+5XgU6m/ coder-provisioner"
-    ];
-  };
-  users.groups.coder-provisioner = { };
 }
