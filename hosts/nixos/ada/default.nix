@@ -100,6 +100,8 @@
     rmlint
     wget
     curl
+    openssl
+    attic-client
 
     # KDE
     kdePackages.plasma-thunderbolt

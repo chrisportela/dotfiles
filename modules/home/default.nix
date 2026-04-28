@@ -32,6 +32,7 @@
       nixpkgs-review
       glow
       nix-output-monitor
+      attic-client
 
       git-annex
       gnupg
