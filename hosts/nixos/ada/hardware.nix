@@ -71,27 +71,24 @@
   time.hardwareClockInLocalTime = true;
 
   boot.kernel.sysctl = {
-    # Validation phase: strict overcommit retained as a backstop while we
-    # verify cgroup containment under load. Wide budget (64G swap + 250% × 64G
-    # RAM ≈ 224G) lets legitimate sci-python and docker builds proceed.
-    # Task 9 of the plan switches this to mode 0 once cgroup containment is
-    # validated.
-    "vm.overcommit_memory" = 2;
-    "vm.overcommit_ratio" = 250;
+    # Heuristic overcommit. Layer 2 (per-cgroup MemoryMax via
+    # chrisportela.memory-protection) is the actual protection against
+    # runaways; mode 2 was redundant after cgroup containment landed and
+    # was blocking legitimate sci-python and docker builds.
+    # See docs/superpowers/specs/2026-04-29-ada-memory-tuning-design.md
+    # for the four-layer architecture.
+    "vm.overcommit_memory" = 0;
 
-    # Less aggressive than the previous 133 (which was tuned to push pages
-    # into zram). With zswap+Optane, swap is fast enough that we don't need
-    # to bias hard.
+    # zswap+Optane is fast enough that aggressive anon-prefer (was 133 with
+    # zram) is unnecessary; 100 keeps anon and file-cache reclaim balanced.
     "vm.swappiness" = 100;
 
     # Wake kswapd at ~2% free RAM (~1.3GB on 64GB) instead of the default
-    # 0.1% (~64MB). Default is far too late on big-memory boxes; allocations
-    # stall before reclaim catches up.
+    # 0.1% (~64MB). Default is too late on big-memory boxes.
     "vm.watermark_scale_factor" = 200;
 
-    # Bias toward keeping file cache under pressure. Default 100 reclaims
-    # dentry/inode cache as aggressively as page cache; 50 keeps file cache
-    # longer (helps nix-store reads + ZFS ARC interactions).
+    # Bias toward keeping file cache under pressure. Helps nix-store reads
+    # + ZFS ARC interactions.
     "vm.vfs_cache_pressure" = 50;
   };
 
