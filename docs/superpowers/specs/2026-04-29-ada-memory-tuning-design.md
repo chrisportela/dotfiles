@@ -284,7 +284,56 @@ Each step is a single git revert away. Through step 3, mode 2 is still active (j
 
 ## Out of scope (follow-ups)
 
-- **Grow Optane swap to ~128GB.** Requires repartitioning Optane drives that currently host ZFS log + special vdevs. Safe procedure: detach one mirror member from each vdev, repartition, reattach, resilver — repeat for the second member. Time-consuming and storage-sensitive; deserves a separate plan.
+### Grow Optane swap
+
+The user's workload mix (concurrent heavy builds, VMs, and interactive desktop) wants more than the current 64GB swap. The motivation is to raise per-cgroup ceilings (`nixDaemon`, `dockerSlice`, `userSlice`) higher and have physical+swap headroom to back them. Target: ~128GB swap (4×32GB).
+
+The four Intel Optane P1600X drives are dual-use, with **two very different ZFS roles** that have very different growability:
+
+- **`intel-ssd0/1` — SLOG mirror (ZFS Intent Log):** *removable* without data loss. SLOG holds in-flight ZIL records; `zpool remove tank mirror-1` flushes them to the main pool, then releases the devices. SLOG is also wildly oversized currently — typical usage is < 1GB; the 102GB allocation is overkill. **Safely growable to ~32GB swap each** (gain: +32GB total swap).
+- **`intel-ssd2/3` — special vdev mirror (metadata + small blocks):** *not removable* from a `raidz1` pool. Once added, special vdev is permanent. ZFS also doesn't support shrinking a vdev — `zpool replace` requires the new device to be ≥ the old one's *size*, not its *used*. Detach-resize-reattach will fail because the resized LUKS container is smaller than the existing vdev. **Cannot be grown without recreating the pool.**
+
+**Recommended progression:**
+
+1. **Observe first.** Run with current 64GB swap for several weeks. Monitor `journalctl -u systemd-oomd --grep=killed` and `/proc/pressure/{memory,io}` for genuine pressure events. If none surface, current swap is sized right.
+2. **Raise cgroup ceilings before growing swap.** If a specific workload (e.g., a heavy CUDA build) hits its ceiling, raise the relevant `chrisportela.memory-protection.{nixDaemon,dockerSlice,userSlice}.memoryMax` first. That's a one-line config change, no hardware risk. Cgroup ceiling and swap size are independent levers — bigger ceilings only need bigger swap when the *summed* concurrent demand exceeds physical+swap.
+3. **Phase 1 — SLOG repartition (modest gain, low risk):** Free up `intel-ssd0/1` as described above. Net: 64GB → 96GB swap. Procedure outlined below.
+4. **Phase 2 — Pool migration (full gain, real downtime):** Backup `tank/main` to a separate target, destroy and recreate the pool with the desired Optane layout (32GB swap + ~70GB special each), restore data. Net: 96GB → 128GB swap. Requires backup capacity for the full pool and a downtime window. Out of scope for any incremental work — deserves its own plan with explicit backup/recovery steps.
+
+**Phase 1 procedure outline (SLOG drives, no data loss):**
+
+```bash
+# Flush ZIL to main pool, remove the SLOG mirror
+sync
+sudo zpool remove tank mirror-1
+sudo zpool status tank   # wait for "logs" section to disappear
+
+# Close LUKS, swapoff
+sudo cryptsetup close crypt-intel-ssd0
+sudo cryptsetup close crypt-intel-ssd1
+sudo swapoff /dev/disk/by-partlabel/disk-intel-ssd0-swap
+sudo swapoff /dev/disk/by-partlabel/disk-intel-ssd1-swap
+
+# Repartition (sgdisk or update disko + run imperatively on those devices)
+# New layout per drive: 32GB swap + ~80GB LUKS (with 4-8GB SLOG to spare)
+
+# Recreate LUKS
+sudo cryptsetup luksFormat ... /dev/disk/by-partlabel/disk-intel-ssd0-luks
+sudo cryptsetup luksFormat ... /dev/disk/by-partlabel/disk-intel-ssd1-luks
+sudo cryptsetup open ... crypt-intel-ssd0
+sudo cryptsetup open ... crypt-intel-ssd1
+
+# Re-add as new SLOG mirror (size determined by smaller LUKS now)
+sudo zpool add tank log mirror /dev/mapper/crypt-intel-ssd0 /dev/mapper/crypt-intel-ssd1
+
+# Reactivate swap (NixOS recreates random-encrypted swap automatically on next boot
+# with randomEncryption=true; or run `nixos-rebuild switch` to apply the new disko spec)
+```
+
+Update `disko.nix` to reflect the new layout so subsequent installs / disaster recovery rebuild correctly. Disko is declarative for *initial* provisioning; live repartitioning is imperative, but the spec should match the final state.
+
+### Other follow-ups
+
 - **Migrate `flamme` to `chrisportela.memory-protection`.** flamme's existing inline cgroup config (`hosts/nixos/flamme/hardware.nix:90–100`) replicates the same pattern at smaller scale. Replacing it with the module is cleanup, not new behavior.
 - **Per-cgroup `MemoryZSwapWriteback` toggles.** Kernel 6.8+ feature allowing a cgroup to opt out of writing zswap-compressed pages to disk swap. Useful for KDE Plasma (prefer responsiveness loss over Optane writes). Revisit once the basic system is stable.
 
