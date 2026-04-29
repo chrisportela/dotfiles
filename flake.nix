@@ -131,6 +131,10 @@
               type = "app";
               program = "${self.packages.${system}.cachix-helper}/bin/cachix-helper";
             };
+            attic-helper = {
+              type = "app";
+              program = "${self.packages.${system}.attic-helper}/bin/attic-helper";
+            };
             update = {
               type = "app";
               program = "${self.packages.${system}.update}/bin/update";
@@ -141,6 +145,7 @@
             {
               terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
               cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
+              attic-helper = pkgs.callPackage ./pkgs/attic-helper/default.nix { };
               rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
               openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw/default.nix {
                 upstreamOpenclaw = nixpkgs-unstable.legacyPackages.${system}.openclaw;
