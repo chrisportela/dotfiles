@@ -11,6 +11,33 @@
     "nvidia-persistenced"
     "nvidia-settings"
     "nvidia-x11"
+    # nvtopPackages.full pulls a small slice of CUDA on NVIDIA hosts. Keep
+    # this list minimal — infra adds the broader CUDA list for LLM workloads.
+    "cuda-merged"
+    "cuda_cuobjdump"
+    "cuda_gdb"
+    "cuda_nvcc"
+    "cuda_nvdisasm"
+    "cuda_nvprune"
+    "cuda_cccl"
+    "cuda_cudart"
+    "cuda_cupti"
+    "cuda_cuxxfilt"
+    "cuda_nvml_dev"
+    "cuda_nvrtc"
+    "cuda_nvtx"
+    "cuda_profiler_api"
+    "cuda_sanitizer_api"
+    "libcublas"
+    "libcufft"
+    "libcurand"
+    "libcusolver"
+    "libcusparse"
+    "libcusparse_lt"
+    "libcufile"
+    "libnvjitlink"
+    "libnpp"
+    "cudnn"
   ];
 
   cafecitocloud.enable = true;
