@@ -5,6 +5,7 @@
   # ddc = ./ddc.nix;
   local-llm = ./local-llm;
   gaming = ./gaming.nix;
+  memory-protection = ./memory-protection;
   network = ./network.nix;
   nixpkgs = ./nixpkgs.nix;
   nginx-cloudflare = ./nginx-cloudflare.nix;
