@@ -91,5 +91,48 @@ in
         OOMScoreAdjust = -800;
       };
     })
+
+    # nix-daemon ceiling (opt-in via nixDaemon.enable)
+    (lib.mkIf cfg.nixDaemon.enable {
+      systemd.services.nix-daemon.serviceConfig = {
+        ManagedOOMMemoryPressure = "kill";
+        ManagedOOMMemoryPressureLimit = "80%";
+        MemoryMax = cfg.nixDaemon.memoryMax;
+        MemoryHigh = cfg.nixDaemon.memoryHigh;
+      };
+    })
+
+    # docker.slice (opt-in via dockerSlice.enable)
+    (lib.mkIf cfg.dockerSlice.enable {
+      systemd.services.docker.serviceConfig.Slice = "docker.slice";
+      systemd.slices."docker".sliceConfig = {
+        MemoryMax = cfg.dockerSlice.memoryMax;
+        MemoryHigh = cfg.dockerSlice.memoryHigh;
+        ManagedOOMMemoryPressure = "kill";
+        ManagedOOMMemoryPressureLimit = "80%";
+      };
+      virtualisation.docker.daemon.settings = {
+        "exec-opts" = [ "native.cgroupdriver=systemd" ];
+        "cgroup-parent" = "docker.slice";
+      };
+    })
+
+    # user.slice (opt-in via userSlice.enable; nullable values disable)
+    (lib.mkIf (cfg.userSlice.enable && cfg.userSlice.memoryMax != null && cfg.userSlice.memoryHigh != null) {
+      systemd.slices."user".sliceConfig = {
+        MemoryMax = cfg.userSlice.memoryMax;
+        MemoryHigh = cfg.userSlice.memoryHigh;
+        ManagedOOMMemoryPressure = "kill";
+        ManagedOOMMemoryPressureLimit = "80%";
+      };
+    })
+
+    # microvm@.service host-side OOM (opt-in via microvmHost)
+    (lib.mkIf cfg.microvmHost {
+      systemd.services."microvm@".serviceConfig = {
+        OOMScoreAdjust = 200;
+        ManagedOOMPreference = "omit";
+      };
+    })
   ]);
 }
