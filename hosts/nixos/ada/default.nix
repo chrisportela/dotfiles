@@ -23,11 +23,6 @@
       speedtest-utils = true;
       mDNS = true;
     };
-    ftp = {
-      enable = false;
-      directory = "/mnt/tank/photo-dump";
-      domain = "ftp.ada.i.cafecito.cloud";
-    };
     samba = {
       enable = true;
       openFirewall = true;

@@ -8,7 +8,6 @@
     ./network.nix
     ./openssh.nix
     ./gaming.nix
-    ./ftp.nix
     ./cafecitocloud
     ./local-llm
     ./memory-protection
