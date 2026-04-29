@@ -678,7 +678,7 @@ Replace with:
     enableRootSlice = true;
     enableUserSlices = true;
     enableSystemSlice = true;
-    extraConfig = {
+    settings.OOM = {
       # Default 30s is too patient on a workstation. 10s catches runaways
       # before interactive responsiveness craters.
       DefaultMemoryPressureDurationSec = "10s";
@@ -689,6 +689,8 @@ Replace with:
     };
   };
 ```
+
+(Note: NixOS's `systemd.oomd.extraConfig` was renamed to `systemd.oomd.settings.OOM`. The new spelling maps to the `[OOM]` section of `oomd.conf`.)
 
 - [ ] **Step 2: Remove the inline `ManagedOOMPreference` lines**
 

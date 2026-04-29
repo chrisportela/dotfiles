@@ -116,7 +116,7 @@
     enableRootSlice = true;
     enableUserSlices = true;
     enableSystemSlice = true;
-    extraConfig = {
+    settings.OOM = {
       # Default 30s is too patient on a workstation. 10s catches runaways
       # before interactive responsiveness craters.
       DefaultMemoryPressureDurationSec = "10s";
