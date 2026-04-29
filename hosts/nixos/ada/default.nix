@@ -13,10 +13,7 @@
     "nvidia-x11"
   ];
 
-  cafecitocloud = {
-    enable = true;
-    enableACME = true;
-  };
+  cafecitocloud.enable = true;
 
   chrisportela = {
     network = {

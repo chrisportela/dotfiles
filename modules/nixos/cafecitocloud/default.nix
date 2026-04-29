@@ -1,36 +1,17 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
   cfg = config.cafecitocloud;
 in
-with lib;
 {
   options.cafecitocloud = {
-    enable = mkEnableOption "Cafecito Cloud config";
-    enableACME = mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Enable cafecito cloud ACME";
-    };
+    enable = lib.mkEnableOption "Cafecito Cloud root CA trust";
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     security.pki.certificateFiles = [ ./cafecitocloud-root_ca.crt ];
-
-    security.acme = mkIf cfg.enableACME {
-      acceptTerms = true;
-      defaults = {
-        dnsResolver = "liara.gorgon-basilisk.ts.net";
-        email = "chris@cafecito.cloud";
-        server = "https://ca.cafecito.cloud/acme/acme/directory";
-        webroot = "/var/lib/acme/acme-challenge";
-        validMinDays = 5; # 14 certificate lifetime
-        renewInterval = "daily";
-      };
-    };
   };
 }
