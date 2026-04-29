@@ -4,7 +4,6 @@
   stdenv,
   attic-client,
   nix,
-  atticCache ? "ciri:main",
   hmConfig ? "cmp",
   shellNames ? [
     "dotfiles"
@@ -15,25 +14,65 @@
   ],
 }:
 let
-  atticArgs = lib.concatStringsSep " " [
-    "--jobs 4"
-  ];
   nixBin = "${nix}/bin/nix";
   atticBin = "${attic-client}/bin/attic";
 
   shellBlocks = lib.concatMapStringsSep "\n\n" (name: ''
     echo "#### Building shell: ${name}"
-    ${nixBin} build --out-link result-shell-${name} .#devShells.$SYSTEM.${name}
-    ${atticBin} push ${atticArgs} ${atticCache} result-shell-${name}
+    run ${nixBin} build --out-link result-shell-${name} .#devShells.$SYSTEM.${name}
+    run ${atticBin} push --jobs 4 $EXTRA_ARGS "$CACHE" result-shell-${name}
   '') shellNames;
 in
 (pkgs.writeShellScriptBin "attic-helper" ''
   set -eu
+
+  run() {
+    echo "+ $*" >&2
+    "$@"
+  }
+
+  usage() {
+    cat <<'USAGE' >&2
+  Usage: attic-helper <CACHE> [SYSTEM] [--all]
+
+    <CACHE>   Attic cache to push to, e.g. "ciri:main"
+    [SYSTEM]  Nix system (defaults to current host)
+    --all     Push every path, ignoring the upstream cache filter
+  USAGE
+  }
+
+  ALL=0
+  CACHE=""
   SYSTEM="${stdenv.system}"
-  if [ -n "''${1-}" ]; then
-    SYSTEM="$1"
+  positional=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --all|-a) ALL=1; shift ;;
+      -h|--help) usage; exit 0 ;;
+      --) shift; break ;;
+      -*) echo "Unknown flag: $1" >&2; usage; exit 2 ;;
+      *)
+        case "$positional" in
+          0) CACHE="$1"; positional=1 ;;
+          1) SYSTEM="$1"; positional=2 ;;
+          *) echo "Unexpected arg: $1" >&2; usage; exit 2 ;;
+        esac
+        shift ;;
+    esac
+  done
+
+  if [ -z "$CACHE" ]; then
+    echo "Error: <CACHE> is required" >&2
+    usage
+    exit 2
   fi
-  echo "Using SYSTEM=$SYSTEM"
+
+  EXTRA_ARGS=""
+  if [ "$ALL" = 1 ]; then
+    EXTRA_ARGS="--ignore-upstream-cache-filter"
+  fi
+
+  echo "Using CACHE=$CACHE SYSTEM=$SYSTEM ALL=$ALL"
 
   if [ ! -f flake.nix ]; then
     echo "Error: flake.nix not found. Run this script from the flake root." >&2
@@ -42,13 +81,13 @@ in
 
   echo "#### Building HM"
   if command -v home-manager 1>/dev/null 2>&1; then
-    home-manager build --flake .#${hmConfig}
+    run home-manager build --flake .#${hmConfig}
   else
-    ${nixBin} build .#legacyPackages.$SYSTEM.homeConfigurations.${hmConfig}.activationPackage
+    run ${nixBin} build .#legacyPackages.$SYSTEM.homeConfigurations.${hmConfig}.activationPackage
   fi
-  rm result-hm-${hmConfig} || true
-  mv result result-hm-${hmConfig}
-  ${atticBin} push ${atticArgs} ${atticCache} result-hm-${hmConfig}
+  run rm result-hm-${hmConfig} || true
+  run mv result result-hm-${hmConfig}
+  run ${atticBin} push --jobs 4 $EXTRA_ARGS "$CACHE" result-hm-${hmConfig}
 
   echo "#### Building shells"
   ${shellBlocks}
