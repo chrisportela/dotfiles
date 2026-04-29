@@ -116,20 +116,37 @@
     enableRootSlice = true;
     enableUserSlices = true;
     enableSystemSlice = true;
+    extraConfig = {
+      # Default 30s is too patient on a workstation. 10s catches runaways
+      # before interactive responsiveness craters.
+      DefaultMemoryPressureDurationSec = "10s";
+      # Act when global swap usage crosses 90%. Reaching this on Optane
+      # means we've exhausted reclaim budget, not just normal cold-page
+      # eviction.
+      SwapUsedLimit = "90%";
+    };
   };
 
-  # Protect critical system services from OOM
-  systemd.services.dbus.serviceConfig.ManagedOOMPreference = "avoid";
-  systemd.services.systemd-journald.serviceConfig.ManagedOOMPreference = "avoid";
-
-  # Limit nix-daemon builds to prevent runaway memory consumption.
-  # MemoryHigh triggers systemd-oomd to kill within this cgroup.
-  # MemoryMax is a hard ceiling enforced by the kernel.
-  systemd.services.nix-daemon.serviceConfig = {
-    ManagedOOMMemoryPressure = "kill";
-    ManagedOOMMemoryPressureLimit = "80%"; # kill when 80% pressure in this cgroup
-    MemoryMax = "55G"; # hard ceiling for all nix-daemon children
-    MemoryHigh = "48G"; # trigger pressure/reclaim at 48G
+  # Memory protection: cgroup ceilings + critical-service hardening.
+  # See modules/nixos/memory-protection/README.md for layer architecture.
+  chrisportela.memory-protection = {
+    enable = true;
+    nixDaemon = {
+      enable = true;
+      memoryMax = "90G";
+      memoryHigh = "75G";
+    };
+    dockerSlice = {
+      enable = true;
+      memoryMax = "90G";
+      memoryHigh = "75G";
+    };
+    userSlice = {
+      enable = true;
+      memoryMax = "100G";
+      memoryHigh = "85G";
+    };
+    microvmHost = true;
   };
 
   # Enable OpenGL
