@@ -178,6 +178,7 @@
               content = {
                 type = "swap";
                 randomEncryption = true;
+                priority = 100;
               };
             };
             luks = {
@@ -210,6 +211,7 @@
               content = {
                 type = "swap";
                 randomEncryption = true;
+                priority = 100;
               };
             };
             luks = {
@@ -242,6 +244,7 @@
               content = {
                 type = "swap";
                 randomEncryption = true;
+                priority = 100;
               };
             };
             luks = {
@@ -274,6 +277,7 @@
               content = {
                 type = "swap";
                 randomEncryption = true;
+                priority = 100;
               };
             };
             luks = {
