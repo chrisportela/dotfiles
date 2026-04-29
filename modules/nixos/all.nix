@@ -9,7 +9,6 @@
     ./openssh.nix
     ./gaming.nix
     ./cafecitocloud
-    ./local-llm
     ./memory-protection
     ./nginx-cloudflare.nix
     ./samba

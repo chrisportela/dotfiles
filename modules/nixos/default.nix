@@ -3,7 +3,6 @@
   cafecitocloud = ./cafecitocloud;
   common = ./common.nix;
   # ddc = ./ddc.nix;
-  local-llm = ./local-llm;
   gaming = ./gaming.nix;
   memory-protection = ./memory-protection;
   network = ./network.nix;

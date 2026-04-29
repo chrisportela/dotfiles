@@ -56,46 +56,6 @@
       };
     };
     gaming.enable = true;
-    local-llm = {
-      enable = true;
-      vllm = {
-        enable = true;
-
-        # Pinned to a model this vllm version supports. Bump to Qwen3.6
-        # (or Gemma4) once nixpkgs-unstable advances vllm past Qwen3.5
-        # arch support.
-        model = "cpatonn/Qwen3-Coder-30B-A3B-Instruct-AWQ-4bit";
-        #model = "Qwen/Qwen3.6-27B";
-        #model = "google/gemma-4-26B-A4B-it";
-        #model = "google/gemma-4-31B-it";
-
-        toolCallParser = "qwen3_coder";
-        #toolCallParser = "gemma4";
-
-        # 24 GB 3090, Ollama is being removed from this host, so vLLM can
-        # take most of the card. Leaving ~5 GB headroom for the desktop /
-        # other GPU workloads (Kokoro TTS container, occasional CUDA jobs).
-        gpuMemoryUtilization = 0.92;
-
-        # 32k is a reasonable agentic default; raise up to the model's
-        # native context if you need it and VRAM allows.
-        maxModelLen = 45057;
-
-        # KV cache scales with maxNumSeqs * maxModelLen. On a 24 GB 3090
-        # carrying a 30B-MoE AWQ + 32k context, the upstream default (256)
-        # OOMs at load. 4 lets a couple of agentic clients overlap without
-        # blowing the budget; raise if more concurrency is needed and you
-        # accept the VRAM cost.
-        maxNumSeqs = 2;
-
-        # Short alias clients use in the OpenAI `model` field. Optional.
-        servedModelName = "ada";
-
-        vhost = "vllm.ada.i.cafecito.cloud";
-
-        # extraFlags = [ "--dtype" "auto" ];
-      };
-    };
   };
 
   age.secrets.ada-samba-passwords.file = ../../../secrets/ada-samba-passwords.age;
