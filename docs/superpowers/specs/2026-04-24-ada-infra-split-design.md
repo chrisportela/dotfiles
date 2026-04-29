@@ -120,8 +120,13 @@ Remove:
 - `elasticsearch` from `allowedUnfree`
 
 Keep (baseline):
-- `allowedUnfree` trimmed to `claude-code`, `nvidia-persistenced`,
-  `nvidia-settings`, `nvidia-x11`, `ookla-speedtest`
+- `allowedUnfree` covers `claude-code`, `nvidia-persistenced`,
+  `nvidia-settings`, `nvidia-x11`, `ookla-speedtest`, plus a CUDA slice
+  (`cuda-merged`, the `cuda_*` family, the `lib*`/`cudnn` family) needed by
+  `nvtopPackages.full` once `local-llm` is no longer providing the
+  whitelist. `cudaSupport = true` (which the old `local-llm` module set) is
+  intentionally NOT carried over — that flag belongs to infra's LLM modules,
+  not the recovery baseline.
 - `cafecitocloud.enable = true` (CA trust)
 - `chrisportela.network = { speedtest-utils, mDNS };`
 - `chrisportela.gaming.enable = true`
