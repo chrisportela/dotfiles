@@ -625,10 +625,13 @@ Expected: exit 0. The drv path is regenerated.
 - [ ] **Step 4: Confirm zswap is in kernel params**
 
 ```bash
-nix eval --json .#nixosConfigurations.ada.config.boot.kernelParams | grep -c zswap
+nix eval --json .#nixosConfigurations.ada.config.boot.kernelParams \
+  | python3 -c 'import json, sys; print(sum(1 for p in json.load(sys.stdin) if "zswap" in p))'
 ```
 
 Expected: `5` (five zswap.* parameters added).
+
+(`grep -c` counts matching lines, not matches; `nix eval --json` prints the array on one line, so `grep -c` reports 1.)
 
 - [ ] **Step 5: Commit**
 
