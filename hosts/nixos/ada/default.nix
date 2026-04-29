@@ -23,42 +23,8 @@
       speedtest-utils = true;
       mDNS = true;
     };
-    samba = {
-      enable = true;
-      openFirewall = true;
-      users = [ "cmp" ];
-      passwordFile = config.age.secrets.ada-samba-passwords.path;
-      shares = {
-        photography = {
-          type = "private";
-          browseable = true;
-          path = "/home/cmp/tank/photography";
-          users = [ "cmp" ];
-          createDir = false;
-        };
-        home-shared = {
-          type = "private";
-          browseable = true;
-          path = "/home/cmp/shared";
-          users = [ "cmp" ];
-        };
-        tank-shared = {
-          type = "private";
-          browseable = true;
-          path = "/mnt/tank/shared";
-          users = [ "cmp" ];
-        };
-        tank-public = {
-          type = "public";
-          path = "/mnt/tank/public";
-          users = [ "cmp" ];
-        };
-      };
-    };
     gaming.enable = true;
   };
-
-  age.secrets.ada-samba-passwords.file = ../../../secrets/ada-samba-passwords.age;
 
   networking = {
     hostId = "5bc6e263";

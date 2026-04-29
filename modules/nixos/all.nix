@@ -11,6 +11,5 @@
     ./cafecitocloud
     ./memory-protection
     ./nginx-cloudflare.nix
-    ./samba
   ];
 }
