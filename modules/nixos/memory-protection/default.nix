@@ -54,7 +54,42 @@ in
     microvmHost = lib.mkEnableOption "host-side OOM settings for microvm@.service (biases kernel toward killing VMs before host services)";
   };
 
-  config = lib.mkIf cfg.enable {
-    # Implementation lands in subsequent tasks.
-  };
+  config = lib.mkIf cfg.enable (lib.mkMerge [
+    # Always-on: critical-service hardening
+    {
+      systemd.services.dbus.serviceConfig = {
+        ManagedOOMPreference = "avoid";
+        OOMScoreAdjust = -900;
+        MemoryMin = "64M";
+      };
+      systemd.services.systemd-journald.serviceConfig = {
+        ManagedOOMPreference = "avoid";
+        OOMScoreAdjust = -900;
+        MemoryMin = "128M";
+      };
+      systemd.services.sshd.serviceConfig = {
+        ManagedOOMPreference = "avoid";
+        OOMScoreAdjust = -900;
+        MemoryMin = "32M";
+      };
+      systemd.services.systemd-logind.serviceConfig = {
+        ManagedOOMPreference = "avoid";
+        OOMScoreAdjust = -900;
+      };
+    }
+
+    (lib.mkIf config.networking.networkmanager.enable {
+      systemd.services.NetworkManager.serviceConfig = {
+        ManagedOOMPreference = "avoid";
+        OOMScoreAdjust = -800;
+      };
+    })
+
+    (lib.mkIf config.services.tailscale.enable {
+      systemd.services.tailscaled.serviceConfig = {
+        ManagedOOMPreference = "avoid";
+        OOMScoreAdjust = -800;
+      };
+    })
+  ]);
 }
