@@ -62,7 +62,34 @@
       };
     };
     gaming.enable = true;
-    local-llm.enable = true;
+    local-llm = {
+      enable = true;
+      vllm = {
+        enable = true;
+
+        model = "Qwen/Qwen3.6-27B";
+        #model = "google/gemma-4-26B-A4B-it";
+        #model = "google/gemma-4-31B-it";
+
+        toolCallParser = "qwen3_coder";
+        #toolCallParser = "gemma4";
+
+        # 24 GB 3090, Ollama is being removed from this host, so vLLM can
+        # take the whole card. Lower if another GPU workload runs here.
+        gpuMemoryUtilization = 0.92;
+
+        # 32k is a reasonable agentic default; raise up to the model's
+        # native context if you need it and VRAM allows.
+        maxModelLen = 32768;
+
+        # Short alias clients use in the OpenAI `model` field. Optional.
+        servedModelName = "ada";
+
+        vhost = "vllm.ada.i.cafecito.cloud";
+
+        # extraFlags = [ "--dtype" "auto" ];
+      };
+    };
     agent-vms = {
       enable = true;
       nat.externalInterface = "enp6s0";

@@ -30,6 +30,7 @@ let
       peekaboo
       plane-mcp-server
       context7
+      openldap
     ]);
   unfreePredicate =
     if allowUnfreePredicate == null then

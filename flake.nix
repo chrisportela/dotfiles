@@ -332,6 +332,7 @@
               stateVersion = "25.05";
               overlays = [
                 (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
+                overlaysSet.openldap
               ];
               hardwareConfig = ./hosts/nixos/ada/hardware.nix;
               config = ./hosts/nixos/ada;
