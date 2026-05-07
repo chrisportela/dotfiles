@@ -102,9 +102,25 @@ let
       }
 
       cmd_add() {
-        local branch="''${1:-}"
+        local branch=""
+        local skip_direnv=false
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --no-direnv) skip_direnv=true; shift ;;
+            --) shift; break ;;
+            -*) echo "Unknown flag: $1" >&2; exit 1 ;;
+            *)
+              if [ -z "$branch" ]; then
+                branch="$1"; shift
+              else
+                echo "Unexpected argument: $1" >&2; exit 1
+              fi
+              ;;
+          esac
+        done
+
         if [ -z "$branch" ]; then
-          echo "Usage: wt add <branch>" >&2
+          echo "Usage: wt add [--no-direnv] <branch>" >&2
           exit 1
         fi
 
@@ -130,6 +146,18 @@ let
         else
           echo "Creating new branch '$branch'"
           git worktree add -b "$branch" "$wt_path"
+        fi
+
+        if [ "$skip_direnv" != true ] && command -v direnv >/dev/null 2>&1; then
+          local envrc_list
+          envrc_list=$(wt_find_envrcs "$wt_path")
+          if [ -n "$envrc_list" ]; then
+            local n
+            n=$(printf '%s\n' "$envrc_list" | wc -l)
+            echo ""
+            echo "Approving $n .envrc file(s) with direnv:"
+            wt_allow_envrcs "$wt_path"
+          fi
         fi
 
         echo ""
