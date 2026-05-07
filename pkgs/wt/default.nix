@@ -27,7 +27,7 @@ let
         echo ""
         echo "Commands:"
         echo "  init          Setup .worktrees/ and add to .git/info/exclude"
-        echo "  add <branch>  Create a worktree with a new or existing branch"
+        echo "  add [--no-direnv] <branch>  Create a worktree with a new or existing branch"
         echo "  ls            List active worktrees"
         echo "  rm <branch>   Remove a worktree interactively"
         echo "  help          Show this help message"
@@ -107,7 +107,6 @@ let
         while [ $# -gt 0 ]; do
           case "$1" in
             --no-direnv) skip_direnv=true; shift ;;
-            --) shift; break ;;
             -*) echo "Unknown flag: $1" >&2; exit 1 ;;
             *)
               if [ -z "$branch" ]; then
