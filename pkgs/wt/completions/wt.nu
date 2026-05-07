@@ -32,7 +32,10 @@ export extern "wt" [
 
 # Per-subcommand externs for positional arg completion
 export extern "wt init" []
-export extern "wt add" [branch?: string@"nu-complete wt-branches"]
+export extern "wt add" [
+  branch?: string@"nu-complete wt-branches"
+  --no-direnv  # skip direnv allow on .envrc files
+]
 export extern "wt ls" []
 export extern "wt rm" [branch?: string@"nu-complete wt-worktrees"]
 export extern "wt help" []
