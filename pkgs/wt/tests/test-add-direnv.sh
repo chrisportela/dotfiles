@@ -87,6 +87,7 @@ grep -qxF "DIRENV_CALLED allow $tmp/wt/src/.envrc"    "$DIRENV_LOG" || fail "dir
 pass "wt_allow_envrcs invokes direnv allow once per .envrc"
 
 # Test 5: wt_allow_envrcs prints relative paths for each allowed file.
+# Reads $out_file written by Test 4 — keep these tests in sequence.
 grep -qxF "  allowed: .envrc"        "$out_file" || fail "output missing 'allowed: .envrc'"
 grep -qxF "  allowed: infra/.envrc"  "$out_file" || fail "output missing 'allowed: infra/.envrc'"
 grep -qxF "  allowed: src/.envrc"    "$out_file" || fail "output missing 'allowed: src/.envrc'"

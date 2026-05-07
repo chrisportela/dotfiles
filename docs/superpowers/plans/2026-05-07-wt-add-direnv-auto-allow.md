@@ -60,7 +60,7 @@ pass() { echo "PASS: $*"; }
 wt_find_envrcs() {
   local p="$1"
   find "$p" -name .envrc -not -path '*/.git/*' 2>/dev/null | sort | while IFS= read -r f; do
-    printf '%s\n' "${f#$p/}"
+    printf '%s\n' "${f#"$p"/}"
   done
 }
 
@@ -171,7 +171,7 @@ Open `pkgs/wt/default.nix`. Find the `upstream_gone()` helper (currently around 
       }
 ```
 
-Note the `''${f#$p/}` Nix-string escape: the leading `''$` produces a literal `${...}` so Nix doesn't try to interpolate `f#$p/`. This matches the existing `''${1:-}` pattern in `cmd_add`.
+Note the `''${f#"$p"/}` Nix-string escape: the leading `''$` produces a literal `${...}` so Nix doesn't try to interpolate. This matches the existing `''${1:-}` pattern in `cmd_add`. The `"$p"` quoting inside the parameter expansion is required by `writeShellApplication`'s embedded shellcheck (SC2295); the unquoted form fails the build.
 
 - [ ] **Step 4: Build wt to verify the Nix source still parses**
 
