@@ -13,7 +13,7 @@ _wt() {
     add)
       if [[ "$cur" == --* ]]; then
         COMPREPLY=( $(compgen -W "--no-direnv" -- "$cur") )
-      elif [[ $COMP_CWORD -eq 2 ]]; then
+      elif [[ $COMP_CWORD -eq 2 || ( $COMP_CWORD -eq 3 && "${COMP_WORDS[2]}" == --* ) ]]; then
         local branches
         branches=$(
           {

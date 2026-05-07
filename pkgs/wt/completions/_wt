@@ -40,11 +40,9 @@ _wt() {
     args)
       case $words[1] in
         add)
-          if [[ "$words[CURRENT]" == --* ]]; then
-            _values 'flag' '--no-direnv[skip direnv allow on .envrc files]'
-          else
-            _wt_branches
-          fi
+          _arguments \
+            '--no-direnv[skip direnv allow on .envrc files]' \
+            ': :_wt_branches'
           ;;
         rm)  _wt_worktrees ;;
       esac
