@@ -54,6 +54,26 @@ let
         [[ "$track" == *"[gone]"* ]]
       }
 
+      wt_find_envrcs() {
+        # $1 = path. Prints relative paths of all .envrc files, sorted.
+        local p="$1"
+        find "$p" -name .envrc -not -path '*/.git/*' 2>/dev/null | sort | while IFS= read -r f; do
+          printf '%s\n' "''${f#"$p"/}"
+        done
+      }
+
+      wt_allow_envrcs() {
+        # $1 = worktree path. Calls `direnv allow` on each .envrc found.
+        # Prints "  allowed: <relative>" per file. Caller is responsible for
+        # the `command -v direnv` availability check.
+        local p="$1" rel
+        while IFS= read -r rel; do
+          [ -z "$rel" ] && continue
+          direnv allow "$p/$rel"
+          echo "  allowed: $rel"
+        done < <(wt_find_envrcs "$p")
+      }
+
       cmd_init() {
         ensure_git_repo
         local root
