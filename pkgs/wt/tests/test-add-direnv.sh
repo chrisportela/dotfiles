@@ -11,7 +11,10 @@ pass() { echo "PASS: $*"; }
 
 # Re-declare the helpers here so this test runs standalone without
 # needing to parse bash out of a Nix string. Keep in sync with
-# pkgs/wt/default.nix.
+# pkgs/wt/default.nix. Note: the "$p" quoting in `${f#"$p"/}` is
+# required by writeShellApplication's shellcheck step (SC2295);
+# plain $p without quotes works identically for our paths but
+# fails the build.
 
 wt_find_envrcs() {
   local p="$1"
