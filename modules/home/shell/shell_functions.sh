@@ -281,3 +281,91 @@ which-path() {
     echo "$which_path"
   fi
 }
+
+# dated [-i] PATH
+#
+# Print PATH with today's date attached to the basename. Default mode prefixes
+# the date so files sort chronologically; -i infixes it before the extension.
+# The "extension" is everything after the first non-leading dot, so multi-part
+# extensions like .tar.gz are preserved as a unit.
+#
+# Examples:
+#   dated foo.txt              -> 2026-05-07.foo.txt
+#   dated -i foo.txt           -> foo.2026-05-07.txt
+#   dated archive.tar.gz       -> 2026-05-07.archive.tar.gz
+#   dated -i archive.tar.gz    -> archive.2026-05-07.tar.gz
+#   dated path/to/foo.txt      -> path/to/2026-05-07.foo.txt
+#   dated README               -> warns; emits 2026-05-07.README
+#
+# Compose with cp/mv/tar/etc:
+#   cp foo.txt "$(dated foo.txt)"
+#   tar czf "$(dated archive.tar.gz)" ./src
+dated() {
+    local infix=0
+    if [[ "$1" == "-i" ]]; then
+        infix=1
+        shift
+    fi
+
+    if [[ -z "$1" ]]; then
+        echo "usage: dated [-i] PATH" >&2
+        return 2
+    fi
+
+    local path="$1"
+    local today
+    today=$(date +%F)
+
+    # Separate directory (with trailing slash) from basename so the date
+    # attaches to the basename and the path is reassembled at the end.
+    local dir base
+    if [[ "$path" == */* ]]; then
+        dir="${path%/*}/"
+        base="${path##*/}"
+    else
+        dir=""
+        base="$path"
+    fi
+
+    # Strip leading dots first so the date doesn't break ".bashrc"-style hidden
+    # files (we re-attach $leading at the end). Then the first remaining dot
+    # separates stem from extension; absent any inner dot, ext stays empty.
+    local leading="" rest="$base"
+    while [[ "$rest" == .* ]]; do
+        leading+="."
+        rest="${rest#.}"
+    done
+    local stem ext
+    if [[ "$rest" == *.* ]]; then
+        stem="${rest%%.*}"
+        ext="${rest#*.}"
+    else
+        stem="$rest"
+        ext=""
+    fi
+
+    if [[ -z "$ext" ]]; then
+        echo "dated: warning: '$1' has no extension" >&2
+    fi
+
+    local dated_base
+    if (( infix )); then
+        if [[ -n "$ext" ]]; then
+            dated_base="${leading}${stem}.${today}.${ext}"
+        else
+            # Nothing to infix before; append as suffix.
+            dated_base="${leading}${stem}.${today}"
+        fi
+    else
+        if [[ -n "$ext" ]]; then
+            dated_base="${leading}${today}.${stem}.${ext}"
+        else
+            dated_base="${leading}${today}.${stem}"
+        fi
+    fi
+
+    printf '%s%s\n' "$dir" "$dated_base"
+}
+if command -v compdef >/dev/null 2>&1; then
+    compdef _files dated
+fi
