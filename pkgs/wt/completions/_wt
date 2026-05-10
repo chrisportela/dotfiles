@@ -39,7 +39,11 @@ _wt() {
       ;;
     args)
       case $words[1] in
-        add) _wt_branches ;;
+        add)
+          _arguments \
+            '--no-direnv[skip direnv allow on .envrc files]' \
+            ': :_wt_branches'
+          ;;
         rm)  _wt_worktrees ;;
       esac
       ;;

@@ -27,7 +27,7 @@ let
         echo ""
         echo "Commands:"
         echo "  init          Setup .worktrees/ and add to .git/info/exclude"
-        echo "  add <branch>  Create a worktree with a new or existing branch"
+        echo "  add [--no-direnv] <branch>  Create a worktree with a new or existing branch"
         echo "  ls            List active worktrees"
         echo "  rm <branch>   Remove a worktree interactively"
         echo "  help          Show this help message"
@@ -52,6 +52,34 @@ let
         local track
         track=$(git for-each-ref --format='%(upstream:track)' "refs/heads/$1")
         [[ "$track" == *"[gone]"* ]]
+      }
+
+      wt_remote_matches() {
+        # $1 = branch name. Prints short refs (e.g., "origin/foo") of every
+        # remote-tracking branch with that name, one per line. Empty when none.
+        # Used by cmd_add to decide whether to track an existing remote branch
+        # rather than silently create an unrelated local branch.
+        git for-each-ref --format='%(refname:lstrip=2)' "refs/remotes/*/$1" 2>/dev/null
+      }
+
+      wt_find_envrcs() {
+        # $1 = path. Prints relative paths of all .envrc files, sorted.
+        local p="$1"
+        find "$p" -name .envrc -not -path '*/.git/*' 2>/dev/null | sort | while IFS= read -r f; do
+          printf '%s\n' "''${f#"$p"/}"
+        done
+      }
+
+      wt_allow_envrcs() {
+        # $1 = worktree path. Calls `direnv allow` on each .envrc found.
+        # Prints "  allowed: <relative>" per file. Caller is responsible for
+        # the `command -v direnv` availability check.
+        local p="$1" rel
+        while IFS= read -r rel; do
+          [ -z "$rel" ] && continue
+          direnv allow "$p/$rel"
+          echo "  allowed: $rel"
+        done < <(wt_find_envrcs "$p")
       }
 
       cmd_init() {
@@ -82,9 +110,24 @@ let
       }
 
       cmd_add() {
-        local branch="''${1:-}"
+        local branch=""
+        local skip_direnv=false
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --no-direnv) skip_direnv=true; shift ;;
+            -*) echo "Unknown flag: $1" >&2; exit 1 ;;
+            *)
+              if [ -z "$branch" ]; then
+                branch="$1"; shift
+              else
+                echo "Unexpected argument: $1" >&2; exit 1
+              fi
+              ;;
+          esac
+        done
+
         if [ -z "$branch" ]; then
-          echo "Usage: wt add <branch>" >&2
+          echo "Usage: wt add [--no-direnv] <branch>" >&2
           exit 1
         fi
 
@@ -103,13 +146,46 @@ let
           exit 1
         fi
 
-        # Check if branch already exists
+        # Resolve the branch: prefer an existing local branch, then DWIM-track a
+        # unique remote-tracking branch (matches `git checkout`), and only
+        # create a fresh branch when no remote has it. Multi-remote name
+        # collisions are an error — the user must qualify the desired remote.
         if git show-ref --verify --quiet "refs/heads/$branch"; then
           echo "Checking out existing branch '$branch'"
           git worktree add "$wt_path" "$branch"
         else
-          echo "Creating new branch '$branch'"
-          git worktree add -b "$branch" "$wt_path"
+          local -a remote_short
+          mapfile -t remote_short < <(wt_remote_matches "$branch")
+          local remote_count=''${#remote_short[@]}
+          case "$remote_count" in
+            0)
+              echo "Creating new branch '$branch'"
+              git worktree add -b "$branch" "$wt_path"
+              ;;
+            1)
+              local short_ref="''${remote_short[0]}"
+              echo "Tracking remote branch '$short_ref' as '$branch'"
+              git worktree add --track -b "$branch" "$wt_path" "$short_ref"
+              ;;
+            *)
+              echo "Error: branch '$branch' exists on multiple remotes:" >&2
+              printf '  %s\n' "''${remote_short[@]}" >&2
+              echo "Resolve manually: git worktree add $wt_path -b $branch --track <remote>/$branch" >&2
+              exit 1
+              ;;
+          esac
+        fi
+
+        if [ "$skip_direnv" != true ] && command -v direnv >/dev/null 2>&1; then
+          local envrc_list
+          envrc_list=$(wt_find_envrcs "$wt_path")
+          if [ -n "$envrc_list" ]; then
+            local n
+            n=$(printf '%s\n' "$envrc_list" | wc -l)
+            echo ""
+            echo "Approving $n .envrc file(s) with direnv:"
+            wt_allow_envrcs "$wt_path"
+          fi
         fi
 
         echo ""

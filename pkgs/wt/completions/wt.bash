@@ -11,7 +11,9 @@ _wt() {
 
   case "$subcmd" in
     add)
-      if [[ $COMP_CWORD -eq 2 ]]; then
+      if [[ "$cur" == --* ]]; then
+        COMPREPLY=( $(compgen -W "--no-direnv" -- "$cur") )
+      elif [[ $COMP_CWORD -eq 2 || ( $COMP_CWORD -eq 3 && "${COMP_WORDS[2]}" == --* ) ]]; then
         local branches
         branches=$(
           {

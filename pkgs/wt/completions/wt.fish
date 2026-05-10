@@ -25,4 +25,5 @@ complete -c wt -n __fish_use_subcommand -a help -d 'show help'
 
 # Args
 complete -c wt -n '__fish_seen_subcommand_from add' -a '(__wt_branches)'
+complete -c wt -n '__fish_seen_subcommand_from add' -l no-direnv -d 'skip direnv allow on .envrc files'
 complete -c wt -n '__fish_seen_subcommand_from rm'  -a '(__wt_worktrees)'
