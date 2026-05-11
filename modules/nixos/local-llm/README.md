@@ -22,6 +22,7 @@ All options live under `chrisportela.local-llm`.
 | `vllm.toolCallParser` | str | Tool-call parser name registered in the running vLLM. Validated by vLLM at startup, not at Nix eval — the canonical list lives in `vllm/tool_parsers/__init__.py` of the pinned source. Examples: `hermes`, `llama3_json`, `mistral`, `pythonic`, `qwen3_coder`, `qwen3_xml`, `functiongemma`. |
 | `vllm.gpuMemoryUtilization` | float | Fraction of GPU memory vLLM may use. Default `0.9`. |
 | `vllm.maxModelLen` | int | Max context window in tokens. Default `8192`. KV-cache is pre-allocated based on this. |
+| `vllm.maxNumSeqs` | int | Max concurrent sequences in a batch. Default `256` (vLLM upstream). KV-cache pool sizes as `maxNumSeqs * maxModelLen`; drop on smaller GPUs. |
 | `vllm.port` | port | Port bound on `127.0.0.1`. Default `8000`. |
 | `vllm.servedModelName` | str? | Short alias clients use in the OpenAI `model` field. Default: full repo ID. |
 | `vllm.extraFlags` | [str] | Extra flags appended to `vllm serve`. |

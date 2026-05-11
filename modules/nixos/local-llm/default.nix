@@ -61,6 +61,17 @@ with lib;
         '';
       };
 
+      maxNumSeqs = mkOption {
+        type = types.ints.positive;
+        default = 256;
+        description = ''
+          Maximum number of concurrent sequences in a single batch. vLLM
+          pre-allocates KV-cache for `maxNumSeqs * maxModelLen` tokens, so on
+          smaller GPUs you usually need to drop this from the upstream default
+          (256) to fit a long context window in VRAM.
+        '';
+      };
+
       port = mkOption {
         type = types.port;
         default = 8000;
@@ -81,7 +92,12 @@ with lib;
         type = types.listOf types.str;
         default = [ ];
         description = "Additional flags appended to `vllm serve`.";
-        example = [ "--dtype" "auto" "--quantization" "awq_marlin" ];
+        example = [
+          "--dtype"
+          "auto"
+          "--quantization"
+          "awq_marlin"
+        ];
       };
 
       vhost = mkOption {
@@ -197,7 +213,7 @@ with lib;
       ];
 
       # One-shot prefetch. Runs before vllm.service so the model is on-disk
-      # before the engine starts. Idempotent: huggingface-cli checks local
+      # before the engine starts. Idempotent: hf checks local
       # cache hashes and only downloads missing shards.
       systemd.services.vllm-model-download = {
         description = "Download vLLM model (${vcfg.model}) from HuggingFace";
@@ -217,7 +233,7 @@ with lib;
           RemainAfterExit = true;
           User = "vllm";
           Group = "vllm";
-          ExecStart = "${pkgs.python3-hf}/bin/huggingface-cli download ${lib.escapeShellArg vcfg.model}";
+          ExecStart = "${pkgs.python3-hf}/bin/hf download ${lib.escapeShellArg vcfg.model}";
           TimeoutStartSec = "2h";
         };
       };
@@ -258,15 +274,23 @@ with lib;
               "${pkgs.vllm}/bin/vllm"
               "serve"
               (lib.escapeShellArg vcfg.model)
-              "--host" "127.0.0.1"
-              "--port" (toString vcfg.port)
-              "--gpu-memory-utilization" (toString vcfg.gpuMemoryUtilization)
-              "--max-model-len" (toString vcfg.maxModelLen)
+              "--host"
+              "127.0.0.1"
+              "--port"
+              (toString vcfg.port)
+              "--gpu-memory-utilization"
+              (toString vcfg.gpuMemoryUtilization)
+              "--max-model-len"
+              (toString vcfg.maxModelLen)
+              "--max-num-seqs"
+              (toString vcfg.maxNumSeqs)
               "--enable-auto-tool-choice"
-              "--tool-call-parser" vcfg.toolCallParser
+              "--tool-call-parser"
+              vcfg.toolCallParser
             ]
             ++ lib.optionals (vcfg.servedModelName != null) [
-              "--served-model-name" (lib.escapeShellArg vcfg.servedModelName)
+              "--served-model-name"
+              (lib.escapeShellArg vcfg.servedModelName)
             ]
             ++ map lib.escapeShellArg vcfg.extraFlags
           );
