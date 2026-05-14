@@ -11,7 +11,7 @@ in
 
   options.chrisportela.coding-agents = {
     enable = lib.mkEnableOption "coding agents";
-    localLlm.enable = lib.mkEnableOption "aichat config pointing at a local vLLM at 127.0.0.1:8000 (set on hosts that run the local-llm module)";
+    localLlm.enable = lib.mkEnableOption "aichat client + config pointing at https://vllm.ada.i.cafecito.cloud (the local vLLM service, reachable to tailnet members)";
   };
 
   config = lib.mkIf cfg.enable {
@@ -33,7 +33,6 @@ in
     home.packages =
       with pkgs;
       [
-        aichat
         codex
         context7
         opencode
@@ -46,6 +45,9 @@ in
       ]
       ++ lib.optionals pkgs.stdenv.isLinux [
         code-cursor-fhs
+      ]
+      ++ lib.optionals cfg.localLlm.enable [
+        aichat
       ];
 
     chrisportela.mcp-servers.servers.context7 = {
@@ -61,16 +63,13 @@ in
       "opencode/plugin/cursor-acp.js".source =
         "${pkgs.opencode-cursor}/share/opencode-cursor/plugin-entry.js";
     }
-    # aichat default config: only on hosts running a local vLLM. Targets
-    # 127.0.0.1:8000 since the public vhost (vllm.ada.i.cafecito.cloud)
-    # needs DNS + ACME before it's reachable.
     // lib.optionalAttrs cfg.localLlm.enable {
       "aichat/config.yaml".text = ''
         model: ada:ada
         clients:
           - type: openai-compatible
             name: ada
-            api_base: http://127.0.0.1:8000/v1
+            api_base: https://vllm.ada.i.cafecito.cloud/v1
             api_key: dummy
             models:
               - name: ada
