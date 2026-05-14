@@ -215,7 +215,10 @@
                   options.chrisportela = {
                     desktop.enable = true;
                     experiment.enable = true;
-                    coding-agents.enable = true;
+                    coding-agents = {
+                      enable = true;
+                      localLlm.enable = true;
+                    };
                     direnv.plugins = {
                       postgres.enable = true;
                       plane.enable = true;
@@ -314,6 +317,11 @@
                 inputs.disko.nixosModules.disko
                 inputs.vscode-server.nixosModules.default
                 self.nixosModules.default
+              ];
+              # Repo-wide overlays applied to every host. Per-host overlays
+              # (the `overlays` arg below) still compose on top.
+              defaultOverlays = [
+                overlaysSet.openldap
               ];
               specialArgs = { inherit inputs; };
             };

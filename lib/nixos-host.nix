@@ -11,6 +11,9 @@
 {
   nixos,
   nixosModules,
+  # Overlays applied to every host built through mkHost. Host-specific
+  # overlays (the per-host `overlays` arg below) are appended after these.
+  defaultOverlays ? [ ],
   specialArgs ? { },
 }:
 {
@@ -26,7 +29,8 @@ nixos.lib.nixosSystem {
   inherit system;
 
   specialArgs = {
-    inherit system overlays;
+    inherit system;
+    overlays = defaultOverlays ++ overlays;
     nixpkgs = nixos;
   }
   // specialArgs;

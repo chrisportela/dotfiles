@@ -121,4 +121,22 @@
       context7 = self.packages.${final.stdenv.system}.context7;
     }
   );
+
+  # Skips the OpenLDAP check phase for the i686 build only, which is pulled
+  # in by 32-bit multilib (lutris/steam). test017-syncreplication-refresh
+  # is a timing-sensitive flake; bumping SLEEP1/SLEEP2 didn't help. Scoped
+  # to pkgsi686Linux so the x86_64 build stays on the binary cache.
+  # Tracked upstream in https://github.com/NixOS/nixpkgs/issues/514113 —
+  # acknowledged as low-urgency; disabling checks is the recommended workaround.
+  openldap = (
+    final: prev: {
+      pkgsi686Linux = prev.pkgsi686Linux.extend (
+        _: prevI686: {
+          openldap = prevI686.openldap.overrideAttrs (_: {
+            doCheck = false;
+          });
+        }
+      );
+    }
+  );
 }
