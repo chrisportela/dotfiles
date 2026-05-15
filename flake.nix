@@ -235,7 +235,7 @@
                   };
                 };
                 "deck@steamdeck" = simpleHomeConfig {
-                  inherit pkgs;
+                  pkgs = pkgsUnstable;
                   home-manager = inputs.home-manager;
                   username = "deck";
                   options.chrisportela = {
@@ -305,6 +305,61 @@
         };
 
         overlays = overlaysSet;
+
+        # Jobs Hydra (hydra.cafecito.cloud) walks. Every derivation leaf is a
+        # buildable. Restricted to x86_64-linux because the liara build farm
+        # only has x86_64-linux builders (ada, lucy). See docs/hydra.md for
+        # the bootstrap recipe and day-to-day ops.
+        #
+        # Shape: hydraJobs.<group>.<name>.${system} = derivation
+        hydraJobs =
+          let
+            sys = "x86_64-linux";
+            pkgs = self.packages.${sys};
+            legacy = self.legacyPackages.${sys};
+          in
+          {
+            hosts = {
+              ada.${sys} = self.nixosConfigurations.ada.config.system.build.toplevel;
+              flamme.${sys} = self.nixosConfigurations.flamme.config.system.build.toplevel;
+            };
+
+            packages = {
+              terraform.${sys} = pkgs.terraform;
+              cachix-helper.${sys} = pkgs.cachix-helper;
+              attic-helper.${sys} = pkgs.attic-helper;
+              rmlint.${sys} = pkgs.rmlint;
+              openclaw.${sys} = pkgs.openclaw;
+              opencode-cursor.${sys} = pkgs.opencode-cursor;
+              claude-code.${sys} = pkgs.claude-code;
+              cursor-agent.${sys} = pkgs.cursor-agent;
+              opencode.${sys} = pkgs.opencode;
+              context7.${sys} = pkgs.context7;
+              plane-mcp-server.${sys} = pkgs.plane-mcp-server;
+              setup-envrc.${sys} = pkgs.setup-envrc;
+              update.${sys} = pkgs.update;
+              wt.${sys} = pkgs.wt;
+              llmfit.${sys} = pkgs.llmfit;
+            };
+
+            devShells = {
+              dotfiles.${sys} = self.devShells.${sys}.dotfiles;
+              dev.${sys} = self.devShells.${sys}.dev;
+              devops.${sys} = self.devShells.${sys}.devops;
+              react-native.${sys} = self.devShells.${sys}.react-native;
+            };
+
+            # `@` is not permitted in Hydra job names. Flatten `cmp@ada` →
+            # `cmp-at-ada` at the boundary; legacyPackages.homeConfigurations
+            # keeps the original names.
+            homeActivations = {
+              cmp.${sys} = legacy.homeConfigurations.cmp.activationPackage;
+              nixos.${sys} = legacy.homeConfigurations.nixos.activationPackage;
+              cmp-at-ada.${sys} = legacy.homeConfigurations."cmp@ada".activationPackage;
+              cmp-at-flamme.${sys} = legacy.homeConfigurations."cmp@flamme".activationPackage;
+              deck-at-steamdeck.${sys} = legacy.homeConfigurations."deck@steamdeck".activationPackage;
+            };
+          };
 
         nixosModules = (import ./modules/nixos/default.nix);
 
