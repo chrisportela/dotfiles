@@ -5,7 +5,7 @@
     "emailoverride": "",
     "enabled": 1,
     "enableemail": false,
-    "flake": "git+ssh://forgejo@git.cafecito.cloud:2222/cmp/dotfiles.git?ref=main",
+    "flake": "git+ssh://forgejo@git.cafecito.cloud:2222/cmp/dotfiles.git?ref=forgejo-hydra",
     "hidden": false,
     "keepnr": 5,
     "schedulingshares": 100,
