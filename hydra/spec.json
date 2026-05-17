@@ -1,0 +1,14 @@
+{
+  "main": {
+    "checkinterval": 300,
+    "description": "cmp dotfiles: hosts + packages + devshells + home activations (main)",
+    "emailoverride": "",
+    "enabled": 1,
+    "enableemail": false,
+    "flake": "git+ssh://forgejo@git.cafecito.cloud:2222/cmp/dotfiles.git?ref=main",
+    "hidden": false,
+    "keepnr": 5,
+    "schedulingshares": 100,
+    "type": "flake"
+  }
+}

@@ -11,15 +11,15 @@ Dashboard: <https://hydra.cafecito.cloud/project/cmp-dotfiles>
 
 ## Adding / changing jobsets
 
-Edit `hydra/spec.nix` and push to `main`. Hydra re-evaluates the project's
+Edit `hydra/spec.json` and push to `main`. Hydra re-evaluates the project's
 hidden `.jobsets` jobset on its check interval and reconciles real jobsets
 to match the spec.
 
-Sanity-check the spec builds locally:
+The spec must be literal JSON — Hydra reads `hydra/spec.json` as text and
+`decode_json`s it directly (no nix-build step). Validate locally:
 
 ```sh
-nix-build hydra/spec.nix --no-out-link  # prints path to generated spec.json
-cat "$(nix-build hydra/spec.nix --no-out-link)" | jq .
+jq . hydra/spec.json
 ```
 
 ## Adding / changing the job manifest
@@ -36,7 +36,7 @@ the liara build farm covers (`ada` + `lucy`).
 ## One-time bootstrap
 
 This only happens the first time the project is brought up on Hydra.
-Everything afterward is declarative via `spec.nix` + flake `hydraJobs`.
+Everything afterward is declarative via `spec.json` + flake `hydraJobs`.
 
 ### 1. Push the flake to Forgejo
 
@@ -70,11 +70,11 @@ project**:
 - **Identifier:** `cmp-dotfiles`
 - **Display name:** `cmp dotfiles`
 - **Enabled:** yes
-- **Declarative spec file:** `hydra/spec.nix`
+- **Declarative spec file:** `hydra/spec.json`
 - **Declarative input type:** `Git checkout`
 - **Declarative input value:** `git+ssh://forgejo@git.cafecito.cloud:2222/cmp/dotfiles.git main`
 
-Hydra auto-creates the hidden `.jobsets` jobset, evaluates `hydra/spec.nix`,
+Hydra auto-creates the hidden `.jobsets` jobset, reads `hydra/spec.json`,
 and materializes the `main` jobset.
 
 ### 4. Smoke check
