@@ -12,7 +12,7 @@
 }:
 
 let
-  version = "2.1.119";
+  version = "2.1.142";
 
 in
 buildNpmPackage (finalAttrs: {
@@ -21,10 +21,10 @@ buildNpmPackage (finalAttrs: {
 
   src = fetchzip {
     url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${finalAttrs.version}.tgz";
-    hash = "sha256-niZddQ0t40dzR0nXlj5Onkxy0apq5wvvPvhjQvr96cw=";
+    hash = "sha256-H6mjQ5kGHUmoH6+FKm5urDVzVSF/9x9ct2iMNpQfiX8=";
   };
 
-  npmDepsHash = "sha256-durBbNV3SKFip2OA7kCh/3fiAawkm4A1PeaQRq1n7JQ=";
+  npmDepsHash = "sha256-IwvWZSAxKxp/n5tpaD1+/xm6d0rw2bNyKnIEJXeqCNI=";
 
   nativeBuildInputs = lib.optionals stdenv.hostPlatform.isLinux [ autoPatchelfHook ];
 

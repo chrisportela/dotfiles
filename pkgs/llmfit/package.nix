@@ -6,23 +6,23 @@
 
 let
   inherit (stdenv) hostPlatform;
-  version = "0.9.11";
+  version = "0.9.24";
   sources = {
     x86_64-linux = fetchurl {
       url = "https://github.com/AlexsJones/llmfit/releases/download/v${version}/llmfit-v${version}-x86_64-unknown-linux-musl.tar.gz";
-      hash = "sha256-DM9p+0EEXxLCzzVLxKOlY/yek347S4H3QYCRQ40tZsQ=";
+      hash = "sha256-DWclkNHMqOwQECmN+P4eUlzoWuxd8/AiP9r+Xn3yR6s=";
     };
     aarch64-linux = fetchurl {
       url = "https://github.com/AlexsJones/llmfit/releases/download/v${version}/llmfit-v${version}-aarch64-unknown-linux-musl.tar.gz";
-      hash = "sha256-8RkOSJViG3xzpxOQm4ZVzB3qdGuG4GYJZqclY1zYeY8=";
+      hash = "sha256-yYEfW6lMzpHlTIkpVZXdd6rF2Air60EvD/zSTx3ZgCw=";
     };
     x86_64-darwin = fetchurl {
       url = "https://github.com/AlexsJones/llmfit/releases/download/v${version}/llmfit-v${version}-x86_64-apple-darwin.tar.gz";
-      hash = "sha256-xRAJPAUhR6jkJfUexMOJKx8Q4RoMz4ofxIz3gxXvzxA=";
+      hash = "sha256-03ZcIV+n/L3BputrCG8E8nBW7VcV5KT6cQJmjglVyHI=";
     };
     aarch64-darwin = fetchurl {
       url = "https://github.com/AlexsJones/llmfit/releases/download/v${version}/llmfit-v${version}-aarch64-apple-darwin.tar.gz";
-      hash = "sha256-5Dp66CSxaBjkgHoPZckKOksLxswjBOjaB/VrX0Ar/TQ=";
+      hash = "sha256-MjPquH6lxLfutxCOJRBPzxjjE6Pp1aRi+xESnudyoEI=";
     };
   };
 in
