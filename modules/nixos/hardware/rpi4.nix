@@ -53,7 +53,6 @@
   services.xserver = {
     enable = true;
     displayManager.lightdm.enable = true;
-    desktopManager.gnome.enable = true;
     # desktopManager.xfce.enable = true;
     desktopManager.xterm.enable = true;
     # videoDrivers = [ "fbdev" ];
@@ -68,6 +67,7 @@
       }
     ];
   };
+  services.desktopManager.gnome.enable = true;
 
   hardware.enableRedistributableFirmware = true;
 

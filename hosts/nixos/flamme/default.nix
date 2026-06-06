@@ -35,12 +35,12 @@
   services.xserver = {
     enable = true;
     dpi = 180;
-    desktopManager.gnome.enable = true;
-    displayManager.gdm.enable = true;
   };
+  services.desktopManager.gnome.enable = true;
+  services.displayManager.gdm.enable = true;
   services.displayManager.sddm.enable = false;
 
-  services.logind.lidSwitchExternalPower = "ignore";
+  services.logind.settings.Login.HandleLidSwitchExternalPower = "ignore";
   services.flatpak.enable = true;
 
   # Virtualization

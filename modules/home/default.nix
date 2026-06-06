@@ -69,6 +69,8 @@
       viAlias = lib.mkDefault true;
       vimAlias = lib.mkDefault true;
       vimdiffAlias = lib.mkDefault true;
+      withRuby = false;
+      withPython3 = false;
       extraConfig = ''
         set nocompatible
         set nobackup

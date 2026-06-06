@@ -59,8 +59,6 @@ nixos.lib.nixosSystem {
         documentation.enable = lib.mkOverride 10 false;
         documentation.nixos.enable = lib.mkOverride 10 false;
 
-        boot.initrd.systemd.enable = lib.mkForce false;
-
         system.disableInstallerTools = lib.mkOverride 10 false;
 
         systemd.services.sshd.wantedBy = pkgs.lib.mkOverride 10 [ "multi-user.target" ];

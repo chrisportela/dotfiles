@@ -130,14 +130,17 @@
             cachix-helper = {
               type = "app";
               program = "${self.packages.${system}.cachix-helper}/bin/cachix-helper";
+              meta.description = "Helper for pushing build outputs to Cachix";
             };
             attic-helper = {
               type = "app";
               program = "${self.packages.${system}.attic-helper}/bin/attic-helper";
+              meta.description = "Helper for pushing build outputs to an Attic cache";
             };
             update = {
               type = "app";
               program = "${self.packages.${system}.update}/bin/update";
+              meta.description = "Update flake inputs and bump package sources";
             };
           };
 
@@ -283,7 +286,6 @@
               };
           });
 
-          devShell = devShells.default;
           formatter = treefmt-eval.config.build.wrapper;
           checks = {
             formatting = treefmt-eval.config.build.check self;

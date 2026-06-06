@@ -62,10 +62,12 @@ with lib;
 
     services.resolved = {
       enable = true;
-      fallbackDns = [
-        "1.1.1.1#853" # Encrypted Cloudflare DNS
-      ];
-      dnssec = "false";
+      settings.Resolve = {
+        FallbackDNS = [
+          "1.1.1.1#853" # Encrypted Cloudflare DNS
+        ];
+        DNSSEC = "false";
+      };
     };
   };
 }
