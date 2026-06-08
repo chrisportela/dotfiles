@@ -3,7 +3,7 @@
 }:
 
 let
-  version = "1.15.12";
+  version = "1.16.2";
 in
 upstreamOpencode.overrideAttrs (
   finalAttrs: prev: {
@@ -11,12 +11,12 @@ upstreamOpencode.overrideAttrs (
 
     src = prev.src.override {
       tag = "v${version}";
-      hash = "sha256-ecSZVJ1uyubWcIhp29FS0MA2MCgURN2jo6CFRJ1mm2I=";
+      hash = "sha256-IpTD4YCgGNtYlZ6EoyY+YLD81rIFR0D2A4W3uhWSSfo=";
     };
 
     node_modules = prev.node_modules.overrideAttrs {
       inherit (finalAttrs) version src;
-      outputHash = "sha256-x5qbmA4/EhEbqyGHAy8VRXw9Do8QYHTRLeZXuyvd4QY=";
+      outputHash = "sha256-4yjQlxN+U4CKwA/hE8gACuvA4bBeTrX0ACVBIK4UQCg=";
     };
 
     postPatch = (prev.postPatch or "") + ''

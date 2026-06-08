@@ -10,13 +10,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "context7";
-  version = "3.0.0";
+  version = "3.1.0";
 
   src = fetchFromGitHub {
     owner = "upstash";
     repo = "context7";
-    rev = "af1ae7a85af05d5d44f988df3a6240b9e7f9143c";
-    hash = "sha256-3Hk3YEXIR6SAEtCeDeaU1fU/CyvxuObZSNbgqrzeJ/o=";
+    rev = "8459920b2fd8bccaea308744d463a7e5eaf90e6d";
+    hash = "sha256-TPDtbGs6jGK+pJdZjfr0JV2t9F2390CwRTQnt/hX+r4=";
   };
 
   pnpmDeps = fetchPnpmDeps {
@@ -27,7 +27,7 @@ stdenv.mkDerivation (finalAttrs: {
       ;
     pnpm = pnpm_10;
     fetcherVersion = 3;
-    hash = "sha256-ugUN1U0OR8dPTq4PADJaq6ElngSlw6PlmYDUFoW+2F4=";
+    hash = "sha256-gyDfoMMCgtJyFjoUgQaRLFw/yhfiy9685hyAOX5kIbU=";
   };
 
   nativeBuildInputs = [
