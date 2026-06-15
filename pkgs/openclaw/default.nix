@@ -3,8 +3,8 @@
 }:
 
 let
-  version = "2026.6.5";
-  tagVersion = "2026.6.5";
+  version = "2026.6.6";
+  tagVersion = "2026.6.6";
 in
 upstreamOpenclaw.overrideAttrs (
   finalAttrs: prev: {
@@ -12,10 +12,10 @@ upstreamOpenclaw.overrideAttrs (
 
     src = prev.src.override {
       tag = "v${tagVersion}";
-      hash = "sha256-hiYbIhE13XMFIeB0zmb6AHlfw8le6vpJgCqN81YWGsE=";
+      hash = "sha256-sgLyNHQNnuEWZBaIxqJUz9o0x+P1EgNuLlUfy1iRunk=";
     };
 
-    pnpmDepsHash = "sha256-7RQJAVWqhauG8JrF8AD1VU1IJRM+SH05aHAfmFaXraU=";
+    pnpmDepsHash = "sha256-eADEHT4CW8ffCKwEfQjjrQ63oZQUYmRYymYQpMT8/gY=";
 
     passthru = prev.passthru // {
       updateScript = ./update.sh;
