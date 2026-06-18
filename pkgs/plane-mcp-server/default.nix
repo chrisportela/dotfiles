@@ -37,18 +37,27 @@ python3Packages.buildPythonApplication rec {
 
   build-system = [ python3Packages.setuptools ];
 
-  dependencies = with python3Packages; [
-    fastmcp
-    plane-sdk
-    py-key-value-aio
-    mcp
-  ];
+  dependencies =
+    (with python3Packages; [
+      fastmcp
+      plane-sdk
+      py-key-value-aio
+      mcp
+    ])
+    # Upstream declares `py-key-value-aio[redis]`; server.py imports RedisStore
+    # unconditionally at module load, so the redis backend must be present.
+    ++ python3Packages.py-key-value-aio.optional-dependencies.redis;
 
   pythonRelaxDeps = true;
 
   passthru.updateScript = ./update.sh;
 
-  pythonImportsCheck = [ "plane_mcp" ];
+  # Import server.py too: it pulls in the redis backend at module load, so this
+  # turns the missing-redis runtime crash into a build-time failure.
+  pythonImportsCheck = [
+    "plane_mcp"
+    "plane_mcp.server"
+  ];
 
   meta = {
     description = "Model Context Protocol server for Plane project management integration";
