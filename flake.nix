@@ -180,37 +180,24 @@
             installer-iso = self.nixosConfigurations.installer.config.system.build.isoImage;
             homeConfigurations = builtins.foldl' (acc: attrs: acc // attrs) { } [
               {
-                cmp = home-manager.lib.homeManagerConfiguration {
+                cmp = simpleHomeConfig {
                   pkgs = pkgsUnstable;
-                  modules = [
-                    ./modules/home/nixpkgs.nix
-                    ./modules/home/default.nix
-                    {
-                      allowedUnfree = [
-                        "vault-bin"
-                        "terraform"
-                      ];
-                      home.username = "cmp";
-                    }
-                  ];
+                  home-manager = inputs.home-manager;
                 };
-
               }
               (pkgs.lib.optionalAttrs (system == flake-utils.lib.system.x86_64-linux) {
-                nixos = home-manager.lib.homeManagerConfiguration {
+                nixos = simpleHomeConfig {
                   pkgs = pkgsUnstable;
-                  modules = [
-                    ./modules/home/nixpkgs.nix
-                    ./modules/home/default.nix
-                    {
-                      allowedUnfree = [
-                        "vault-bin"
-                        "terraform"
-                      ];
-                      home.username = "nixos";
-                      chrisportela.coding-agents.enable = true;
-                    }
-                  ];
+                  home-manager = inputs.home-manager;
+                  username = "nixos";
+                  options.chrisportela.coding-agents.enable = true;
+                };
+                "cmp@lucy-nix" = simpleHomeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager;
+                  options.chrisportela = {
+                    coding-agents.enable = true;
+                  };
                 };
                 "cmp@ada" = simpleHomeConfig {
                   pkgs = pkgsUnstable;
