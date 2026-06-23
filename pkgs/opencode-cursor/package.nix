@@ -7,16 +7,16 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "opencode-cursor";
-  version = "2.4.11-unstable-2026-06-15";
+  version = "2.4.14-unstable-2026-06-18";
 
   src = fetchFromGitHub {
     owner = "Nomadcxx";
     repo = "opencode-cursor";
-    rev = "9b0a77d4513da60e1cf9fda24770c012763fc7fe";
-    hash = "sha256-qwnEsyVsvlQBlmJFn/JiznGJnF3b/siH8Dfq0cVm0aA=";
+    rev = "21631ec9b05bc4ac02eb734e1a742a3a9e48e0d3";
+    hash = "sha256-sHT8AqNWvnxoO/fBfsByv/WodGz2Myo0hLIPhwr4GtI=";
   };
 
-  npmDepsHash = "sha256-d2RVpvvejrPxRU90GpjvaQpnmxzsV2F2eeNQepBHSkM=";
+  npmDepsHash = "sha256-TlDwfaWYl8DQDRrEsRv0pQUD7s12YAetrOq5nEjg2WU=";
 
   nativeBuildInputs = [ bun ];
 

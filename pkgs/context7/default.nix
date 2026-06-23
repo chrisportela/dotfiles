@@ -10,13 +10,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "context7";
-  version = "3.2.1";
+  version = "3.2.2";
 
   src = fetchFromGitHub {
     owner = "upstash";
     repo = "context7";
-    rev = "ecea65a3e6c54f14e70e03f7eacaed2e580518a8";
-    hash = "sha256-Gf3GnVOceAMzsc1SYGQVriDzDD/dQYSoBSrCuQ5M4UI=";
+    rev = "2118260fe15c750dc8852a41a2e80569104cb67a";
+    hash = "sha256-v3zKMnZsc0gWVAdgZwFTskWcFVlOU6sG2i+qDwjx+dw=";
   };
 
   pnpmDeps = fetchPnpmDeps {
