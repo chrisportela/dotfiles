@@ -11,18 +11,29 @@ echo "Latest tag version: $tag_version"
 current=$(sed -nE 's/.*tagVersion = "([^"]+)".*/\1/p' "$PKG_FILE")
 echo "Current tag version: $current"
 
-if [ "$tag_version" = "$current" ]; then
+# Detect placeholder/dummy hashes (a real hash would never be all the same character)
+is_placeholder() { echo "$1" | grep -qE '^sha256-(.)\1{10,}'; }
+
+current_pnpm_hash=$(sed -nE 's/.*pnpmDepsHash = "([^"]+)".*/\1/p' "$PKG_FILE")
+current_src_hash=$(sed -nE 's/.*hash = "([^"]+)".*/\1/p' "$PKG_FILE")
+
+if [ "$tag_version" = "$current" ] \
+    && ! is_placeholder "$current_pnpm_hash" \
+    && ! is_placeholder "$current_src_hash"; then
   echo "Already up to date."
   exit 0
 fi
 
 # Derive display version (drop any suffix like "-1")
 display_version=$(echo "$tag_version" | sed 's/-[0-9]*$//')
-echo "Updating $current -> $tag_version (display: $display_version)"
 
-# Update tagVersion and version
-sed -i "s|tagVersion = \"$current\"|tagVersion = \"$tag_version\"|" "$PKG_FILE"
-sed -i "s|version = \"[^\"]*\"|version = \"$display_version\"|" "$PKG_FILE"
+if [ "$tag_version" != "$current" ]; then
+  echo "Updating $current -> $tag_version (display: $display_version)"
+  sed -i "s|tagVersion = \"$current\"|tagVersion = \"$tag_version\"|" "$PKG_FILE"
+  sed -i "s|version = \"[^\"]*\"|version = \"$display_version\"|" "$PKG_FILE"
+else
+  echo "Version already $display_version — refreshing placeholder hashes"
+fi
 
 # Step 1: Get new src hash
 # Set a dummy src hash to force a mismatch, then capture the correct one
@@ -49,7 +60,8 @@ if [ -n "$pnpm_hash" ]; then
   sed -i "s|pnpmDepsHash = \"sha256-[^\"]*\"|pnpmDepsHash = \"$pnpm_hash\"|" "$PKG_FILE"
   echo "Updated pnpmDepsHash to $pnpm_hash"
 else
-  echo "Warning: could not determine new pnpmDepsHash" >&2
+  echo "Error: could not determine new pnpmDepsHash" >&2
+  exit 1
 fi
 
 echo "Updated openclaw to $display_version (tag: $tag_version)"
