@@ -15,7 +15,7 @@ upstreamOpenclaw.overrideAttrs (
       hash = "sha256-Ryj+aJ4Daql/ILs3Z/Gi+ltBGQfOdtXKJoOqr3YNoQ0=";
     };
 
-    pnpmDepsHash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=";
+    pnpmDepsHash = "sha256-WvMphvtdimFXIx6kTQ5DMW9dcXS1tcFu2v3W1aiiW+4=";
 
     passthru = prev.passthru // {
       updateScript = ./update.sh;
