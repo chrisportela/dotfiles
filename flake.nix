@@ -132,11 +132,6 @@
               program = "${self.packages.${system}.cachix-helper}/bin/cachix-helper";
               meta.description = "Helper for pushing build outputs to Cachix";
             };
-            attic-helper = {
-              type = "app";
-              program = "${self.packages.${system}.attic-helper}/bin/attic-helper";
-              meta.description = "Helper for pushing build outputs to an Attic cache";
-            };
             update = {
               type = "app";
               program = "${self.packages.${system}.update}/bin/update";
@@ -148,7 +143,10 @@
             {
               terraform = pkgs.callPackage ./pkgs/terraform/default.nix { };
               cachix-helper = pkgs.callPackage ./pkgs/cachix-helper.nix { };
-              attic-helper = pkgs.callPackage ./pkgs/attic-helper/default.nix { };
+              cache-targets = pkgs.callPackage ./pkgs/cache-targets/default.nix {
+                homeActivation = legacyPackages.homeConfigurations.cmp.activationPackage;
+                devShells = { inherit (devShells) dotfiles dev devops; };
+              };
               rmlint = pkgs.callPackage ./pkgs/rmlint.nix { };
               openclaw = pkgs.pkgsUnstable.callPackage ./pkgs/openclaw/default.nix {
                 upstreamOpenclaw = nixpkgs-unstable.legacyPackages.${system}.openclaw;
@@ -314,7 +312,7 @@
             packages = {
               terraform.${sys} = pkgs.terraform;
               cachix-helper.${sys} = pkgs.cachix-helper;
-              attic-helper.${sys} = pkgs.attic-helper;
+              cache-targets.${sys} = pkgs.cache-targets;
               rmlint.${sys} = pkgs.rmlint;
               openclaw.${sys} = pkgs.openclaw;
               opencode-cursor.${sys} = pkgs.opencode-cursor;

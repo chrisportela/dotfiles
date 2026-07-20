@@ -5,15 +5,7 @@
   cachix,
   nix,
   cachixRepo ? "chrisportela-dotfiles",
-  hmConfig ? "cmp",
   keepRevisions ? 2,
-  shellNames ? [
-    "dotfiles"
-    "dev"
-    "devops"
-    # Disabled: Requires too much space in cache (40gb+)
-    # "react-native"
-  ],
 }:
 let
   cachixArgs = lib.concatStringsSep " " [
@@ -23,13 +15,6 @@ let
   ];
   nixBin = "${nix}/bin/nix";
   cachixBin = "${cachix}/bin/cachix";
-
-  shellBlocks = lib.concatMapStringsSep "\n\n" (name: ''
-    echo "#### Building shell: ${name}"
-    ${nixBin} build --out-link result-shell-${name} .#devShells.$SYSTEM.${name}
-    ${cachixBin} push ${cachixArgs} ${cachixRepo} result-shell-${name}
-    ${cachixBin} pin ${cachixRepo} --keep-revisions ${toString keepRevisions} shell-${name}-$SYSTEM result-shell-${name}
-  '') shellNames;
 in
 (pkgs.writeShellScriptBin "cachix-helper" ''
   set -eu
@@ -44,26 +29,23 @@ in
     exit 1
   fi
 
-  echo "#### Building HM"
-  if command -v home-manager 1>/dev/null 2>&1; then
-    home-manager build --flake .#${hmConfig}
-  else
-    ${nixBin} build .#legacyPackages.$SYSTEM.homeConfigurations.${hmConfig}.activationPackage
-  fi
-  rm result-hm-${hmConfig} || true
-  mv result result-hm-${hmConfig}
-  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-hm-${hmConfig}
-  ${cachixBin} pin ${cachixRepo} --keep-revisions ${toString keepRevisions} home-manager-$SYSTEM result-hm-${hmConfig}
+  echo "#### Building cache-targets"
+  ${nixBin} build --out-link result-cache-targets .#packages.$SYSTEM.cache-targets
+  ${cachixBin} push ${cachixArgs} ${cachixRepo} result-cache-targets
 
-  echo "#### Building shells"
-  ${shellBlocks}
+  echo "#### Pinning targets"
+  for entry in result-cache-targets/*; do
+    name="$(basename "$entry")"
+    target="$(readlink -f "$entry")"
+    ${cachixBin} pin ${cachixRepo} --keep-revisions ${toString keepRevisions} "$name-$SYSTEM" "$target"
+  done
 
   echo "#### Finished!"
 '')
 // {
 
   meta = with lib; {
-    description = "Helper script for building and pushing home-manager and dev shells to Cachix";
+    description = "Helper script for building and pushing cache-targets to Cachix";
     license = licenses.mit;
     maintainers = [ ];
     mainProgram = "cachix-helper";
