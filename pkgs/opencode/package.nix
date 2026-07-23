@@ -4,9 +4,9 @@
 }:
 
 let
-  version = "1.17.19";
-  srcHash = "sha256-zpGO6DpWDC3unpiTKZY7/s4fDbZwmtR+xzWF98MwJoQ=";
-  nodeModulesHash = "sha256-pk5JjO3RHjdOX1T9qX4UWOv7dST/i3DmHGhxTb5QJDA=";
+  version = "1.18.4";
+  srcHash = "sha256-tGMO5JktINO8kXAHFQftn+JCrzwvpmNipTa8V0aIfNI=";
+  nodeModulesHash = "sha256-qt11SKmOjq0KU542QFbs+u7YyJicn4drCcwCdg325yk=";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
