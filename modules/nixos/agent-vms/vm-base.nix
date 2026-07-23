@@ -398,9 +398,9 @@ in
         enable = true;
         enableZshIntegration = true;
         defaultCommand = "fd --type f";
-        fileWidgetOptions = [ "--preview 'head {}'" ];
-        changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
-        historyWidgetOptions = [
+        fileWidget.options = [ "--preview 'head {}'" ];
+        changeDirWidget.options = [ "--preview 'tree -C {} | head -200'" ];
+        historyWidget.options = [
           "--sort"
           "--exact"
         ];

@@ -45,12 +45,16 @@ lib.mkMerge [
         "--height 40%"
         "--border"
       ];
-      fileWidgetCommand = "fd --type f";
-      fileWidgetOptions = [ "--preview 'head {}'" ];
-      changeDirWidgetCommand = "fd --type d";
-      changeDirWidgetOptions = [ "--preview 'tree -C {} | head -200'" ];
+      fileWidget = {
+        command = "fd --type f";
+        options = [ "--preview 'head {}'" ];
+      };
+      changeDirWidget = {
+        command = "fd --type d";
+        options = [ "--preview 'tree -C {} | head -200'" ];
+      };
       tmux.enableShellIntegration = lib.mkDefault true;
-      historyWidgetOptions = [
+      historyWidget.options = [
         "--sort"
         "--exact"
       ];
