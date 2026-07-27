@@ -6,7 +6,7 @@
 let
   version = "1.18.4";
   srcHash = "sha256-tGMO5JktINO8kXAHFQftn+JCrzwvpmNipTa8V0aIfNI=";
-  nodeModulesHash = "sha256-qt11SKmOjq0KU542QFbs+u7YyJicn4drCcwCdg325yk=";
+  nodeModulesHash = "sha256-PILYH1Pi8XBvSkuZ+1sNnUTao5kba+m5Z8iJKx6YXPo=";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
