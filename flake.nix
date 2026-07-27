@@ -236,6 +236,13 @@
                     coding-agents.enable = true;
                   };
                 };
+                "cmp@lux" = simpleHomeConfig {
+                  pkgs = pkgsUnstable;
+                  home-manager = inputs.home-manager;
+                  options.chrisportela = {
+                    coding-agents.enable = true;
+                  };
+                };
               })
             ];
           };
