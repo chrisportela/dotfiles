@@ -122,6 +122,23 @@
     }
   );
 
+  # poetry 2.4.1's test suite spins up a MockEnv defaulting to version_info
+  # (3, 7, 0) and exercises the embedded-pip fallback path. virtualenv 21.6.1
+  # (pulled in transitively) only bundles bootstrap pip/setuptools wheels for
+  # Python 3.9+, so the 3.7 lookup returns None and these tests fail with
+  # "embedded pip wheel not found" — a stale test fixture vs. a newer
+  # transitive dependency, unrelated to the host's actual Python version.
+  poetry = (
+    final: prev: {
+      poetry = prev.poetry.overridePythonAttrs (old: {
+        disabledTests = (old.disabledTests or [ ]) ++ [
+          "test_execute_executes_a_batch_of_operations"
+          "test_execute_prints_warning_for_yanked_package"
+        ];
+      });
+    }
+  );
+
   # Skips the OpenLDAP check phase for the i686 build only, which is pulled
   # in by 32-bit multilib (lutris/steam). test017-syncreplication-refresh
   # is a timing-sensitive flake; bumping SLEEP1/SLEEP2 didn't help. Scoped
