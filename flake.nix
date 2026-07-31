@@ -383,7 +383,10 @@
               hostName = "ada";
               stateVersion = "25.05";
               overlays = [
-                (final: prev: { rmlint = self.packages.x86_64-linux.rmlint; })
+                (final: prev: {
+                  rmlint = self.packages.x86_64-linux.rmlint;
+                  onnxruntime = prev.onnxruntime.override { cudaSupport = false; };
+                })
               ];
               hardwareConfig = ./hosts/nixos/ada/hardware.nix;
               config = ./hosts/nixos/ada;
