@@ -26,7 +26,6 @@ let
         sdkPkgs."build-tools-${apiVersion}-0-0"
         cmdline-tools-latest
         emulator
-        platform-tools
         sdkPkgs."platforms-android-${apiVersion}"
 
         # Other useful packages for a development environment.
@@ -35,10 +34,13 @@ let
         # "sources-android-${apiVersion}"
       ]
       ++ lib.optionals (system == "aarch64-darwin") [
+        # Fixes hash for 37.0.1; remove when updated
+        (platform-tools.overrideAttrs (prev: { src = prev.src.overrideAttrs { outputHash = "6ae73f4de6452dc57e62ec02b68eed92a4c21661"; }; }))
         sdkPkgs."system-images-android-${apiVersion}-google-apis-arm64-v8a"
         sdkPkgs."system-images-android-${apiVersion}-google-apis-playstore-arm64-v8a"
       ]
       ++ lib.optionals (system == "x86_64-darwin" || system == "x86_64-linux") [
+        platform-tools
         sdkPkgs."system-images-android-${apiVersion}-google-apis-x86-64"
         sdkPkgs."system-images-android-${apiVersion}-google-apis-playstore-x86-64"
       ]
