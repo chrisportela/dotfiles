@@ -6,7 +6,7 @@
 let
   version = "1.18.10";
   srcHash = "sha256-S90dh9+Xvpqva2L+gfIFJfSoL+mobXZZWMNkeegEYRE=";
-  nodeModulesHash = "sha256-fK6zAHJC3ut/KUdfqLPxVMH7Z1yv65YZ7qcHF45kPas=";
+  nodeModulesHash = "sha256-IyFm5NbnU63BaOO/F4/v1exz3VbvkY96yjg9iun+O9Q=";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
@@ -24,7 +24,7 @@ let
       (o: {
         inherit version; # avoid the "+dirty" rev suffix — opencode.nix inherits version from node_modules
         __intentionallyOverridingVersion = true; # src is correct; only the rev-suffix in version changes
-        buildPhase = builtins.replaceStrings [ "--frozen-lockfile" ] [ "" ] o.buildPhase;
+        # buildPhase = builtins.replaceStrings [ "--frozen-lockfile" ] [ "" ] o.buildPhase;
       });
 in
 (callPackage "${src}/nix/opencode.nix" { inherit node_modules; }).overrideAttrs (prev: {
