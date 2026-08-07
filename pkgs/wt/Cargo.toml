@@ -1,0 +1,9 @@
+[package]
+name = "wt"
+version = "0.2.0"
+edition = "2024"
+description = "Git worktree manager: setup, direnv, tmux automation"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }

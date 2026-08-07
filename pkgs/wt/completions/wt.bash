@@ -1,4 +1,4 @@
-# wt(1) bash completion
+# wt(1) bash completion — candidates come from `wt __complete`.
 _wt() {
   local cur subcmd
   cur="${COMP_WORDS[COMP_CWORD]}"
@@ -12,26 +12,16 @@ _wt() {
   case "$subcmd" in
     add)
       if [[ "$cur" == --* ]]; then
-        COMPREPLY=( $(compgen -W "--no-direnv" -- "$cur") )
-      elif [[ $COMP_CWORD -eq 2 || ( $COMP_CWORD -eq 3 && "${COMP_WORDS[2]}" == --* ) ]]; then
-        local branches
-        branches=$(
-          {
-            git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null
-            git for-each-ref --format='%(refname:lstrip=3)' refs/remotes 2>/dev/null
-          } | grep -vE '^HEAD$' | sort -u
-        )
-        COMPREPLY=( $(compgen -W "$branches" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--no-direnv --no-env --no-tmux --session --dry-run" -- "$cur") )
+      else
+        COMPREPLY=( $(compgen -W "$(wt __complete branches 2>/dev/null)" -- "$cur") )
       fi
       ;;
     rm)
-      if [[ $COMP_CWORD -eq 2 ]]; then
-        local root wts
-        root=$(git rev-parse --show-toplevel 2>/dev/null) || return
-        if [[ -d "$root/.worktrees" ]]; then
-          wts=$(command ls -1 "$root/.worktrees" 2>/dev/null)
-          COMPREPLY=( $(compgen -W "$wts" -- "$cur") )
-        fi
+      if [[ "$cur" == --* ]]; then
+        COMPREPLY=( $(compgen -W "--no-tmux --dry-run" -- "$cur") )
+      else
+        COMPREPLY=( $(compgen -W "$(wt __complete worktrees 2>/dev/null)" -- "$cur") )
       fi
       ;;
   esac

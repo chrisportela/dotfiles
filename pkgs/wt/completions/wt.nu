@@ -1,4 +1,4 @@
-# wt(1) nushell completion
+# wt(1) nushell completion — candidates come from `wt __complete`.
 
 def "nu-complete wt-subcommand" [] {
   [
@@ -11,31 +11,32 @@ def "nu-complete wt-subcommand" [] {
 }
 
 def "nu-complete wt-branches" [] {
-  let local_refs = (do -i { git for-each-ref --format='%(refname:short)' refs/heads } | lines)
-  let remote_refs = (do -i { git for-each-ref --format='%(refname:lstrip=3)' refs/remotes } | lines)
-  $local_refs | append $remote_refs | where $it != "HEAD" | uniq
+  do -i { ^wt __complete branches } | lines
 }
 
 def "nu-complete wt-worktrees" [] {
-  let root = (do -i { git rev-parse --show-toplevel } | str trim)
-  if ($root | is-empty) { return [] }
-  let wtdir = $"($root)/.worktrees"
-  if not ($wtdir | path exists) { return [] }
-  ls $wtdir | where type == dir | get name | path basename
+  do -i { ^wt __complete worktrees } | lines
 }
 
 # Top-level dispatch so `wt <TAB>` offers subcommands
 export extern "wt" [
   command?: string@"nu-complete wt-subcommand"
   ...args: string
+  --dry-run    # print planned commands instead of executing
 ]
 
 # Per-subcommand externs for positional arg completion
 export extern "wt init" []
 export extern "wt add" [
   branch?: string@"nu-complete wt-branches"
-  --no-direnv  # skip direnv allow on .envrc files
+  --no-direnv  # skip direnv allow / devshell priming
+  --no-env     # skip copying .env files
+  --no-tmux    # skip tmux window creation
+  --session    # create a detached tmux session instead
 ]
 export extern "wt ls" []
-export extern "wt rm" [branch?: string@"nu-complete wt-worktrees"]
+export extern "wt rm" [
+  branch?: string@"nu-complete wt-worktrees"
+  --no-tmux    # skip killing the matching tmux window
+]
 export extern "wt help" []

@@ -1,30 +1,27 @@
 #compdef wt
 
+# Candidates come from `wt __complete` (registered worktrees via
+# `git worktree list --porcelain`, not directory listings), so nested
+# slashed names like cportela/feature complete fully. _multi_parts gives
+# git-style segment-by-segment completion on '/'.
+
 _wt_branches() {
-  local -a branches
-  branches=(
-    ${(@f)"$(git for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)"}
-    ${(@f)"$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes 2>/dev/null)"}
-  )
-  # Drop 'HEAD' entries (from refs/remotes/<remote>/HEAD)
-  branches=(${branches:#HEAD})
-  _describe 'branch' branches
+  local -a bs
+  bs=(${(f)"$(wt __complete branches 2>/dev/null)"})
+  (( $#bs )) && _multi_parts -S '' / bs
 }
 
 _wt_worktrees() {
-  local root
-  root=$(git rev-parse --show-toplevel 2>/dev/null) || return
-  [[ -d "$root/.worktrees" ]] || return
   local -a wts
-  wts=("$root/.worktrees"/*(/N:t))
-  (( ${#wts} )) || return
-  _describe 'worktree' wts
+  wts=(${(f)"$(wt __complete worktrees 2>/dev/null)"})
+  (( $#wts )) && _multi_parts -S '' / wts
 }
 
 _wt() {
   local state
 
   _arguments -C \
+    '--dry-run[print planned commands instead of executing]' \
     '1: :->command' \
     '*:: :->args'
 
@@ -41,10 +38,19 @@ _wt() {
       case $words[1] in
         add)
           _arguments \
-            '--no-direnv[skip direnv allow on .envrc files]' \
+            '--no-direnv[skip direnv allow / devshell priming]' \
+            '--no-env[skip copying .env files]' \
+            '--no-tmux[skip tmux window creation]' \
+            '--session[create a detached tmux session instead]' \
+            '--dry-run[print planned commands instead of executing]' \
             ': :_wt_branches'
           ;;
-        rm)  _wt_worktrees ;;
+        rm)
+          _arguments \
+            '--no-tmux[skip killing the matching tmux window]' \
+            '--dry-run[print planned commands instead of executing]' \
+            ': :_wt_worktrees'
+          ;;
       esac
       ;;
   esac
