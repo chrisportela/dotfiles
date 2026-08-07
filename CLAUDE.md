@@ -12,7 +12,7 @@
 ```bash
 nix build .                    # Test full config builds
 nix build .#<pkg>              # Build a single package (e.g. .#wt)
-nix run . -- -b backup         # Apply home-manager config
+HOME_MANAGER_BACKUP_EXT=backup nix run .  # Apply home-manager config
 nix build .#nixosConfigurations.ada.config.system.build.toplevel  # Build NixOS for ada
 nix build .#darwinConfigurations.roxy.system                      # Build Darwin for roxy
 ```
