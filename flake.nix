@@ -65,6 +65,10 @@
       url = "github:tadfisher/android-nixpkgs/stable";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    claude-history = {
+      url = "github:raine/claude-history";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
 
   };
 
@@ -153,6 +157,7 @@
               cursor-agent = pkgs.pkgsUnstable.callPackage ./pkgs/cursor-agent/package.nix { };
               opencode = pkgs.pkgsUnstable.callPackage ./pkgs/opencode/package.nix { };
               context7 = pkgs.pkgsUnstable.callPackage ./pkgs/context7/default.nix { };
+              claude-history = inputs.claude-history.packages.${system}.default;
               plane-mcp-server = pkgs.pkgsUnstable.callPackage ./pkgs/plane-mcp-server/default.nix { };
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
@@ -324,6 +329,7 @@
               cursor-agent.${sys} = pkgs.cursor-agent;
               opencode.${sys} = pkgs.opencode;
               context7.${sys} = pkgs.context7;
+              claude-history.${sys} = pkgs.claude-history;
               plane-mcp-server.${sys} = pkgs.plane-mcp-server;
               setup-envrc.${sys} = pkgs.setup-envrc;
               update.${sys} = pkgs.update;

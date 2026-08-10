@@ -46,6 +46,26 @@
         "type": "github"
       }
     },
+    "claude-history": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785526203,
+        "narHash": "sha256-0KMdKe2fBm8HkIqktp+QkQbOjNfw6Oajd4tnUSFz0/0=",
+        "owner": "raine",
+        "repo": "claude-history",
+        "rev": "77edc802cdb8b97ba26680c895330fb137df8630",
+        "type": "github"
+      },
+      "original": {
+        "owner": "raine",
+        "repo": "claude-history",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -421,6 +441,7 @@
       "inputs": {
         "agenix": "agenix",
         "android-nixpkgs": "android-nixpkgs",
+        "claude-history": "claude-history",
         "darwin": "darwin_2",
         "deploy-rs": "deploy-rs",
         "disko": "disko",
