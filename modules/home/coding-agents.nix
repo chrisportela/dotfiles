@@ -26,6 +26,19 @@ in
 
     programs.claude-code = {
       enable = true;
+      skills = {
+        # Upstream ships the skill without YAML frontmatter, which Claude
+        # Code needs for discovery — prepend it and inline the rest.
+        claude-history = ''
+          ---
+          name: claude-history
+          description: Search and read past Claude Code conversations with the claude-history CLI. Use when the user references a previous session or past conversation, asks what was decided or done before, or wants to find, quote, or resume prior work.
+          ---
+
+        ''
+        + builtins.readFile "${pkgs.claude-history.src}/skills/claude-history/SKILL.md";
+        session = "${pkgs.claude-session}/share/claude-session/skill";
+      };
     };
 
     chrisportela.mcp-servers.enable = lib.mkDefault true;
@@ -38,7 +51,9 @@ in
         opencode
         opencode-cursor
         claude-code
+        claude-history
         claude-monitor
+        claude-session
       ]
       ++ [
         cursor-agent

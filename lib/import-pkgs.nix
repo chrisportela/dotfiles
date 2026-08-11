@@ -30,6 +30,8 @@ let
       peekaboo
       plane-mcp-server
       context7
+      claude-history
+      claude-session
       poetry
       openldap
     ]);
