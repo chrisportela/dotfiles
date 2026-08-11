@@ -45,7 +45,6 @@ in
       bun.enable = true;
       ranger.enable = true;
       # arrpc.enable = false; # https://arrpc.openasar.dev/
-      mise.enable = false; # https://mise.jdx.dev/about.html
       granted.enable = false; # https://github.com/common-fate/granted
       bacon.enable = false; # https://github.com/Canop/bacon background rust checker
       carapace = {

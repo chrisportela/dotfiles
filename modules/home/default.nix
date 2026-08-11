@@ -109,6 +109,12 @@
     };
     custom-difftastic.enable = true;
 
+    mise = {
+      enable = true;
+      enableBashIntegration = true;
+      enableZshIntegration = true;
+    };
+
     zoxide = {
       enable = true;
       enableZshIntegration = true;
