@@ -5,8 +5,8 @@
 }:
 
 let
-  version = "1.18.15";
-  srcHash = "sha256-yUPwXDv93O0Ub/giX78FJyFxZyaUzSguDoK2y/YIPBM=";
+  version = "1.18.16";
+  srcHash = "sha256-AP2W443Zk/X8j6BWfMgAEbR4BQiJgnPpr1OG6JWIprE=";
   nodeModulesHash =
     if stdenv.isDarwin then
       "sha256-IyFm5NbnU63BaOO/F4/v1exz3VbvkY96yjg9iun+O9Q="
