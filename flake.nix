@@ -158,6 +158,7 @@
               opencode = pkgs.pkgsUnstable.callPackage ./pkgs/opencode/package.nix { };
               context7 = pkgs.pkgsUnstable.callPackage ./pkgs/context7/default.nix { };
               claude-history = inputs.claude-history.packages.${system}.default;
+              claude-session = pkgs.pkgsUnstable.callPackage ./pkgs/claude-session/package.nix { };
               plane-mcp-server = pkgs.pkgsUnstable.callPackage ./pkgs/plane-mcp-server/default.nix { };
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
@@ -330,6 +331,7 @@
               opencode.${sys} = pkgs.opencode;
               context7.${sys} = pkgs.context7;
               claude-history.${sys} = pkgs.claude-history;
+              claude-session.${sys} = pkgs.claude-session;
               plane-mcp-server.${sys} = pkgs.plane-mcp-server;
               setup-envrc.${sys} = pkgs.setup-envrc;
               update.${sys} = pkgs.update;

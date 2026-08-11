@@ -128,6 +128,12 @@
     }
   );
 
+  claude-session = (
+    final: prev: {
+      claude-session = self.packages.${final.stdenv.system}.claude-session;
+    }
+  );
+
   # poetry 2.4.1's test suite spins up a MockEnv defaulting to version_info
   # (3, 7, 0) and exercises the embedded-pip fallback path. virtualenv 21.6.1
   # (pulled in transitively) only bundles bootstrap pip/setuptools wheels for
