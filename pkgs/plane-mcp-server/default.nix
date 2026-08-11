@@ -7,12 +7,12 @@
 let
   plane-sdk = python3Packages.buildPythonPackage rec {
     pname = "plane_sdk";
-    version = "0.2.21";
+    version = "0.2.22";
     pyproject = true;
 
     src = fetchPypi {
       inherit pname version;
-      hash = "sha256-0s1A6gHd96/fYcFjm46MtvUyIzSKmuKr9SGp1RDav5E=";
+      hash = "sha256-3Mn8Dx5eoKKaTtBV5biQnlupZ/w2Kz5rVd5V8alUEtM=";
     };
 
     build-system = [ python3Packages.setuptools ];

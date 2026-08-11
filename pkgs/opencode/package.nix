@@ -5,13 +5,13 @@
 }:
 
 let
-  version = "1.18.10";
-  srcHash = "sha256-S90dh9+Xvpqva2L+gfIFJfSoL+mobXZZWMNkeegEYRE=";
+  version = "1.18.16";
+  srcHash = "sha256-AP2W443Zk/X8j6BWfMgAEbR4BQiJgnPpr1OG6JWIprE=";
   nodeModulesHash =
     if stdenv.isDarwin then
       "sha256-IyFm5NbnU63BaOO/F4/v1exz3VbvkY96yjg9iun+O9Q="
     else
-      "sha256-fK6zAHJC3ut/KUdfqLPxVMH7Z1yv65YZ7qcHF45kPas=";
+      "sha256-uduwrM143NDSc+tXsi4lVVfoMll2a3BDHRUjuO7GB68=";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
