@@ -9,7 +9,7 @@ let
   srcHash = "sha256-AP2W443Zk/X8j6BWfMgAEbR4BQiJgnPpr1OG6JWIprE=";
   nodeModulesHash =
     if stdenv.isDarwin then
-      "sha256-IyFm5NbnU63BaOO/F4/v1exz3VbvkY96yjg9iun+O9Q="
+      "sha256-AkJwfLULLZVwwz+XU1QcFUZoIS7oVPCn+n/MXEaxrqE="
     else
       "sha256-uduwrM143NDSc+tXsi4lVVfoMll2a3BDHRUjuO7GB68=";
 
