@@ -1,17 +1,13 @@
 {
   callPackage,
   fetchFromGitHub,
+  lib,
   stdenv,
 }:
 
 let
   version = "1.18.18";
   srcHash = "sha256-rDVcv8j9KghTDwooPYriTloOMgTyVutud7xKLG2mTmk=";
-  nodeModulesHash =
-    if stdenv.isDarwin then
-      "sha256-AkJwfLULLZVwwz+XU1QcFUZoIS7oVPCn+n/MXEaxrqE="
-    else
-      "sha256-TNwKfqxD83UpZuCKN8FdEWN+CcQUP9CkCQSLGNqR/sA=";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
@@ -20,19 +16,18 @@ let
     hash = srcHash;
   };
 
-  # Build node_modules from opencode's own nix/node_modules.nix. Drop --frozen-lockfile
-  # so nixpkgs bun (1.3.13) can re-resolve the lockfile that was generated with bun@1.3.14.
-  node_modules =
-    (callPackage "${src}/nix/node_modules.nix" {
-      hash = nodeModulesHash;
-    }).overrideAttrs
-      (o: {
-        inherit version; # avoid the "+dirty" rev suffix — opencode.nix inherits version from node_modules
-        __intentionallyOverridingVersion = true; # src is correct; only the rev-suffix in version changes
-        # buildPhase = builtins.replaceStrings [ "--frozen-lockfile" ] [ "" ] o.buildPhase;
-      });
+  # node_modules FOD hashes come verbatim from upstream's nix/hashes.json
+  # (vendored by update.sh); our build reproduces upstream's output exactly.
+  nodeModulesHash = (lib.importJSON ./hashes.json).nodeModules.${stdenv.hostPlatform.system};
+
+  # Vendored copies of opencode's nix/ expressions — importing them from
+  # ${src} would be IFD, which nix flake check and Hydra eval forbid.
+  node_modules = callPackage ./node_modules.nix {
+    inherit src version;
+    hash = nodeModulesHash;
+  };
 in
-(callPackage "${src}/nix/opencode.nix" { inherit node_modules; }).overrideAttrs (prev: {
+(callPackage ./opencode.nix { inherit node_modules; }).overrideAttrs (prev: {
   passthru = (prev.passthru or { }) // {
     updateScript = ./update.sh;
   };

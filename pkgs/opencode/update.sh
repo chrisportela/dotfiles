@@ -1,9 +1,11 @@
 #!/usr/bin/env nix
-#!nix shell --ignore-environment nixpkgs#cacert nixpkgs#nix nixpkgs#bash nixpkgs#git nixpkgs#curl nixpkgs#jq nixpkgs#gnused nixpkgs#coreutils --command bash
+#!nix shell --ignore-environment nixpkgs#cacert nixpkgs#nix nixpkgs#bash nixpkgs#git nixpkgs#curl nixpkgs#jq nixpkgs#gnused nixpkgs#coreutils nixpkgs#diffutils --command bash
 
 set -euo pipefail
 
-PKG_FILE="pkgs/opencode/package.nix"
+PKG_DIR="pkgs/opencode"
+PKG_FILE="$PKG_DIR/package.nix"
+RAW="https://raw.githubusercontent.com/anomalyco/opencode"
 
 version=$(curl -s https://api.github.com/repos/anomalyco/opencode/releases/latest | jq -r '.tag_name | ltrimstr("v")')
 echo "Latest version: $version"
@@ -21,9 +23,13 @@ echo "Updating $current -> $version"
 # Update version
 sed -i "s|version = \"$current\"|version = \"$version\"|" "$PKG_FILE"
 
-# Step 1: Get new srcHash
+# node_modules hashes come verbatim from upstream's nix/hashes.json
+curl -fsS "$RAW/v$version/nix/hashes.json" -o "$PKG_DIR/hashes.json"
+echo "Refreshed hashes.json"
+
+# Get new srcHash
 sed -i 's|srcHash = "sha256-[^"]*"|srcHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="|' "$PKG_FILE"
-git add "$PKG_FILE"
+git add "$PKG_DIR"
 src_hash=$( (nix build --no-link ".#opencode" 2>&1 || true) \
   | sed -nE 's/.*got: *(sha256-[A-Za-z0-9+/=_-]+).*/\1/p' | head -1)
 
@@ -34,19 +40,18 @@ fi
 sed -i "s|srcHash = \"sha256-[^\"]*\"|srcHash = \"$src_hash\"|" "$PKG_FILE"
 echo "Updated srcHash to $src_hash"
 
-# Step 2: Get new nodeModulesHash
-# The node_modules FOD builds using opencode's own nix/node_modules.nix (--frozen-lockfile
-# removed so nixpkgs bun works). A hash mismatch emits "got: sha256-..." as expected.
-sed -i 's|nodeModulesHash = "sha256-[^"]*"|nodeModulesHash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="|' "$PKG_FILE"
-git add "$PKG_FILE"
-modules_hash=$( (nix build --no-link ".#opencode" 2>&1 || true) \
-  | sed -nE 's/.*got: *(sha256-[A-Za-z0-9+/=_-]+).*/\1/p' | head -1)
+# node_modules.nix and opencode.nix are hand-adapted vendored copies of
+# upstream's nix/ expressions; warn when upstream changed them between the
+# two releases so the adaptation can be re-synced by hand.
+for f in node_modules.nix opencode.nix; do
+  if ! diff -q <(curl -fsS "$RAW/v$current/nix/$f") <(curl -fsS "$RAW/v$version/nix/$f") > /dev/null; then
+    echo "WARNING: upstream nix/$f changed between v$current and v$version;" >&2
+    echo "         review the diff and re-sync the vendored $PKG_DIR/$f" >&2
+  fi
+done
 
-if [ -n "$modules_hash" ]; then
-  sed -i "s|nodeModulesHash = \"sha256-[^\"]*\"|nodeModulesHash = \"$modules_hash\"|" "$PKG_FILE"
-  echo "Updated nodeModulesHash to $modules_hash"
-else
-  echo "Warning: could not determine new nodeModulesHash" >&2
-fi
+# Verification build (node_modules FOD hash mismatches surface here)
+git add "$PKG_DIR"
+nix build --no-link ".#opencode"
 
 echo "Updated opencode to $version"

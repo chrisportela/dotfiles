@@ -37,7 +37,10 @@ in
 
         ''
         + builtins.readFile "${pkgs.claude-history.src}/skills/claude-history/SKILL.md";
-        session = "${pkgs.claude-session}/share/claude-session/skill";
+        # Repo path, not "${pkgs.claude-session}/share/...": home-manager's
+        # mkSkillEntry stats the path at eval time, which would force building
+        # the package during evaluation (IFD) and break `nix flake check`.
+        session = ../../pkgs/claude-session/skill;
       };
     };
 
