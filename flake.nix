@@ -69,6 +69,10 @@
       url = "github:raine/claude-history";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    # niks3 binary-cache client (server runs on liara, see infra repo).
+    # Pinned to the same release as infra; no nixpkgs follows on purpose
+    # (matches infra) so both repos run the identical client build.
+    niks3.url = "github:Mic92/niks3/v1.7.0";
 
   };
 
@@ -164,6 +168,7 @@
               update = pkgs.callPackage ./pkgs/update.nix { };
               wt = pkgs.callPackage ./pkgs/wt/default.nix { };
               llmfit = pkgs.callPackage ./pkgs/llmfit/package.nix { };
+              niks3-client = inputs.niks3.packages.${system}.niks3;
               pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
               default = legacyPackages.homeConfigurations.cmp.activationPackage;
             }
@@ -337,6 +342,7 @@
               update.${sys} = pkgs.update;
               wt.${sys} = pkgs.wt;
               llmfit.${sys} = pkgs.llmfit;
+              niks3-client.${sys} = pkgs.niks3-client;
             };
 
             devShells = {
@@ -432,6 +438,8 @@
               modules = with self.darwinModules; [
                 default
                 ./hosts/darwin/mba.nix
+                ./hosts/darwin/lux.nix
+                inputs.agenix.darwinModules.default
                 # { nix.linux-builder.enable = true; }
                 inputs.nix-rosetta-builder.darwinModules.default
                 {

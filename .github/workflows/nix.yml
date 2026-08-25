@@ -26,43 +26,9 @@ jobs:
       - name: Check flake
         run: nix flake check --all-systems
 
-  build:
-    name: Build (Linux)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-
-      - uses: cachix/cachix-action@v16
-        with:
-          name: chrisportela-dotfiles
-
-      - name: Build packages and devShells
-        run: |
-          nix build \
-            .#packages.x86_64-linux.cachix-helper \
-            .#packages.x86_64-linux.setup-envrc \
-            .#packages.x86_64-linux.claude-code \
-            .#formatter.x86_64-linux \
-            .#devShells.x86_64-linux.dotfiles \
-            .#devShells.x86_64-linux.dev \
-            .#devShells.x86_64-linux.devops \
-            --no-link
-
-      - name: Build home-manager
-        run: nix build .#legacyPackages.x86_64-linux.homeConfigurations.cmp.activationPackage --no-link
-
-      - name: Eval React-Native Shell
-        run: nix eval .#devShells.x86_64-linux.react-native
-
-      - name: Eval NixOS config (ada)
-        run: nix eval .#nixosConfigurations.ada.config.system.build.toplevel
-
+  # The linux build matrix lives on Forgejo Actions now (see docs/ci.md);
+  # GitHub keeps the flake check plus the darwin build below, which feeds
+  # the public cachix cache for consumers without tailnet access.
   build-darwin:
     name: Build (Darwin)
     runs-on: macos-14

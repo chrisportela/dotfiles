@@ -1,0 +1,77 @@
+# Weekly `nix flake update` → PR → auto-merge once the full ci workflow
+# passes. Adapted from the cafecito-extensions update-deps workflow.
+name: update-flake
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print what would update but do not push a branch or open a PR"
+        type: boolean
+        default: false
+
+concurrency:
+  group: update-flake
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: lucy-docker
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Use the bot PAT so the PR this workflow opens will trigger the ci
+          # workflow. The built-in GITHUB_TOKEN is suppressed from triggering
+          # further workflows (Forgejo anti-recursion guard), so a real user
+          # PAT is required here.
+          token: ${{ secrets.DEPS_BOT_TOKEN }}
+      # The lucy-docker runner bind-mounts the host /nix/store but doesn't
+      # set up any profile, so nothing in /nix/var/nix/profiles/* exists
+      # and nix isn't on PATH. Discover a nix binary in the bind-mounted
+      # store and symlink the whole tooldir into /usr/local/bin (already
+      # on PATH). Also enable experimental features since the host's
+      # nix.conf isn't inherited inside the job container. The container
+      # persists across steps so this setup only needs to run once per job.
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: configure git
+        run: |
+          git config user.name  "dotfiles-deps-bot"
+          git config user.email "deps-bot@cafecito.cloud"
+      - name: run flake update
+        id: update
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: nix develop .#dotfiles --command bash scripts/ci/update-flake.sh
+      - name: open PR and enable auto-merge
+        if: steps.update.outputs.changed == 'true'
+        env:
+          FORGEJO_TOKEN: ${{ secrets.DEPS_BOT_TOKEN }}
+          PR_TITLE: ${{ steps.update.outputs.title }}
+          PR_BODY_FILE: ${{ steps.update.outputs.body_file }}
+          UPDATE_BRANCH: ${{ steps.update.outputs.branch }}
+          UPDATE_BRANCH_PREFIX: chore/flake-update
+        run: nix develop .#dotfiles --command bash scripts/ci/create-update-pr.sh

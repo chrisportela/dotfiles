@@ -17,6 +17,12 @@ nix build .#nixosConfigurations.ada.config.system.build.toplevel  # Build NixOS 
 nix build .#darwinConfigurations.roxy.system                      # Build Darwin for roxy
 ```
 
+## CI
+
+CI/automation runs on Forgejo Actions (remote `liara`); GitHub carries a slim
+informational workflow. See `docs/ci.md` for the workflow inventory, runner
+labels, niks3 cache behavior, and the server-side setup checklist.
+
 ## Layout
 
 - **flake.nix** — Entry point. Defines NixOS, Darwin, and home-manager configs for multiple hosts.

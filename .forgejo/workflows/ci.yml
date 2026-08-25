@@ -1,0 +1,262 @@
+# Staged CI for the dotfiles flake. This is the merge gate for every PR to
+# main (including the update-flake / update-packages bot PRs) and the
+# post-merge rebuild on main.
+#
+# Staging principle: expensive things are built as individual matrix jobs
+# (stage 1) so each stays well under the runner job timeout, retries are
+# granular, and the aggregate host builds (stage 2) assemble from the
+# already-populated host store / niks3 cache instead of building anything
+# heavy themselves. If CUDA ever gets enabled, its heavy packages become
+# additional entries in the `heavy` list of scripts/ci/plan-jobs.sh — no
+# restructuring needed.
+#
+# Cache push: none here, by design. The linux docker runners share the host
+# nix daemon (NIX_REMOTE=daemon), and the build hosts run a niks3
+# post-build-hook (infra: cafecito.nixCachePush); lux runs the darwin
+# equivalent (modules/darwin/nix-cache-push). Everything CI builds lands in
+# https://niks3.cafecito.cloud without any workflow wiring.
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: lucy-docker
+    steps:
+      - uses: actions/checkout@v4
+      # The lucy-docker runner bind-mounts the host /nix/store but doesn't
+      # set up any profile, so nothing in /nix/var/nix/profiles/* exists
+      # and nix isn't on PATH. Discover a nix binary in the bind-mounted
+      # store and symlink the whole tooldir into /usr/local/bin (already
+      # on PATH). Also enable experimental features since the host's
+      # nix.conf isn't inherited inside the job container. The container
+      # persists across steps so this setup only needs to run once per job.
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: flake check
+        run: nix flake check --all-systems --no-warn-dirty
+
+  # Derives the stage-1 build matrices from the flake (hydraJobs + the
+  # per-system package/shell/home sets) so the job list can never drift
+  # from what the flake actually exposes.
+  plan:
+    runs-on: lucy-docker
+    outputs:
+      linux: ${{ steps.plan.outputs.linux }}
+      aarch64: ${{ steps.plan.outputs.aarch64 }}
+      darwin: ${{ steps.plan.outputs.darwin }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: compute build matrices
+        id: plan
+        run: nix develop .#dotfiles --command bash scripts/ci/plan-jobs.sh
+
+  # ── Stage 1: leaf builds ────────────────────────────────────────────────
+  # One job per package / devShell / home activation / heavy dependency.
+
+  linux:
+    needs: plan
+    runs-on: lucy-docker
+    name: linux (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.linux) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: build ${{ matrix.attr }}
+        env:
+          ATTR: ${{ matrix.attr }}
+        run: nix build --no-link --print-out-paths --no-warn-dirty ".#${ATTR}"
+
+  # aarch64-linux built on the x86_64 runners via binfmt emulation (the
+  # build hosts all set boot.binfmt.emulatedSystems = ["aarch64-linux"],
+  # which adds aarch64-linux to the daemon's extra-platforms).
+  aarch64:
+    needs: plan
+    runs-on: lucy-docker
+    name: aarch64 (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.aarch64) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: build ${{ matrix.attr }}
+        env:
+          ATTR: ${{ matrix.attr }}
+        run: nix build --no-link --print-out-paths --no-warn-dirty ".#${ATTR}"
+
+  # Real darwin builds on the lux native runner (modules/darwin/forgejo-runner).
+  # Native backend: nix/git/node are on the daemon PATH, no setup step needed.
+  darwin:
+    needs: plan
+    runs-on: darwin
+    name: darwin (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.darwin) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: build ${{ matrix.attr }}
+        env:
+          ATTR: ${{ matrix.attr }}
+        run: nix build --no-link --print-out-paths --no-warn-dirty ".#${ATTR}"
+
+  # ── Stage 2: aggregates ─────────────────────────────────────────────────
+  # Host toplevels pull the stage-1 leaves from the store/cache, so these
+  # jobs mostly assemble rather than build.
+
+  hosts:
+    needs: [plan, linux]
+    runs-on: lucy-docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: build ada toplevel
+        run: nix build --no-link --print-out-paths --no-warn-dirty '.#hydraJobs.hosts.ada.x86_64-linux'
+      - name: build flamme toplevel
+        run: nix build --no-link --print-out-paths --no-warn-dirty '.#hydraJobs.hosts.flamme.x86_64-linux'
+
+  hosts-darwin:
+    needs: [plan, darwin]
+    runs-on: darwin
+    steps:
+      - uses: actions/checkout@v4
+      - name: build lux system
+        run: nix build --no-link --print-out-paths --no-warn-dirty '.#darwinConfigurations.lux.system'
+      - name: build roxy system
+        run: nix build --no-link --print-out-paths --no-warn-dirty '.#darwinConfigurations.roxy.system'
+      - name: eval react-native shell
+        run: nix eval --no-warn-dirty '.#devShells.aarch64-darwin.react-native.drvPath'
+
+  # The rpi4 SD image is a large fully-emulated build; keep it off the PR
+  # gate and only rebuild it after merges to main.
+  pi:
+    if: github.event_name == 'push'
+    needs: [plan, aarch64]
+    runs-on: lucy-docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup nix in PATH
+        run: |
+          set -e
+          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
+          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
+          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
+            echo "ERROR: no nix binary in /nix/store"
+            # shellcheck disable=SC2012
+            ls -la /nix/ 2>&1 | head -20
+            exit 1
+          fi
+          NIX_BIN_DIR=$(dirname "$NIX_BIN")
+          for tool in "$NIX_BIN_DIR"/*; do
+            name=$(basename "$tool")
+            ln -sf "$tool" "/usr/local/bin/$name"
+          done
+          mkdir -p /etc/nix
+          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+          nix --version
+      - name: build rpi4 sd image
+        run: nix build --no-link --print-out-paths --no-warn-dirty '.#packages.x86_64-linux.pi'

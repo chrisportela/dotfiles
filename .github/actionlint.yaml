@@ -1,0 +1,9 @@
+# Self-hosted Forgejo Actions runner labels (see docs/ci.md).
+self-hosted-runner:
+  labels:
+    - lucy-docker
+    - liara-docker
+    - nix-docker
+    - darwin
+    - nix-darwin
+    - lux-darwin

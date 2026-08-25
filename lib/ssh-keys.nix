@@ -7,8 +7,14 @@ let
   # iphoneEd25519 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAzxvjRupAABCMRfZURSWZZcWRncglE+61vQp7t8uQr ShellFish@iPhone-23072024";
   windowsDesktop = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII5kFjpHHMhPxXAp54egnvuGVidd0g83jrw9AzD3AB5N cp@cp-win1";
   nixDesktop = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILsqpaOSjCbxoTry3oYRHElBMbnFvZVVa5sxjbTZO/lX cmp@ada";
+  # Host key (/etc/ssh/ssh_host_ed25519_key.pub) — agenix decrypts with it at boot.
+  luxHost = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL1StbI94/404imm10SA0nxRh0SnVXhR6rNrMm5vrl8K host@lux";
 in
 {
+  hostKeys = {
+    lux = luxHost;
+  };
+
   keys = {
     lux = luxHomeSE;
     roxy = roxyInfraSE;
