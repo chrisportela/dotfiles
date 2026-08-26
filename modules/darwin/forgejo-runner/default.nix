@@ -11,11 +11,23 @@ let
 
   settingsFormat = pkgs.formats.yaml { };
 
+  # Declarative pre-registered runner (forgejo-runner v12+): the connection
+  # is defined entirely in the config file — url + uuid + token loaded from
+  # a file — replacing the deprecated `register`/`create-runner-file`
+  # commands. The runner identity is created server-side once with
+  # `forgejo-cli actions register --secret <secret>`; the uuid is derived
+  # from the secret's first 32 hex chars, so nothing is minted at runtime
+  # and there is no orphaned-runner problem.
   configFile = settingsFormat.generate "forgejo-runner-config.yaml" {
     runner = {
       labels = cfg.labels;
       timeout = cfg.timeout;
       capacity = cfg.capacity;
+    };
+    server.connections.cafecito = {
+      url = cfg.serverUrl;
+      uuid = cfg.uuid;
+      token_url = "file:${cfg.secretFile}";
     };
   };
 
@@ -39,31 +51,9 @@ let
     ++ cfg.extraPackages
   );
 
-  # Registration is gated on a hash of the token: upstream forgejo-runner
-  # re-registers whenever it is asked to, and every re-registration mints a
-  # NEW runner identity server-side, orphaning the previous row in Forgejo's
-  # runner list. Labels are synced from the daemon config file at startup,
-  # so label changes never require re-registering. (Pattern ported from the
-  # infra repo's NixOS forgejo-runner module.)
   runnerScript = pkgs.writeShellScript "forgejo-runner-daemon" ''
     set -euo pipefail
     cd ${lib.escapeShellArg cfg.stateDir}
-
-    TOKEN="$(cat ${lib.escapeShellArg cfg.tokenFile})"
-    TOKEN_HASH_CURRENT="$(printf '%s' "$TOKEN" | ${pkgs.coreutils}/bin/sha256sum | cut -d' ' -f1)"
-    TOKEN_HASH_STORED="$(cat .token-hash 2>/dev/null || echo "")"
-
-    if [ ! -e .runner ] || [ "$TOKEN_HASH_CURRENT" != "$TOKEN_HASH_STORED" ]; then
-      rm -f .runner
-      ${lib.getExe cfg.package} register --no-interactive \
-        --instance ${lib.escapeShellArg cfg.serverUrl} \
-        --token "$TOKEN" \
-        --name ${lib.escapeShellArg cfg.name} \
-        --labels ${lib.escapeShellArg (lib.concatStringsSep "," cfg.labels)} \
-        --config ${configFile}
-      printf '%s' "$TOKEN_HASH_CURRENT" > .token-hash
-    fi
-
     exec ${lib.getExe cfg.package} daemon --config ${configFile}
   '';
 in
@@ -83,9 +73,13 @@ in
       description = "Forgejo server URL the runner registers with (must be reachable, e.g. over tailscale).";
     };
 
-    name = lib.mkOption {
+    uuid = lib.mkOption {
       type = lib.types.str;
-      description = "Display name for this runner in the Forgejo UI.";
+      description = ''
+        UUID of the pre-registered runner. Derived from the shared secret's
+        first 32 hex chars (8-4-4-4-12); printed by
+        `forgejo-cli actions register`. Not sensitive — the secret is.
+      '';
     };
 
     labels = lib.mkOption {
@@ -109,11 +103,14 @@ in
       description = "Number of jobs executed concurrently (runner.capacity).";
     };
 
-    tokenFile = lib.mkOption {
+    secretFile = lib.mkOption {
       type = lib.types.str;
       description = ''
         Path (at runtime, e.g. an agenix secret) to a file containing the
-        raw registration token. Must be readable by `user`.
+        raw 40-hex-char shared secret (`openssl rand -hex 20`) this runner
+        was pre-registered with on the server
+        (`forgejo-cli actions register --secret <secret>`). Must be
+        readable by `user`.
       '';
     };
 

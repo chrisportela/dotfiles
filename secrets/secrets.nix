@@ -11,10 +11,11 @@ in
 {
   "example.age".publicKeys = sshKeys.secrets ++ [ ];
 
-  # Forgejo Actions runner registration token for lux
-  # (modules/darwin/forgejo-runner). Mint in the Forgejo UI:
-  # Settings → Actions → Runners → Create registration token.
-  "lux-forgejo-runner-token.age".publicKeys = [ sshKeys.hostKeys.lux ] ++ admins;
+  # Shared secret for lux's pre-registered Forgejo Actions runner
+  # (modules/darwin/forgejo-runner). Generate with `openssl rand -hex 20`,
+  # register the same value server-side on liara:
+  #   forgejo-cli actions register --name lux --secret <secret>
+  "lux-forgejo-runner-secret.age".publicKeys = [ sshKeys.hostKeys.lux ] ++ admins;
 
   # niks3 API token for lux's post-build cache push
   # (modules/darwin/nix-cache-push). Minted on liara (infra repo).

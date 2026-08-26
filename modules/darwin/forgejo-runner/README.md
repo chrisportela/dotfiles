@@ -16,29 +16,35 @@ no darwin member, so lux advertises the `darwin` labels and picks up the
 | `name` | hostname | Runner display name. |
 | `labels` | `<host>-darwin:host`, `darwin:host`, `nix-darwin:host` | Labels advertised to Forgejo. Synced from the config file at startup — changing them does **not** re-register. |
 | `timeout` / `capacity` | `3h` / `1` | Per-job wall clock limit / concurrent jobs. |
-| `tokenFile` | — | Runtime path to the raw registration token (use an agenix secret, `owner` = `user`). |
+| `uuid` | — | UUID of the pre-registered runner (not sensitive). |
+| `secretFile` | — | Runtime path to the raw 40-hex shared secret (use an agenix secret, `owner` = `user`). |
 | `user` | `cmp` | macOS user jobs run as. |
 | `stateDir` | `/var/lib/forgejo-runner` | Registration state, workspaces, logs (`logs/runner*.log`). |
 | `extraPackages` | `[ ]` | Extra tools on the job PATH. |
 
-## Registration semantics
+## Registration semantics (declarative pre-registered runner, v12+)
 
-Upstream `forgejo-runner` mints a **new server-side runner identity** every
-time `register` runs, orphaning the old row in the Forgejo admin UI. The
-daemon script therefore only registers when there is no `.runner` file yet or
-the token content actually changed (tracked via a sha256 in
-`<stateDir>/.token-hash`). Ported from the infra repo's NixOS
-`forgejo-runner.nix`.
+There is no registration step on the runner at all — the deprecated
+`register` and `create-runner-file` commands are not used. The connection is
+declared in the generated config file (`server.connections.cafecito`) with
+the instance `url`, the runner `uuid`, and `token_url: file:<secretFile>`,
+which forgejo-runner v12+ reads directly:
 
-To force a re-registration: delete `<stateDir>/.runner` and `.token-hash`,
-then `sudo launchctl kickstart -k system/cloud.cafecito.forgejo-runner`.
+1. Generate the shared secret: `openssl rand -hex 20`.
+2. Pre-register it server-side (liara):
+   `forgejo-cli actions register --name lux --secret <secret>` — this
+   prints the runner UUID (derived from the secret's first 32 hex chars,
+   formatted 8-4-4-4-12).
+3. Set `uuid` in the host config (it is not sensitive) and encrypt the
+   secret as the agenix secret referenced by `secretFile`
+   (`cd secrets && agenix -e lux-forgejo-runner-secret.age`; replaces the
+   committed placeholder).
 
-## Getting a token
-
-Forgejo → Site/Org/Repo settings → Actions → Runners → Create registration
-token. Encrypt it as the agenix secret referenced by `tokenFile` (see
-`secrets/secrets.nix`; the placeholder committed there must be replaced with
-`agenix -e <name>.age` before the runner can register).
+The runner identity is fully determined by the config, so rotating the
+secret is: re-register server-side, re-encrypt, update `uuid` if it
+changed, and `sudo launchctl kickstart -k
+system/cloud.cafecito.forgejo-runner`. Labels live in `runner.labels` in
+the same config and never touch registration.
 
 ## Dependencies
 

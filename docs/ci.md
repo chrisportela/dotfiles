@@ -58,9 +58,15 @@ push+pin flow stays for the public cachix cache.
    `needs:` edges make those transitively cover stage 1). Without required
    status checks, `merge_when_checks_succeed` fires on the *first* passing
    check.
-3. **lux runner token**: Forgejo → Settings → Actions → Runners → create
-   registration token; store it: `cd secrets && agenix -e
-   lux-forgejo-runner-token.age` (replaces the committed placeholder).
+3. **lux runner secret** (declarative pre-registered runner): generate with
+   `openssl rand -hex 20`, register it on liara with
+   `forgejo-cli actions register --name lux --secret <secret>` (prints the
+   runner UUID), store the secret with `cd secrets && agenix -e
+   lux-forgejo-runner-secret.age` (replaces the committed placeholder), and
+   set the printed UUID in `hosts/darwin/lux.nix`
+   (`chrisportela.forgejo-runner.uuid`, currently a zeros placeholder). No
+   registration token involved; the connection is declared in the runner's
+   config file.
 4. **lux niks3 token**: mint on liara (infra repo), then `agenix -e
    lux-niks3-api-token.age`.
 5. **Optional** Actions secret `GH_API_TOKEN` (a GitHub read-only token) so
