@@ -5,12 +5,7 @@
 {
   chrisportela.forgejo-runner = {
     enable = true;
-    # Placeholder — replace with the real UUID after pre-registering:
-    # generate `openssl rand -hex 20`, run
-    # `forgejo-cli actions register --name lux --secret <secret>` on liara
-    # (prints the UUID), and store the secret via
-    # `agenix -e lux-forgejo-runner-secret.age`.
-    uuid = "00000000-0000-0000-0000-000000000000";
+    uuid = "1df45530-8a2a-4a18-ae94-49936aa2a863";
     labels = [
       "lux-darwin:host"
       "darwin:host"
