@@ -21,6 +21,7 @@ no darwin member, so lux advertises the `darwin` labels and picks up the
 | `user` | `cmp` | macOS user jobs run as. |
 | `stateDir` | `/var/lib/forgejo-runner` | Registration state, workspaces, logs (`logs/runner*.log`). |
 | `extraPackages` | `[ ]` | Extra tools on the job PATH. |
+| `extraCertificateFiles` | `[ ]` | PEM CAs appended to the job/daemon CA bundle (`SSL_CERT_FILE`, `NIX_SSL_CERT_FILE`, `GIT_SSL_CAINFO`, `NODE_EXTRA_CA_CERTS`). |
 
 ## Registration semantics (declarative pre-registered runner, v12+)
 
@@ -49,6 +50,12 @@ the same config and never touch registration.
 ## Dependencies
 
 - Host must reach `serverUrl` (tailscale).
+- Internal-CA TLS: trusting a CA in the macOS Keychain only helps
+  Keychain-aware clients (the Go runner daemon itself). Nix-built
+  git/curl/node/nix use OpenSSL and need the CA in a PEM bundle — that's
+  `extraCertificateFiles` (lux passes `lib/cafecito-root-ca.crt` so
+  `actions/checkout` can fetch from git.cafecito.cloud). Darwin analog of
+  the infra docker runners' `shareHostCAs`.
 - `nix` on the job PATH is the client for the host nix-daemon; builds run as
   the daemon's build users as usual.
 - JS actions (e.g. `actions/checkout`) need `node` — provided on the PATH.

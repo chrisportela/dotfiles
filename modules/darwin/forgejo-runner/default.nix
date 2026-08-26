@@ -31,6 +31,17 @@ let
     };
   };
 
+  # Nix-built tools (git/curl/node/nix) use OpenSSL and never consult the
+  # macOS Keychain, so trusting an internal CA in the Keychain does nothing
+  # for them — they need a PEM bundle via environment variables. Bundle the
+  # standard Mozilla roots with any extra CAs (darwin analog of the infra
+  # runners' shareHostCAs).
+  caBundle = pkgs.runCommand "forgejo-runner-ca-bundle" { } ''
+    cat ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt \
+      ${lib.concatMapStringsSep " " lib.escapeShellArg cfg.extraCertificateFiles} \
+      > $out
+  '';
+
   # Tools every job can rely on. actions/checkout and other JS actions need
   # node; nix itself must be the client for the host daemon.
   jobPath = lib.makeBinPath (
@@ -131,6 +142,18 @@ in
       default = [ ];
       description = "Extra packages appended to the PATH jobs see.";
     };
+
+    extraCertificateFiles = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
+      default = [ ];
+      description = ''
+        PEM certificate files appended to the CA bundle the daemon and its
+        jobs use (SSL_CERT_FILE etc.). Needed for TLS endpoints signed by
+        an internal CA (e.g. the Cafecito Cloud Root CA for
+        git.cafecito.cloud) — nix-built git/curl/node do not read the
+        macOS Keychain.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -156,6 +179,12 @@ in
           # shells out to outside of nix builds.
           PATH = "${jobPath}:/usr/bin:/bin:/usr/sbin:/sbin";
           HOME = cfg.stateDir;
+          # OpenSSL-based tools (git via curl), the nix client, and node all
+          # take their trust roots from these — see caBundle above.
+          SSL_CERT_FILE = "${caBundle}";
+          NIX_SSL_CERT_FILE = "${caBundle}";
+          GIT_SSL_CAINFO = "${caBundle}";
+          NODE_EXTRA_CA_CERTS = "${caBundle}";
         };
       };
     };

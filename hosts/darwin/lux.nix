@@ -12,6 +12,9 @@
       "nix-darwin:host"
     ];
     secretFile = config.age.secrets.lux-forgejo-runner-secret.path;
+    # git.cafecito.cloud is signed by the internal CA; nix-built git/curl
+    # don't read the macOS Keychain, so it must be in the PEM bundle.
+    extraCertificateFiles = [ ../../lib/cafecito-root-ca.crt ];
   };
 
   chrisportela.nix-cache-push = {
