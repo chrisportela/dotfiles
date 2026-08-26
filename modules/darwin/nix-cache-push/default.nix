@@ -21,6 +21,9 @@ let
   postBuildHook = pkgs.writeShellScript "niks3-post-build-hook" ''
     set -uf
     [ -n "''${OUT_PATHS:-}" ] || exit 0
+    # The niks3 client shells out to `nix path-info`; the launchd
+    # nix-daemon's PATH doesn't include nix, so provide it explicitly.
+    export PATH=${lib.makeBinPath [ config.nix.package ]}:"$PATH"
     export NIKS3_SERVER_URL=${lib.escapeShellArg cfg.serverUrl}
     export NIKS3_AUTH_TOKEN_FILE=${lib.escapeShellArg cfg.tokenFile}
     # shellcheck disable=SC2086 # OUT_PATHS is a space-separated list
