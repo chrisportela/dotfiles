@@ -275,7 +275,7 @@ fn bare_wt_prints_usage() {
         String::from_utf8_lossy(&out.stderr)
     );
     assert!(all.contains("Usage"), "expected usage text, got: {all}");
-    for cmd in ["init", "add", "ls", "rm"] {
+    for cmd in ["init", "add", "open", "ls", "rm"] {
         assert!(all.contains(cmd), "usage should mention '{cmd}': {all}");
     }
     assert!(
@@ -738,6 +738,132 @@ fn add_reuses_existing_window_of_same_name() {
     assert!(
         stdout_of(&out).contains("already exists"),
         "expected a reuse note: {}",
+        stdout_of(&out)
+    );
+}
+
+#[test]
+fn open_reopens_window_typing_claude_continue_unentered() {
+    let mut f = Fixture::new();
+    f.with_tmux();
+    f.install_shim("claude"); // logs if `claude` is ever EXECUTED — it must not be
+    assert_success(&f.run_wt(&["add", "--no-tmux", "feature/x"]));
+
+    let out = f.run_wt(&["open", "feature/x"]);
+    assert_success(&out);
+    eprintln!("wt stdout:\n{}", stdout_of(&out));
+    eprintln!("wt stderr:\n{}", stderr_of(&out));
+
+    let panes = f.tmux(&[
+        "list-panes",
+        "-t",
+        "main:feature/x",
+        "-F",
+        "#{pane_id}|#{pane_title}",
+    ]);
+    let rows: Vec<Vec<&str>> = panes
+        .lines()
+        .map(|l| l.split('|').collect::<Vec<_>>())
+        .collect();
+    let titles: Vec<&str> = rows.iter().map(|r| r[1]).collect();
+    assert_eq!(titles, vec!["claude", "shell"], "pane titles: {panes}");
+
+    // The resume command is typed but NOT run. -J joins wrapped lines: the
+    // long fixture prompt can push the typed text across the wrap boundary.
+    let claude_pane = rows[0][0].to_string();
+    f.wait_until("typed 'claude --continue' visible in pane", || {
+        f.tmux(&["capture-pane", "-p", "-J", "-t", &claude_pane])
+            .lines()
+            .any(|l| l.contains("claude --continue"))
+    });
+    std::thread::sleep(std::time::Duration::from_millis(300));
+    assert_eq!(
+        f.shim_log("claude"),
+        "",
+        "claude must be typed, never executed (was Enter sent?)"
+    );
+}
+
+#[test]
+fn open_twice_reuses_the_window() {
+    let mut f = Fixture::new();
+    f.with_tmux();
+    assert_success(&f.run_wt(&["add", "--no-tmux", "again"]));
+
+    assert_success(&f.run_wt(&["open", "again"]));
+    let out = f.run_wt(&["open", "again"]);
+    assert_success(&out);
+
+    let windows = f.tmux(&["list-windows", "-a", "-F", "#{window_name}"]);
+    assert_eq!(
+        windows.lines().filter(|w| *w == "again").count(),
+        1,
+        "must reuse, not duplicate: {windows}"
+    );
+    assert!(
+        stdout_of(&out).contains("already exists"),
+        "expected a reuse note: {}",
+        stdout_of(&out)
+    );
+}
+
+#[test]
+fn open_unknown_worktree_is_clean_error_with_add_hint() {
+    let f = Fixture::new();
+    assert_success(&f.run_wt(&["init"]));
+
+    let out = f.run_wt(&["open", "nope"]);
+    assert!(!out.status.success());
+    let err = stderr_of(&out);
+    assert!(err.contains("no worktree"), "got: {err}");
+    assert!(err.contains("wt add"), "should hint at wt add: {err}");
+}
+
+#[test]
+fn open_restore_all_opens_closed_worktrees_and_skips_open_ones() {
+    let mut f = Fixture::new();
+    f.with_tmux();
+    assert_success(&f.run_wt(&["add", "--no-tmux", "alpha"])); // no window yet
+    assert_success(&f.run_wt(&["add", "beta"])); // window already open
+
+    let out = f.run_wt(&["open"]);
+    assert_success(&out);
+    eprintln!("wt stdout:\n{}", stdout_of(&out));
+    eprintln!("wt stderr:\n{}", stderr_of(&out));
+
+    let windows = f.tmux(&["list-windows", "-a", "-F", "#{window_name}"]);
+    for name in ["alpha", "beta"] {
+        assert_eq!(
+            windows.lines().filter(|w| *w == name).count(),
+            1,
+            "expected exactly one '{name}' window: {windows}"
+        );
+    }
+    assert!(
+        stdout_of(&out).contains("already open"),
+        "expected a skip note for beta: {}",
+        stdout_of(&out)
+    );
+}
+
+#[test]
+fn open_session_creates_detached_session_typing_claude_continue() {
+    let mut f = Fixture::new();
+    f.with_tmux();
+    f.git(&["branch", "rel/v1.2"]);
+    assert_success(&f.run_wt(&["add", "--no-tmux", "rel/v1.2"]));
+
+    let out = f.run_wt(&["open", "--session", "rel/v1.2"]);
+    assert_success(&out);
+
+    let sessions = f.tmux(&["list-sessions", "-F", "#{session_name}"]);
+    assert!(
+        sessions.lines().any(|s| s == "rel-v1-2"),
+        "expected session rel-v1-2: {sessions}"
+    );
+    assert!(
+        stdout_of(&out).contains("tmux attach -t rel-v1-2"),
+        "attach hint missing: {}",
         stdout_of(&out)
     );
 }

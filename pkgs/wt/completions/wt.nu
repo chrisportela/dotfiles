@@ -4,6 +4,7 @@ def "nu-complete wt-subcommand" [] {
   [
     { value: "init", description: "setup .worktrees and exclude" }
     { value: "add",  description: "create a worktree" }
+    { value: "open", description: "reopen tmux workspaces for existing worktrees" }
     { value: "ls",   description: "list active worktrees" }
     { value: "rm",   description: "remove a worktree" }
     { value: "help", description: "show help" }
@@ -32,6 +33,10 @@ export extern "wt add" [
   --no-direnv  # skip direnv allow / devshell priming
   --no-env     # skip copying .env files
   --no-tmux    # skip tmux window creation
+  --session    # create a detached tmux session instead
+]
+export extern "wt open" [
+  branch?: string@"nu-complete wt-worktrees"
   --session    # create a detached tmux session instead
 ]
 export extern "wt ls" []

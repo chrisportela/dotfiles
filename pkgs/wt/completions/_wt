@@ -30,6 +30,7 @@ _wt() {
       _values 'subcommand' \
         'init[setup .worktrees and exclude]' \
         'add[create a worktree]' \
+        'open[reopen tmux workspaces for existing worktrees]' \
         'ls[list active worktrees]' \
         'rm[remove a worktree]' \
         'help[show help]'
@@ -44,6 +45,12 @@ _wt() {
             '--session[create a detached tmux session instead]' \
             '--dry-run[print planned commands instead of executing]' \
             ': :_wt_branches'
+          ;;
+        open)
+          _arguments \
+            '--session[create a detached tmux session instead]' \
+            '--dry-run[print planned commands instead of executing]' \
+            ': :_wt_worktrees'
           ;;
         rm)
           _arguments \

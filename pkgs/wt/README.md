@@ -35,6 +35,16 @@ a working shell.
        press Enter. Pane titles are locked (`allow-set-title off`) so shell
        title escapes don't overwrite them. `--session` creates a detached
        session instead (also works outside tmux); `--no-tmux` skips.
+- `wt open [--session] [<branch>]` — reopen the tmux workspace for
+  worktrees that already exist on disk (the post-reboot case: worktrees
+  survive a shutdown, tmux windows don't). Same window/pane layout as
+  `add`, but the claude pane gets `claude --continue` typed (not entered),
+  so Enter resumes the directory's latest conversation. With a branch:
+  opens that worktree's workspace, or selects the window if it already
+  exists; without a worktree it errors and points at `wt add`. Without a
+  branch: restores every registered worktree, skipping ones whose window
+  (or, with `--session`, session) is already live — idempotent, safe to
+  run right after reboot.
 - `wt ls` — list active worktrees (passes through to `git worktree list`).
 - `wt rm [--no-tmux] <branch>` — remove a worktree with prompts for
   uncommitted changes, an optional merge, and branch deletion. When the

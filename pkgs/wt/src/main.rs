@@ -3,6 +3,7 @@ mod cmd;
 mod complete;
 mod git;
 mod init;
+mod open;
 mod prompt;
 mod rm;
 mod setup;
@@ -46,6 +47,14 @@ enum Cmd {
         session: bool,
         branch: String,
     },
+    /// Reopen tmux workspaces for existing worktrees (types `claude --continue`)
+    Open {
+        /// Create a detached tmux session instead of a window
+        #[arg(long)]
+        session: bool,
+        /// Branch whose worktree to open; omit to restore all worktrees
+        branch: Option<String>,
+    },
     /// List active worktrees
     Ls,
     /// Remove a worktree interactively
@@ -83,6 +92,7 @@ fn run(cli: Cli) -> Result<()> {
                 session,
             },
         ),
+        Cmd::Open { session, branch } => open::run(&runner, &open::OpenOpts { branch, session }),
         Cmd::Ls => {
             let root = git::repo_root(&runner)?;
             let out = runner.query("list worktrees", "git", &["worktree", "list"], Some(&root))?;

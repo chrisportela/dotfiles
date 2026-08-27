@@ -5,7 +5,7 @@ _wt() {
   subcmd="${COMP_WORDS[1]:-}"
 
   if [[ $COMP_CWORD -eq 1 ]]; then
-    COMPREPLY=( $(compgen -W "init add ls rm help" -- "$cur") )
+    COMPREPLY=( $(compgen -W "init add open ls rm help" -- "$cur") )
     return
   fi
 
@@ -15,6 +15,13 @@ _wt() {
         COMPREPLY=( $(compgen -W "--no-direnv --no-env --no-tmux --session --dry-run" -- "$cur") )
       else
         COMPREPLY=( $(compgen -W "$(wt __complete branches 2>/dev/null)" -- "$cur") )
+      fi
+      ;;
+    open)
+      if [[ "$cur" == --* ]]; then
+        COMPREPLY=( $(compgen -W "--session --dry-run" -- "$cur") )
+      else
+        COMPREPLY=( $(compgen -W "$(wt __complete worktrees 2>/dev/null)" -- "$cur") )
       fi
       ;;
     rm)

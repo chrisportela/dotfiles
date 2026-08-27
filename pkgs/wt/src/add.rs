@@ -129,7 +129,7 @@ pub fn run(r: &Runner, opts: &AddOpts) -> Result<()> {
     )?;
 
     if !opts.no_tmux {
-        tmux::open_workspace(r, branch, &wt_path, opts.session)?;
+        tmux::open_workspace(r, branch, &wt_path, opts.session, "claude")?;
     }
 
     println!();

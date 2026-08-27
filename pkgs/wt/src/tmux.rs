@@ -109,7 +109,7 @@ impl Tmux {
         Ok(())
     }
 
-    fn has_session(&self, r: &Runner, name: &str) -> bool {
+    pub fn has_session(&self, r: &Runner, name: &str) -> bool {
         self.query(
             r,
             "check session",
@@ -128,8 +128,16 @@ pub fn sanitize_session_name(branch: &str) -> String {
         .collect()
 }
 
-/// Entry point from `wt add`.
-pub fn open_workspace(r: &Runner, branch: &str, wt_path: &Path, want_session: bool) -> Result<()> {
+/// Entry point from `wt add` and `wt open`. `agent_cmd` is typed (never
+/// entered) into the claude pane — "claude" for a fresh worktree, "claude
+/// --continue" when reopening.
+pub fn open_workspace(
+    r: &Runner,
+    branch: &str,
+    wt_path: &Path,
+    want_session: bool,
+    agent_cmd: &str,
+) -> Result<()> {
     let t = Tmux::from_env();
     let cwd = wt_path.display().to_string();
 
@@ -235,7 +243,7 @@ pub fn open_workspace(r: &Runner, branch: &str, wt_path: &Path, want_session: bo
         r,
         &t,
         claude_pane,
-        "claude",
+        agent_cmd,
         Duration::from_secs(5),
         Duration::from_millis(100),
     )?;
