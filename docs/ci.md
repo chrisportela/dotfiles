@@ -6,6 +6,14 @@ workflow. The old Hydra jobset (`cmp-dotfiles` on hydra.cafecito.cloud) is
 retired; the `hydraJobs` flake output is kept as the machine-readable job
 list that `scripts/ci/plan-jobs.sh` derives the CI matrices from.
 
+Shared CI plumbing (checkout, setup-nix, bot identity, flake update, PR +
+auto-merge + supersede, releases, artifacts) lives in
+[`cafecitocloud/actions`](https://git.cafecito.cloud/cafecitocloud/actions),
+referenced by absolute URL pinned to `@main`. Fix CI plumbing there, not
+here — only `plan-jobs.sh` and `update-packages.sh` are repo-specific.
+GitHub-side workflows (`.github/`) keep `actions/checkout`: GitHub runners
+can't reach git.cafecito.cloud.
+
 ## Workflows
 
 | Workflow | Trigger | What it does |
@@ -19,7 +27,7 @@ list that `scripts/ci/plan-jobs.sh` derives the CI matrices from.
 
 | Platform | Runner | Notes |
 | --- | --- | --- |
-| x86_64-linux | `lucy-docker` (infra repo) | Docker containers sharing the host `/nix/store` + nix-daemon (`NIX_REMOTE=daemon`). Jobs must run the `.forgejo/actions/setup-nix` local action. Job timeout 3h; if a single leaf ever outgrows it, move that job to `nix-heavy:host` (infra WIP, 8h). |
+| x86_64-linux | `lucy-docker` (infra repo) | Docker containers sharing the host `/nix/store` + nix-daemon (`NIX_REMOTE=daemon`). Jobs must run the shared `setup-nix` action. Job timeout 3h; if a single leaf ever outgrows it, move that job to `nix-heavy:host` (infra WIP, 8h). |
 | aarch64-linux | same | binfmt emulation — the build hosts set `boot.binfmt.emulatedSystems = ["aarch64-linux"]`, so the daemon accepts aarch64 builds. |
 | aarch64-darwin | `darwin` → lux (`modules/darwin/forgejo-runner`) | Native launchd runner; if lux is offline, PRs wait for it. |
 
@@ -96,6 +104,6 @@ push+pin flow stays for the public cachix cache.
   foreign-arch binary runs on the host via binfmt but fails inside a
   container with exec ENOENT ("cannot execute: required file not found")
   because the qemu interpreter path only exists in the host mount
-  namespace. `.forgejo/actions/setup-nix` therefore filters candidates by
+  namespace. The shared `setup-nix` action therefore filters candidates by
   ELF machine type and proves the chosen `nix` executes before using it —
   never select a store binary by glob order alone.

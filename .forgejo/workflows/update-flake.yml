@@ -1,5 +1,6 @@
 # Weekly `nix flake update` → PR → auto-merge once the full ci workflow
-# passes. Adapted from the cafecito-extensions update-deps workflow.
+# passes. Composed from the shared cafecitocloud/actions repo; only the
+# repo-specific gate note lives here.
 name: update-flake
 
 on:
@@ -23,7 +24,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
         with:
           fetch-depth: 0
           # Use the bot PAT so the PR this workflow opens will trigger the ci
@@ -31,24 +32,23 @@ jobs:
           # further workflows (Forgejo anti-recursion guard), so a real user
           # PAT is required here.
           token: ${{ secrets.DEPS_BOT_TOKEN }}
-      # Docker jobs get nix from the bind-mounted host store; see
-      # .forgejo/actions/setup-nix for how (and why arch filtering matters).
-      - uses: ./.forgejo/actions/setup-nix
-      - name: configure git
-        run: |
-          git config user.name  "dotfiles-deps-bot"
-          git config user.email "deps-bot@cafecito.cloud"
-      - name: run flake update
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/bot-identity@main
+        with:
+          name: dotfiles-deps-bot
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/update-flake@main
         id: update
-        env:
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: nix develop .#dotfiles --command bash scripts/ci/update-flake.sh
-      - name: open PR and enable auto-merge
+        with:
+          dry-run: ${{ inputs.dry_run }}
+          gate-note: |
+            Merge is gated on the full `ci` workflow: flake check, every
+            package/devShell/home activation on all three platforms, and the
+            ada/flamme/lux/roxy host closures.
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/create-update-pr@main
         if: steps.update.outputs.changed == 'true'
-        env:
-          FORGEJO_TOKEN: ${{ secrets.DEPS_BOT_TOKEN }}
-          PR_TITLE: ${{ steps.update.outputs.title }}
-          PR_BODY_FILE: ${{ steps.update.outputs.body_file }}
-          UPDATE_BRANCH: ${{ steps.update.outputs.branch }}
-          UPDATE_BRANCH_PREFIX: chore/flake-update
-        run: nix develop .#dotfiles --command bash scripts/ci/create-update-pr.sh
+        with:
+          token: ${{ secrets.DEPS_BOT_TOKEN }}
+          title: ${{ steps.update.outputs.title }}
+          body-file: ${{ steps.update.outputs.body-file }}
+          branch: ${{ steps.update.outputs.branch }}
+          branch-prefix: chore/flake-update

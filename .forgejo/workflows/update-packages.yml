@@ -1,6 +1,8 @@
 # Weekly run of every package's passthru.updateScript → batched PR →
 # auto-merge once the full ci workflow passes. Offset from update-flake
-# (Monday) so a red week is attributable to one bot or the other.
+# (Monday) so a red week is attributable to one bot or the other. The
+# update logic (scripts/ci/update-packages.sh) is repo-specific; checkout,
+# nix setup, identity, and PR plumbing come from cafecitocloud/actions.
 name: update-packages
 
 on:
@@ -24,7 +26,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
         with:
           fetch-depth: 0
           # Use the bot PAT so the PR this workflow opens will trigger the ci
@@ -32,13 +34,10 @@ jobs:
           # further workflows (Forgejo anti-recursion guard), so a real user
           # PAT is required here.
           token: ${{ secrets.DEPS_BOT_TOKEN }}
-      # Docker jobs get nix from the bind-mounted host store; see
-      # .forgejo/actions/setup-nix for how (and why arch filtering matters).
-      - uses: ./.forgejo/actions/setup-nix
-      - name: configure git
-        run: |
-          git config user.name  "dotfiles-deps-bot"
-          git config user.email "deps-bot@cafecito.cloud"
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/bot-identity@main
+        with:
+          name: dotfiles-deps-bot
       - name: run package updates
         id: update
         env:
@@ -47,12 +46,11 @@ jobs:
           # it to avoid anonymous rate limits. Fine to leave unset.
           GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
         run: nix develop .#dotfiles --command bash scripts/ci/update-packages.sh
-      - name: open PR and enable auto-merge
+      - uses: https://git.cafecito.cloud/cafecitocloud/actions/create-update-pr@main
         if: steps.update.outputs.changed == 'true'
-        env:
-          FORGEJO_TOKEN: ${{ secrets.DEPS_BOT_TOKEN }}
-          PR_TITLE: ${{ steps.update.outputs.title }}
-          PR_BODY_FILE: ${{ steps.update.outputs.body_file }}
-          UPDATE_BRANCH: ${{ steps.update.outputs.branch }}
-          UPDATE_BRANCH_PREFIX: chore/package-updates
-        run: nix develop .#dotfiles --command bash scripts/ci/create-update-pr.sh
+        with:
+          token: ${{ secrets.DEPS_BOT_TOKEN }}
+          title: ${{ steps.update.outputs.title }}
+          body-file: ${{ steps.update.outputs.body_file }}
+          branch: ${{ steps.update.outputs.branch }}
+          branch-prefix: chore/package-updates
