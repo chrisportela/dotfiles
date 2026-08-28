@@ -19,7 +19,7 @@ list that `scripts/ci/plan-jobs.sh` derives the CI matrices from.
 
 | Platform | Runner | Notes |
 | --- | --- | --- |
-| x86_64-linux | `lucy-docker` (infra repo) | Docker containers sharing the host `/nix/store` + nix-daemon (`NIX_REMOTE=daemon`). Jobs must run the "setup nix in PATH" step. Job timeout 3h; if a single leaf ever outgrows it, move that job to `nix-heavy:host` (infra WIP, 8h). |
+| x86_64-linux | `lucy-docker` (infra repo) | Docker containers sharing the host `/nix/store` + nix-daemon (`NIX_REMOTE=daemon`). Jobs must run the `.forgejo/actions/setup-nix` local action. Job timeout 3h; if a single leaf ever outgrows it, move that job to `nix-heavy:host` (infra WIP, 8h). |
 | aarch64-linux | same | binfmt emulation — the build hosts set `boot.binfmt.emulatedSystems = ["aarch64-linux"]`, so the daemon accepts aarch64 builds. |
 | aarch64-darwin | `darwin` → lux (`modules/darwin/forgejo-runner`) | Native launchd runner; if lux is offline, PRs wait for it. |
 
@@ -90,3 +90,12 @@ push+pin flow stays for the public cachix cache.
   each verify build.
 - `pkgs/update.nix` (the interactive updater) is not CI-safe (`git add -A`,
   `--impure`); CI uses `scripts/ci/update-packages.sh` instead.
+- The host `/nix/store` the docker jobs mount is **multi-arch**: successful
+  emulated aarch64-linux builds leave aarch64 `nix-*` packages whose store
+  path names are identical to the x86_64 ones (only the hash differs). A
+  foreign-arch binary runs on the host via binfmt but fails inside a
+  container with exec ENOENT ("cannot execute: required file not found")
+  because the qemu interpreter path only exists in the host mount
+  namespace. `.forgejo/actions/setup-nix` therefore filters candidates by
+  ELF machine type and proves the chosen `nix` executes before using it —
+  never select a store binary by glob order alone.

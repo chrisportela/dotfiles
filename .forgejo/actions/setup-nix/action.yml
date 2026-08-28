@@ -1,0 +1,64 @@
+# Put a working nix client on PATH inside a docker job container.
+#
+# The docker runners bind-mount the host /nix/store (read-only) and the
+# daemon socket, but no profile: nothing under /nix/var/nix/profiles exists
+# and nix is not on PATH. Discover a nix binary in the mounted store and
+# symlink its tooldir into /usr/local/bin (already on PATH), then enable
+# experimental features (the host nix.conf is not mounted). The container
+# persists across steps, so this only needs to run once per job.
+#
+# The mounted store is MULTI-ARCH: emulated aarch64-linux builds (binfmt on
+# the build hosts) leave aarch64 nix packages in the same store, and store
+# path names do not encode the platform — an aarch64 nix-2.x is
+# indistinguishable from the x86_64 one except by hash. A foreign-arch
+# binary exec()s fine on the host (binfmt) but fails inside the container
+# with ENOENT ("cannot execute: required file not found") because the qemu
+# interpreter binfmt points at lives in the host mount namespace. So:
+# filter candidates by ELF machine type for this container's arch, and
+# prove the survivor actually runs before committing to it.
+name: setup nix
+description: Symlink a working host-store nix onto PATH inside a docker job container
+
+runs:
+  using: composite
+  steps:
+    - name: setup nix in PATH
+      shell: bash
+      run: |
+        set -e
+        case "$(uname -m)" in
+          x86_64) want=3e00 ;;
+          aarch64) want=b700 ;;
+          *)
+            echo "ERROR: unsupported container arch $(uname -m)"
+            exit 1
+            ;;
+        esac
+        NIX_BIN=
+        for candidate in /nix/store/*-nix-*/bin/nix; do
+          [ -x "$candidate" ] || continue
+          # ELF e_machine: little-endian u16 at offset 18
+          machine=$(od -An -j18 -N2 -tx1 "$candidate" 2>/dev/null | tr -d ' ')
+          if [ "$machine" != "$want" ]; then
+            echo "skipping $candidate (foreign arch: e_machine=$machine)"
+            continue
+          fi
+          if "$candidate" --version >/dev/null 2>&1; then
+            NIX_BIN="$candidate"
+            break
+          fi
+          echo "skipping $candidate (does not execute)"
+        done
+        if [ -z "$NIX_BIN" ]; then
+          echo "ERROR: no runnable nix binary for this arch in /nix/store"
+          ls -la /nix/ 2>&1 | head -20
+          exit 1
+        fi
+        NIX_BIN_DIR=$(dirname "$NIX_BIN")
+        for tool in "$NIX_BIN_DIR"/*; do
+          name=$(basename "$tool")
+          ln -sf "$tool" "/usr/local/bin/$name"
+        done
+        mkdir -p /etc/nix
+        echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+        nix --version

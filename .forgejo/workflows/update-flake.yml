@@ -31,32 +31,9 @@ jobs:
           # further workflows (Forgejo anti-recursion guard), so a real user
           # PAT is required here.
           token: ${{ secrets.DEPS_BOT_TOKEN }}
-      # The lucy-docker runner bind-mounts the host /nix/store but doesn't
-      # set up any profile, so nothing in /nix/var/nix/profiles/* exists
-      # and nix isn't on PATH. Discover a nix binary in the bind-mounted
-      # store and symlink the whole tooldir into /usr/local/bin (already
-      # on PATH). Also enable experimental features since the host's
-      # nix.conf isn't inherited inside the job container. The container
-      # persists across steps so this setup only needs to run once per job.
-      - name: setup nix in PATH
-        run: |
-          set -e
-          # shellcheck disable=SC2012  # /nix/store paths are alphanumeric + hyphens; ls is fine
-          NIX_BIN=$(ls /nix/store/*-nix-*/bin/nix 2>/dev/null | head -1)
-          if [ -z "$NIX_BIN" ] || [ ! -x "$NIX_BIN" ]; then
-            echo "ERROR: no nix binary in /nix/store"
-            # shellcheck disable=SC2012
-            ls -la /nix/ 2>&1 | head -20
-            exit 1
-          fi
-          NIX_BIN_DIR=$(dirname "$NIX_BIN")
-          for tool in "$NIX_BIN_DIR"/*; do
-            name=$(basename "$tool")
-            ln -sf "$tool" "/usr/local/bin/$name"
-          done
-          mkdir -p /etc/nix
-          echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-          nix --version
+      # Docker jobs get nix from the bind-mounted host store; see
+      # .forgejo/actions/setup-nix for how (and why arch filtering matters).
+      - uses: ./.forgejo/actions/setup-nix
       - name: configure git
         run: |
           git config user.name  "dotfiles-deps-bot"
