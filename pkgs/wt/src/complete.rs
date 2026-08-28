@@ -1,7 +1,11 @@
-//! `wt __complete <worktrees|branches>` — dynamic completion candidates for
-//! the shell completion scripts. Prints one candidate per line. Never fails:
-//! completion must stay silent when something is off (not a repo, no
-//! .worktrees/), so every error collapses to empty output.
+//! `wt __complete <targets|worktrees|branches>` — dynamic completion
+//! candidates for the shell completion scripts. Prints one candidate per
+//! line. Never fails: completion must stay silent when something is off (not
+//! a repo, no .worktrees/), so every error collapses to empty output.
+//!
+//! `targets` (open/rm) is folder names ∪ worktree branch names — everything
+//! the unified resolver accepts short of a filesystem path. `worktrees` is
+//! kept so stale installed completion scripts don't go silent.
 
 use anyhow::Result;
 
@@ -20,6 +24,25 @@ fn candidates(r: &Runner, what: &str) -> Vec<String> {
         return Vec::new();
     };
     match what {
+        "targets" => {
+            let base = root.join(git::WORKTREE_DIR);
+            let mut seen = std::collections::HashSet::new();
+            git::list_worktrees(r, &root)
+                .unwrap_or_default()
+                .iter()
+                .filter(|wt| !wt.is_main)
+                .flat_map(|wt| {
+                    let folder = wt
+                        .path
+                        .strip_prefix(&base)
+                        .ok()
+                        .map(|rel| rel.display().to_string());
+                    folder.into_iter().chain(wt.branch.clone())
+                })
+                .filter(|c| !c.is_empty())
+                .filter(|c| seen.insert(c.clone()))
+                .collect()
+        }
         "worktrees" => {
             let base = root.join(git::WORKTREE_DIR);
             git::list_worktrees(r, &root)

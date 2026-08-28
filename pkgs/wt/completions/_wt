@@ -11,10 +11,10 @@ _wt_branches() {
   (( $#bs )) && _multi_parts -S '' / bs
 }
 
-_wt_worktrees() {
-  local -a wts
-  wts=(${(f)"$(wt __complete worktrees 2>/dev/null)"})
-  (( $#wts )) && _multi_parts -S '' / wts
+_wt_targets() {
+  local -a ts
+  ts=(${(f)"$(wt __complete targets 2>/dev/null)"})
+  (( $#ts )) && _multi_parts -S '' / ts
 }
 
 _wt() {
@@ -49,14 +49,20 @@ _wt() {
         open)
           _arguments \
             '--session[create a detached tmux session instead]' \
+            '--branch[treat target strictly as a branch name]' \
+            '--folder[treat target strictly as a .worktrees/ folder name]' \
+            '--path[treat target strictly as a filesystem path]' \
             '--dry-run[print planned commands instead of executing]' \
-            ': :_wt_worktrees'
+            ': :_wt_targets'
           ;;
         rm)
           _arguments \
             '--no-tmux[skip killing the matching tmux window]' \
+            '--branch[treat target strictly as a branch name]' \
+            '--folder[treat target strictly as a .worktrees/ folder name]' \
+            '--path[treat target strictly as a filesystem path]' \
             '--dry-run[print planned commands instead of executing]' \
-            ': :_wt_worktrees'
+            ': :_wt_targets'
           ;;
       esac
       ;;

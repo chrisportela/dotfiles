@@ -1034,6 +1034,126 @@ fn rm_kills_tmux_window_after_confirm() {
     });
 }
 
+/// A worktree whose folder name and branch name differ: .worktrees/dir-x on
+/// branch-x. Runs `wt init` first so .worktrees/ exists.
+fn add_mismatched_worktree(f: &Fixture) {
+    assert_success(&f.run_wt(&["init"]));
+    f.git(&["worktree", "add", "-b", "branch-x", ".worktrees/dir-x"]);
+}
+
+#[test]
+fn open_finds_worktree_by_folder_name_when_branch_differs() {
+    let mut f = Fixture::new();
+    f.with_tmux();
+    add_mismatched_worktree(&f);
+
+    let out = f.run_wt(&["open", "dir-x"]);
+    assert_success(&out);
+
+    // The window is named after the BRANCH, found via the folder name.
+    let windows = f.tmux(&["list-windows", "-a", "-F", "#{window_name}"]);
+    assert!(
+        windows.lines().any(|w| w == "branch-x"),
+        "expected window branch-x: {windows}"
+    );
+}
+
+#[test]
+fn rm_by_branch_name_kills_branch_named_window_of_mismatched_folder() {
+    let mut f = Fixture::new();
+    f.with_tmux();
+    add_mismatched_worktree(&f);
+    assert_success(&f.run_wt(&["open", "dir-x"]));
+
+    // merge? n — delete? n — kill window? default yes
+    let out = f.run_wt_stdin(&["rm", "branch-x"], "n\nn\n\n");
+    assert_success(&out);
+
+    assert!(!f.root.join(".worktrees/dir-x").exists());
+    f.wait_until("window branch-x gone", || {
+        !f.tmux(&["list-windows", "-a", "-F", "#{window_name}"])
+            .lines()
+            .any(|w| w == "branch-x")
+    });
+}
+
+#[test]
+fn rm_external_worktree_by_path() {
+    let f = Fixture::new();
+    f.git(&["worktree", "add", "-b", "ext-branch", "../claude-wt/ext"]);
+    let ext = f.base.join("claude-wt/ext");
+    assert!(ext.is_dir(), "fixture external worktree missing");
+
+    // merge? n — delete? n
+    let out = f.run_wt_stdin(&["rm", &ext.to_string_lossy()], "n\nn\n");
+    assert_success(&out);
+
+    assert!(!ext.exists(), "external worktree dir must be removed");
+    assert!(
+        f.base.join("claude-wt").exists(),
+        "container cleanup must stay inside .worktrees/"
+    );
+}
+
+#[test]
+fn target_kind_flags_restrict_interpretation() {
+    let f = Fixture::new();
+    add_mismatched_worktree(&f);
+
+    // --folder refuses a branch name…
+    let out = f.run_wt_stdin(&["rm", "--folder", "branch-x"], "");
+    assert!(!out.status.success());
+    assert!(
+        stderr_of(&out).contains("no worktree"),
+        "got: {}",
+        stderr_of(&out)
+    );
+
+    // …--branch refuses a folder name…
+    let out = f.run_wt(&["open", "--branch", "dir-x"]);
+    assert!(!out.status.success());
+    assert!(
+        stderr_of(&out).contains("no worktree"),
+        "got: {}",
+        stderr_of(&out)
+    );
+
+    // …the flags are mutually exclusive…
+    let out = f.run_wt_stdin(&["rm", "--branch", "--path", "dir-x"], "");
+    assert!(!out.status.success());
+    assert!(
+        stderr_of(&out).contains("cannot be used with"),
+        "got: {}",
+        stderr_of(&out)
+    );
+
+    // …and --path accepts a repo-relative path (cwd is the repo root).
+    let out = f.run_wt_stdin(&["rm", "--path", ".worktrees/dir-x"], "n\nn\n");
+    assert_success(&out);
+    assert!(!f.root.join(".worktrees/dir-x").exists());
+}
+
+#[test]
+fn complete_targets_lists_folder_names_and_branches_deduped() {
+    let f = Fixture::new();
+    add_mismatched_worktree(&f);
+    // folder == branch: must appear once, not twice.
+    f.git(&["worktree", "add", "-b", "plain", ".worktrees/plain"]);
+    // External worktree: only reachable by branch name.
+    f.git(&["worktree", "add", "-b", "ext-branch", "../claude-wt/ext"]);
+
+    let out = f.run_wt(&["__complete", "targets"]);
+    assert_success(&out);
+    let stdout = stdout_of(&out);
+    let mut lines: Vec<&str> = stdout.lines().collect();
+    lines.sort();
+    assert_eq!(
+        lines,
+        vec!["branch-x", "dir-x", "ext-branch", "plain"],
+        "folders ∪ branches, deduped, no main checkout"
+    );
+}
+
 #[test]
 fn ls_passes_through_git_worktree_list() {
     let f = Fixture::new();

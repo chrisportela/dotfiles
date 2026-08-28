@@ -15,8 +15,8 @@ def "nu-complete wt-branches" [] {
   do -i { ^wt __complete branches } | lines
 }
 
-def "nu-complete wt-worktrees" [] {
-  do -i { ^wt __complete worktrees } | lines
+def "nu-complete wt-targets" [] {
+  do -i { ^wt __complete targets } | lines
 }
 
 # Top-level dispatch so `wt <TAB>` offers subcommands
@@ -36,12 +36,18 @@ export extern "wt add" [
   --session    # create a detached tmux session instead
 ]
 export extern "wt open" [
-  branch?: string@"nu-complete wt-worktrees"
+  target?: string@"nu-complete wt-targets"
   --session    # create a detached tmux session instead
+  --branch     # treat target strictly as a branch name
+  --folder     # treat target strictly as a .worktrees/ folder name
+  --path       # treat target strictly as a filesystem path
 ]
 export extern "wt ls" []
 export extern "wt rm" [
-  branch?: string@"nu-complete wt-worktrees"
+  target?: string@"nu-complete wt-targets"
   --no-tmux    # skip killing the matching tmux window
+  --branch     # treat target strictly as a branch name
+  --folder     # treat target strictly as a .worktrees/ folder name
+  --path       # treat target strictly as a filesystem path
 ]
 export extern "wt help" []

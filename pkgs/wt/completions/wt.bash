@@ -19,16 +19,16 @@ _wt() {
       ;;
     open)
       if [[ "$cur" == --* ]]; then
-        COMPREPLY=( $(compgen -W "--session --dry-run" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--session --branch --folder --path --dry-run" -- "$cur") )
       else
-        COMPREPLY=( $(compgen -W "$(wt __complete worktrees 2>/dev/null)" -- "$cur") )
+        COMPREPLY=( $(compgen -W "$(wt __complete targets 2>/dev/null)" -- "$cur") )
       fi
       ;;
     rm)
       if [[ "$cur" == --* ]]; then
-        COMPREPLY=( $(compgen -W "--no-tmux --dry-run" -- "$cur") )
+        COMPREPLY=( $(compgen -W "--no-tmux --branch --folder --path --dry-run" -- "$cur") )
       else
-        COMPREPLY=( $(compgen -W "$(wt __complete worktrees 2>/dev/null)" -- "$cur") )
+        COMPREPLY=( $(compgen -W "$(wt __complete targets 2>/dev/null)" -- "$cur") )
       fi
       ;;
   esac

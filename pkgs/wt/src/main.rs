@@ -5,6 +5,7 @@ mod git;
 mod init;
 mod open;
 mod prompt;
+mod resolve;
 mod rm;
 mod setup;
 mod tmux;
@@ -52,8 +53,18 @@ enum Cmd {
         /// Create a detached tmux session instead of a window
         #[arg(long)]
         session: bool,
-        /// Branch whose worktree to open; omit to restore all worktrees
-        branch: Option<String>,
+        /// Treat <TARGET> strictly as a branch name
+        #[arg(long, requires = "target", conflicts_with_all = ["folder", "path"])]
+        branch: bool,
+        /// Treat <TARGET> strictly as a folder name under .worktrees/
+        #[arg(long, requires = "target", conflicts_with = "path")]
+        folder: bool,
+        /// Treat <TARGET> strictly as a filesystem path
+        #[arg(long, requires = "target")]
+        path: bool,
+        /// Worktree to open — branch name, .worktrees/ folder name, or path;
+        /// omit to restore all worktrees
+        target: Option<String>,
     },
     /// List active worktrees
     Ls,
@@ -62,14 +73,33 @@ enum Cmd {
         /// Skip killing the matching tmux window
         #[arg(long)]
         no_tmux: bool,
-        branch: String,
+        /// Treat <TARGET> strictly as a branch name
+        #[arg(long, conflicts_with_all = ["folder", "path"])]
+        branch: bool,
+        /// Treat <TARGET> strictly as a folder name under .worktrees/
+        #[arg(long, conflicts_with = "path")]
+        folder: bool,
+        /// Treat <TARGET> strictly as a filesystem path
+        #[arg(long)]
+        path: bool,
+        /// Worktree to remove — branch name, .worktrees/ folder name, or path
+        target: String,
     },
     /// Shell-completion helper (prints candidates, one per line)
     #[command(name = "__complete", hide = true)]
     Complete {
-        #[arg(value_parser = ["worktrees", "branches"])]
+        #[arg(value_parser = ["targets", "worktrees", "branches"])]
         what: String,
     },
+}
+
+fn target_kind(branch: bool, folder: bool, path: bool) -> resolve::TargetKind {
+    match (branch, folder, path) {
+        (true, _, _) => resolve::TargetKind::Branch,
+        (_, true, _) => resolve::TargetKind::Folder,
+        (_, _, true) => resolve::TargetKind::Path,
+        _ => resolve::TargetKind::Any,
+    }
 }
 
 fn run(cli: Cli) -> Result<()> {
@@ -92,17 +122,37 @@ fn run(cli: Cli) -> Result<()> {
                 session,
             },
         ),
-        Cmd::Open { session, branch } => open::run(&runner, &open::OpenOpts { branch, session }),
+        Cmd::Open {
+            session,
+            branch,
+            folder,
+            path,
+            target,
+        } => open::run(
+            &runner,
+            &open::OpenOpts {
+                target,
+                kind: target_kind(branch, folder, path),
+                session,
+            },
+        ),
         Cmd::Ls => {
             let root = git::repo_root(&runner)?;
             let out = runner.query("list worktrees", "git", &["worktree", "list"], Some(&root))?;
             print!("{out}");
             Ok(())
         }
-        Cmd::Rm { no_tmux, branch } => rm::run(
+        Cmd::Rm {
+            no_tmux,
+            branch,
+            folder,
+            path,
+            target,
+        } => rm::run(
             &runner,
             &rm::RmOpts {
-                name: branch,
+                target,
+                kind: target_kind(branch, folder, path),
                 no_tmux,
             },
         ),

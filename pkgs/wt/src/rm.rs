@@ -6,31 +6,36 @@
 
 use std::path::Path;
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 
 use crate::cmd::Runner;
 use crate::git;
 use crate::prompt::confirm;
+use crate::resolve;
 use crate::tmux;
 
 pub struct RmOpts {
-    pub name: String,
+    pub target: String,
+    pub kind: resolve::TargetKind,
     pub no_tmux: bool,
 }
 
 pub fn run(r: &Runner, opts: &RmOpts) -> Result<()> {
-    let name = opts.name.as_str();
     let root = git::repo_root(r)?;
     let worktrees_root = root.join(git::WORKTREE_DIR);
-    let wt_path = worktrees_root.join(name);
 
     // Resolve against REGISTERED worktrees, not the filesystem — a stale
     // container dir like `.worktrees/cportela/` is not removable.
     let worktrees = git::list_worktrees(r, &root)?;
-    let Some(target) = worktrees.iter().find(|w| !w.is_main && w.path == wt_path) else {
-        bail!("no worktree '{name}' (see wt ls)");
-    };
+    let target = resolve::find(&worktrees, &root, &opts.target, opts.kind)?;
+    let wt_path = target.path.clone();
     let branch = target.branch.clone();
+    // How messages name this worktree: .worktrees/-relative when inside,
+    // the full path for external worktrees (e.g. ~/.claude/worktrees/x).
+    let shown = match wt_path.strip_prefix(&root) {
+        Ok(rel) => rel.display().to_string(),
+        Err(_) => wt_path.display().to_string(),
+    };
 
     let inside_victim = std::env::current_dir()
         .ok()
@@ -59,21 +64,24 @@ pub fn run(r: &Runner, opts: &RmOpts) -> Result<()> {
     let wt_path_str = wt_path.display().to_string();
     remove_args.push(&wt_path_str);
     r.run("remove worktree", "git", &remove_args, Some(&root))?;
-    println!("Removed worktree at {}/{name}", git::WORKTREE_DIR);
+    println!("Removed worktree at {shown}");
 
-    if !r.dry_run {
+    if !r.dry_run && wt_path.starts_with(&worktrees_root) {
         clean_empty_parents(&worktrees_root, &wt_path);
     }
 
     branch_afterlife(r, &root, branch.as_deref())?;
 
-    // Kill the matching tmux window (named after the worktree) last.
-    if !opts.no_tmux {
+    // Kill the matching tmux window last. Windows are named after the BRANCH
+    // (that's what add/open create) — detached worktrees never got one.
+    if !opts.no_tmux
+        && let Some(window) = branch.as_deref()
+    {
         let t = tmux::Tmux::from_env();
         if t.inside_tmux()
             && let Some(session) = t.current_session(r)
-            && let Some(window_id) = t.window_named(r, &session, name)
-            && confirm(&format!("Kill tmux window '{name}'?"), true)?
+            && let Some(window_id) = t.window_named(r, &session, window)
+            && confirm(&format!("Kill tmux window '{window}'?"), true)?
         {
             t.kill_window(r, &window_id)?;
         }
