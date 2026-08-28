@@ -24,7 +24,8 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
         with:
           fetch-depth: 0
           # Use the bot PAT so the PR this workflow opens will trigger the ci
@@ -32,11 +33,14 @@ jobs:
           # further workflows (Forgejo anti-recursion guard), so a real user
           # PAT is required here.
           token: ${{ secrets.DEPS_BOT_TOKEN }}
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/bot-identity@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: bot identity
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/bot-identity@main
         with:
           name: dotfiles-deps-bot
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/update-flake@main
+      - name: update flake
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/update-flake@main
         id: update
         with:
           dry-run: ${{ inputs.dry_run }}
@@ -44,7 +48,8 @@ jobs:
             Merge is gated on the full `ci` workflow: flake check, every
             package/devShell/home activation on all three platforms, and the
             ada/flamme/lux/roxy host closures.
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/create-update-pr@main
+      - name: open update PR
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/create-update-pr@main
         if: steps.update.outputs.changed == 'true'
         with:
           token: ${{ secrets.DEPS_BOT_TOKEN }}

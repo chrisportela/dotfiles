@@ -31,11 +31,13 @@ jobs:
   check:
     runs-on: lucy-docker
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
       # Docker jobs get nix from the bind-mounted host store; see the
       # setup-nix action in cafecitocloud/actions for how (and why arch
       # filtering matters).
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
       - name: flake check
         run: nix flake check --all-systems --no-warn-dirty
 
@@ -49,8 +51,10 @@ jobs:
       aarch64: ${{ steps.plan.outputs.aarch64 }}
       darwin: ${{ steps.plan.outputs.darwin }}
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
       - name: compute build matrices
         id: plan
         run: nix develop .#dotfiles --command bash scripts/ci/plan-jobs.sh
@@ -67,8 +71,10 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.linux) }}
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
       - name: build ${{ matrix.attr }}
         env:
           ATTR: ${{ matrix.attr }}
@@ -86,8 +92,10 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.aarch64) }}
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
       - name: build ${{ matrix.attr }}
         env:
           ATTR: ${{ matrix.attr }}
@@ -104,7 +112,8 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.darwin) }}
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
       - name: build ${{ matrix.attr }}
         env:
           ATTR: ${{ matrix.attr }}
@@ -118,8 +127,10 @@ jobs:
     needs: [plan, linux]
     runs-on: lucy-docker
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
       - name: build ada toplevel
         run: nix build --no-link --print-out-paths --no-warn-dirty '.#hydraJobs.hosts.ada.x86_64-linux'
       - name: build flamme toplevel
@@ -129,7 +140,8 @@ jobs:
     needs: [plan, darwin]
     runs-on: darwin
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
       - name: build lux system
         run: nix build --no-link --print-out-paths --no-warn-dirty '.#darwinConfigurations.lux.system'
       - name: build roxy system
@@ -144,7 +156,9 @@ jobs:
     needs: [plan, aarch64]
     runs-on: lucy-docker
     steps:
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
-      - uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
+      - name: checkout
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
+      - name: setup nix
+        uses: https://git.cafecito.cloud/cafecitocloud/actions/setup-nix@main
       - name: build rpi4 sd image
         run: nix build --no-link --print-out-paths --no-warn-dirty '.#packages.x86_64-linux.pi'
