@@ -24,7 +24,10 @@ let
       with sdkPkgs;
       [
         sdkPkgs."build-tools-${apiVersion}-0-0"
-        cmdline-tools-latest
+        # Pinned: cmdline-tools 23 dropped sdkmanager for an `android` binary
+        # that android-nixpkgs doesn't patchelf yet, breaking the sdk-env
+        # composition build (DF-31)
+        cmdline-tools-22-0
         emulator
         sdkPkgs."platforms-android-${apiVersion}"
 

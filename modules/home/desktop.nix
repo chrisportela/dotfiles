@@ -18,6 +18,9 @@ in
       "vault-bin"
       "vscode"
       "discord"
+      # nixpkgs split discord into a wrapper + discord-unwrapped; the unfree
+      # check runs per-derivation, so both names must be allowed
+      "discord-unwrapped"
       "obsidian"
     ];
 
