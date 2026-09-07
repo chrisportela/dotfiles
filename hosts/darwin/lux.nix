@@ -5,7 +5,7 @@
 {
   chrisportela.forgejo-runner = {
     enable = true;
-    uuid = "1df45530-8a2a-4a18-ae94-49936aa2a863";
+    uuid = "76afbb38-7b59-4b54-955f-a96858e345df";
     labels = [
       "lux-darwin:host"
       "darwin:host"
