@@ -9,10 +9,18 @@ let
   nixDesktop = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILsqpaOSjCbxoTry3oYRHElBMbnFvZVVa5sxjbTZO/lX cmp@ada";
   # Host key (/etc/ssh/ssh_host_ed25519_key.pub) — agenix decrypts with it at boot.
   luxHost = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL1StbI94/404imm10SA0nxRh0SnVXhR6rNrMm5vrl8K host@lux";
+  flammeHost = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAts2P5LEiUqSyEnMIUTJvKR9rkDZfDTvTz9cL9PFzfm root@flamme";
+  roxyHost = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP3tQKczL4HeBlZ30BI9osYAN/x5ixzOmy/saQ7eStwM";
+  adaHost = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINzAkODt0f1rcTToP7ajlylJtj4IfmyLgCW8yE5ze+UT root@ada";
+  liaraHost = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIv+ND0xR+zZnGMSv2gx3IyYbhDYugOfB3pR5FYipW/m root@liara";
 in
 {
   hostKeys = {
     lux = luxHost;
+    flamme = flameHost;
+    roxy = roxyHost;
+    ada = adaHost;
+    liara = liaraHost;
   };
 
   keys = {
