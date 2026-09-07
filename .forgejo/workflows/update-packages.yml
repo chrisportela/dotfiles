@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   update:
-    runs-on: lucy-docker
+    runs-on: nix-docker
     permissions:
       contents: write
       pull-requests: write

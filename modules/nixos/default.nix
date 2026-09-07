@@ -3,6 +3,7 @@
   cafecitocloud = ./cafecitocloud;
   common = ./common.nix;
   # ddc = ./ddc.nix;
+  forgejo-runner = ./forgejo-runner;
   gaming = ./gaming.nix;
   memory-protection = ./memory-protection;
   network = ./network.nix;

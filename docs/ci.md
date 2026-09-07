@@ -27,7 +27,7 @@ can't reach git.cafecito.cloud.
 
 | Platform | Runner | Notes |
 | --- | --- | --- |
-| x86_64-linux | `lucy-docker` (infra repo) | Docker containers sharing the host `/nix/store` + nix-daemon (`NIX_REMOTE=daemon`). Jobs must run the shared `setup-nix` action. Job timeout 3h; if a single leaf ever outgrows it, move that job to `nix-heavy:host` (infra WIP, 8h). |
+| x86_64-linux | `nix-docker` → lucy (infra repo) + flamme (`modules/nixos/forgejo-runner`) | Docker containers sharing the host `/nix/store` + nix-daemon (`NIX_REMOTE=daemon`). Jobs must run the shared `setup-nix` action. Job timeout 3h; if a single leaf ever outgrows it, move that job to `nix-heavy:host` (lucy native runner, 8h). |
 | aarch64-linux | same | binfmt emulation — the build hosts set `boot.binfmt.emulatedSystems = ["aarch64-linux"]`, so the daemon accepts aarch64 builds. |
 | aarch64-darwin | `darwin` → lux (`modules/darwin/forgejo-runner`) | Native launchd runner; if lux is offline, PRs wait for it. |
 
@@ -77,6 +77,16 @@ push+pin flow stays for the public cachix cache.
    config file.
 4. **lux niks3 token**: mint on liara (infra repo), then `agenix -e
    lux-niks3-api-token.age`.
+4a. **flamme runner secret** (same declarative flow as lux): generate with
+   `openssl rand -hex 20`, register on liara with
+   `forgejo-cli actions register --name flamme-docker --secret <secret>`
+   (prints the runner UUID), store `TOKEN=<secret>` with `cd secrets &&
+   agenix -e flamme-forgejo-runner-token.age` (replaces the committed
+   placeholder), and set the printed UUID in
+   `hosts/nixos/flamme/default.nix`
+   (`chrisportela.forgejo-runner.instances.flamme-docker.uuid`, currently a
+   zeros placeholder). Note the NixOS token format is `TOKEN=<hex>` (env
+   file), unlike lux's raw-hex secret.
 5. **Optional** Actions secret `GH_API_TOKEN` (a GitHub read-only token) so
    package update scripts that hit api.github.com avoid anonymous rate
    limits.

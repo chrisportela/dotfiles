@@ -20,4 +20,10 @@ in
   # niks3 API token for lux's post-build cache push
   # (modules/darwin/nix-cache-push). Minted on liara (infra repo).
   "lux-niks3-api-token.age".publicKeys = [ sshKeys.hostKeys.lux ] ++ admins;
+
+  # Credential for flamme's pre-registered Forgejo Actions runner
+  # (modules/nixos/forgejo-runner), TOKEN=<40-hex> env format. Generate with
+  # `openssl rand -hex 20`, register the same value server-side on liara:
+  #   forgejo-cli actions register --name flamme-docker --secret <secret>
+  "flamme-forgejo-runner-token.age".publicKeys = [ sshKeys.hostKeys.flamme ] ++ admins;
 }

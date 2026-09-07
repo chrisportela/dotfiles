@@ -9,6 +9,7 @@
     ./openssh.nix
     ./gaming.nix
     ./cafecitocloud
+    ./forgejo-runner
     ./memory-protection
     ./nginx-cloudflare.nix
   ];

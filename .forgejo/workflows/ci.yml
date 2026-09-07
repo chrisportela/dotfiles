@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: lucy-docker
+    runs-on: nix-docker
     steps:
       - name: checkout
         uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
@@ -45,7 +45,7 @@ jobs:
   # per-system package/shell/home sets) so the job list can never drift
   # from what the flake actually exposes.
   plan:
-    runs-on: lucy-docker
+    runs-on: nix-docker
     outputs:
       linux: ${{ steps.plan.outputs.linux }}
       aarch64: ${{ steps.plan.outputs.aarch64 }}
@@ -64,7 +64,7 @@ jobs:
 
   linux:
     needs: plan
-    runs-on: lucy-docker
+    runs-on: nix-docker
     name: linux (${{ matrix.name }})
     strategy:
       fail-fast: false
@@ -85,7 +85,7 @@ jobs:
   # which adds aarch64-linux to the daemon's extra-platforms).
   aarch64:
     needs: plan
-    runs-on: lucy-docker
+    runs-on: nix-docker
     name: aarch64 (${{ matrix.name }})
     strategy:
       fail-fast: false
@@ -125,7 +125,7 @@ jobs:
 
   hosts:
     needs: [plan, linux]
-    runs-on: lucy-docker
+    runs-on: nix-docker
     steps:
       - name: checkout
         uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main
@@ -154,7 +154,7 @@ jobs:
   pi:
     if: github.event_name == 'push'
     needs: [plan, aarch64]
-    runs-on: lucy-docker
+    runs-on: nix-docker
     steps:
       - name: checkout
         uses: https://git.cafecito.cloud/cafecitocloud/actions/checkout@main

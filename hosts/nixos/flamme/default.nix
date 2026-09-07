@@ -23,6 +23,33 @@
       defaults.claude = true;
       user.authorizedKeys = (import ../../../lib/ssh-keys.nix).users.cmp;
     };
+
+    # CI runner for git.cafecito.cloud: shares the x86_64-linux `nix-docker`
+    # queue with lucy (infra repo). Jobs run in containers with the host
+    # /nix/store + nix-daemon shared, so aarch64 binfmt builds work too.
+    forgejo-runner = {
+      enable = true;
+      instances.flamme-docker = {
+        backend = "docker";
+        # Placeholder until the runner is registered on liara
+        # (`forgejo-cli actions register --name flamme-docker --secret <secret>`);
+        # the printed UUID goes here, the secret goes in the agenix token file.
+        uuid = "00000000-0000-0000-0000-000000000000";
+        tokenFile = config.age.secrets.flamme-forgejo-runner-token.path;
+        labels = [
+          "flamme-docker:docker://docker.gitea.com/runner-images:ubuntu-latest"
+          "nix-docker:docker://docker.gitea.com/runner-images:ubuntu-latest"
+        ];
+        docker.shareHostNixStore = true;
+        docker.shareHostCAs = true;
+      };
+    };
+  };
+
+  age.secrets.flamme-forgejo-runner-token = {
+    # TOKEN=<40-hex> env format, read by the runner service's EnvironmentFile.
+    file = ../../../secrets/flamme-forgejo-runner-token.age;
+    mode = "400";
   };
 
   networking = {
