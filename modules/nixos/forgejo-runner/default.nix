@@ -230,32 +230,31 @@ in
             ]
             ++ inst.native.packages
           );
-          settings =
-            {
-              # Labels live in the daemon config: forgejo-runner syncs config
-              # labels to the server on startup, so label changes take effect
-              # without touching the runner identity.
-              runner = {
-                labels = inst.labels;
-                timeout = inst.timeout;
-                capacity = inst.capacity;
-              };
-              # Declarative connection (Forgejo's current registration flow):
-              # uuid+token authenticate directly, replacing `register`. The
-              # token placeholder is substituted from $TOKEN at service start
-              # — this file is world-readable in the nix store.
-              server.connections.forgejo = {
-                url = cfg.serverUrl;
-                uuid = inst.uuid;
-                token = "@FORGEJO_RUNNER_TOKEN@";
-              };
-            }
-            // lib.optionalAttrs (allContainerOpts != [ ]) {
-              container = {
-                options = lib.concatStringsSep " " allContainerOpts;
-                valid_volumes = allValidVolumes;
-              };
+          settings = {
+            # Labels live in the daemon config: forgejo-runner syncs config
+            # labels to the server on startup, so label changes take effect
+            # without touching the runner identity.
+            runner = {
+              labels = inst.labels;
+              timeout = inst.timeout;
+              capacity = inst.capacity;
             };
+            # Declarative connection (Forgejo's current registration flow):
+            # uuid+token authenticate directly, replacing `register`. The
+            # token placeholder is substituted from $TOKEN at service start
+            # — this file is world-readable in the nix store.
+            server.connections.forgejo = {
+              url = cfg.serverUrl;
+              uuid = inst.uuid;
+              token = "@FORGEJO_RUNNER_TOKEN@";
+            };
+          }
+          // lib.optionalAttrs (allContainerOpts != [ ]) {
+            container = {
+              options = lib.concatStringsSep " " allContainerOpts;
+              valid_volumes = allValidVolumes;
+            };
+          };
         }
       ) enabledInstances;
     };
@@ -270,7 +269,9 @@ in
       lib.nameValuePair "gitea-runner-${utils.escapeSystemdPath name}" {
         serviceConfig =
           let
-            configFile = settingsFormat.generate "config.yaml" config.services.gitea-actions-runner.instances.${name}.settings;
+            configFile =
+              settingsFormat.generate "config.yaml"
+                config.services.gitea-actions-runner.instances.${name}.settings;
           in
           {
             ExecStartPre = lib.mkForce [
