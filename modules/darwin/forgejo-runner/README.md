@@ -34,8 +34,8 @@ which forgejo-runner v12+ reads directly:
 1. Generate the shared secret: `openssl rand -hex 20`.
 2. Pre-register it server-side (liara):
    `forgejo-cli actions register --name lux --secret <secret>` — this
-   prints the runner UUID (derived from the secret's first 32 hex chars,
-   formatted 8-4-4-4-12).
+   prints the runner UUID (minted server-side; also visible in the forgejo
+   DB's `action_runner` table).
 3. Set `uuid` in the host config (it is not sensitive) and encrypt the
    secret as the agenix secret referenced by `secretFile`
    (`cd secrets && agenix -e lux-forgejo-runner-secret.age`; replaces the

@@ -15,9 +15,9 @@ let
   # is defined entirely in the config file — url + uuid + token loaded from
   # a file — replacing the deprecated `register`/`create-runner-file`
   # commands. The runner identity is created server-side once with
-  # `forgejo-cli actions register --secret <secret>`; the uuid is derived
-  # from the secret's first 32 hex chars, so nothing is minted at runtime
-  # and there is no orphaned-runner problem.
+  # `forgejo-cli actions register --secret <secret>`, which mints and
+  # prints the uuid; nothing is created at runtime and there is no
+  # orphaned-runner problem.
   configFile = settingsFormat.generate "forgejo-runner-config.yaml" {
     runner = {
       labels = cfg.labels;
@@ -87,8 +87,7 @@ in
     uuid = lib.mkOption {
       type = lib.types.str;
       description = ''
-        UUID of the pre-registered runner. Derived from the shared secret's
-        first 32 hex chars (8-4-4-4-12); printed by
+        UUID of the pre-registered runner; printed by
         `forgejo-cli actions register`. Not sensitive — the secret is.
       '';
     };

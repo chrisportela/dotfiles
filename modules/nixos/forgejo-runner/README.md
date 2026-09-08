@@ -47,7 +47,8 @@ directory from the systemd `EnvironmentFile` (`tokenFile`).
 1. Generate the shared secret: `openssl rand -hex 20`.
 2. Pre-register it server-side (liara):
    `forgejo-cli actions register --name <name> --secret <secret>` — prints
-   the runner UUID (derived from the secret's first 32 hex chars).
+   the runner UUID (minted server-side; also visible in the forgejo DB's
+   `action_runner` table).
 3. Set `uuid` in the host config and encrypt `TOKEN=<secret>` as the agenix
    secret referenced by `tokenFile`.
 
