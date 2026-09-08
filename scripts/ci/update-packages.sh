@@ -98,8 +98,25 @@ for pkg in "${all_pkgs[@]}"; do
   else
     cmd_args=("$(echo "$script_json" | jq -r '.')")
   fi
+  # Nix ≥ 2.35 lazy trees: eval returns /nix/store/*-source/... paths
+  # without materializing them in the store, so the path may not exist —
+  # especially after this loop's own commits create a tree state nothing
+  # has built yet. The script is in the checkout anyway; map it back.
+  script_src="${cmd_args[0]}"
+  if [ ! -e "$script_src" ]; then
+    case "$script_src" in
+      /nix/store/*-source/*)
+        script_src="$PWD/${script_src#/nix/store/*-source/}"
+        ;;
+    esac
+  fi
+  if [ ! -e "$script_src" ]; then
+    echo "==> WARNING: update script for $pkg not found at ${cmd_args[0]}; skipping." >&2
+    failed+=("$pkg"$'\t'"update script path missing")
+    continue
+  fi
   tmp=$(mktemp)
-  cp "${cmd_args[0]}" "$tmp"
+  cp "$script_src" "$tmp"
   chmod +x "$tmp"
   cmd_args[0]="$tmp"
 

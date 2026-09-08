@@ -19,7 +19,7 @@ fi
 echo "Updating $current -> $version"
 
 src_hash=$(nix hash convert --to sri --hash-algo sha256 \
-  "$(nix-prefetch-url --unpack "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz" 2>/dev/null)")
+  "$(nix-prefetch-url --unpack "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz")")
 
 sed -i "s|version = \"$current\"|version = \"$version\"|" "$pkg"
 sed -i "s|hash = \"sha256-[^\"]*\"|hash = \"$src_hash\"|" "$pkg"

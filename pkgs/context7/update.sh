@@ -33,7 +33,7 @@ sed -i "s|rev = \"$old_rev\"|rev = \"$rev\"|" "$pkg"
 
 # Update source hash
 src_hash=$(nix hash convert --to sri --hash-algo sha256 \
-  "$(nix-prefetch-url --unpack "https://github.com/upstash/context7/archive/${rev}.tar.gz" 2>/dev/null)")
+  "$(nix-prefetch-url --unpack "https://github.com/upstash/context7/archive/${rev}.tar.gz")")
 sed -i "s|hash = \"sha256-[^\"]*\"|hash = \"$src_hash\"|" "$pkg"
 
 # Update pnpmDeps hash by setting dummy and capturing correct one

@@ -42,7 +42,7 @@ declare -A platforms=( [x86_64-linux]="linux/x64" [aarch64-linux]="linux/arm64" 
 for platform in "${!platforms[@]}"; do
   url="https://downloads.cursor.com/lab/$release/${platforms[$platform]}/agent-cli-package.tar.gz"
   echo "Prefetching $platform..."
-  store_path=$(nix-prefetch-url "$url" --name "cursor-agent-$version" 2>/dev/null)
+  store_path=$(nix-prefetch-url "$url" --name "cursor-agent-$version")
   hash=$(nix hash convert --to sri --hash-algo sha256 "$store_path")
 
   # Replace the hash on the line following this platform's URL
