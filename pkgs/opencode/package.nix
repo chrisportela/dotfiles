@@ -6,8 +6,8 @@
 }:
 
 let
-  version = "1.18.29";
-  srcHash = "sha256-lCXlxTOhcX70jxJAbpolyGlIxQK2nst+6bFhq3Xzdmc=";
+  version = "1.18.30";
+  srcHash = "sha256-G4qRDwJ6i5SpsiHoej31HRPLOHpkLc66B+UmdzOY1+o=";
 
   src = fetchFromGitHub {
     owner = "anomalyco";
