@@ -21,6 +21,7 @@ let
       terraform
       setup-envrc
       wt
+      aws-client-vpn
       claude-code
       cursor-agent
       opencode

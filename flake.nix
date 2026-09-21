@@ -172,6 +172,9 @@
               pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
               default = legacyPackages.homeConfigurations.cmp.activationPackage;
             }
+            (nixpkgs.lib.optionalAttrs (nixpkgs.lib.hasSuffix "-linux" system) {
+              aws-client-vpn = pkgs.callPackage ./pkgs/aws-client-vpn/default.nix { };
+            })
             (nixpkgs.lib.optionalAttrs (system == flake-utils.lib.system.aarch64-darwin) {
               cliclick = pkgs.callPackage ./pkgs/cliclick/default.nix { };
               peekaboo = pkgs.callPackage ./pkgs/peekaboo/default.nix { };
@@ -343,6 +346,7 @@
               wt.${sys} = pkgs.wt;
               llmfit.${sys} = pkgs.llmfit;
               niks3-client.${sys} = pkgs.niks3-client;
+              aws-client-vpn.${sys} = pkgs.aws-client-vpn;
             };
 
             devShells = {

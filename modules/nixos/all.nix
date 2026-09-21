@@ -3,6 +3,7 @@
 {
   imports = [
     ./agent-vms
+    ./aws-client-vpn
     ./nixpkgs.nix
     ./common.nix
     ./network.nix

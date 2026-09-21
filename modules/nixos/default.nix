@@ -1,5 +1,6 @@
 {
   agent-vms = ./agent-vms;
+  aws-client-vpn = ./aws-client-vpn;
   cafecitocloud = ./cafecitocloud;
   common = ./common.nix;
   # ddc = ./ddc.nix;
