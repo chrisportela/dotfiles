@@ -29,6 +29,13 @@
     }
   );
 
+  aws-client-vpn = (
+    final: prev:
+    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
+      aws-client-vpn = self.packages.${prev.stdenv.system}.aws-client-vpn;
+    }
+  );
+
   claude-code = (
     final: prev:
     let
