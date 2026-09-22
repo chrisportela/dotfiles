@@ -1,0 +1,45 @@
+#compdef aws-client-vpn
+
+# Candidates come from `aws-client-vpn __complete`.
+
+_aws_client_vpn_configs() {
+  local -a files
+  files=(${(f)"$(aws-client-vpn __complete configs 2>/dev/null)"})
+  # Already-exported profiles first, then any other path.
+  (( $#files )) && _describe -t configs 'exported profile' files
+  _files -g '*.ovpn'
+}
+
+_aws_client_vpn_endpoints() {
+  local -a ids
+  ids=(${(f)"$(aws-client-vpn __complete endpoints 2>/dev/null)"})
+  (( $#ids )) && _describe -t endpoints 'endpoint id' ids
+}
+
+_aws_client_vpn_profiles() {
+  local -a names
+  names=(${(f)"$(aws-client-vpn __complete profiles 2>/dev/null)"})
+  (( $#names )) && _describe -t profiles 'AWS profile' names
+}
+
+_aws_client_vpn_regions() {
+  local -a names
+  names=(${(f)"$(aws-client-vpn __complete regions 2>/dev/null)"})
+  (( $#names )) && _describe -t regions 'AWS region' names
+}
+
+_aws-client-vpn() {
+  _arguments -s -S \
+    '(-c --config)'{-c,--config}'[OpenVPN profile exported from the endpoint]:profile:_aws_client_vpn_configs' \
+    '(-e --endpoint)'{-e,--endpoint}'[Client VPN endpoint id to export a profile from]:endpoint:_aws_client_vpn_endpoints' \
+    '(-p --profile)'{-p,--profile}'[AWS CLI profile used for the export]:aws profile:_aws_client_vpn_profiles' \
+    '(-r --region)'{-r,--region}'[AWS region used for the export]:region:_aws_client_vpn_regions' \
+    '--port[loopback port the assertion is posted back to]:port:' \
+    '--timeout[seconds to wait for the browser login]:seconds:' \
+    '--dns[how pushed DNS servers are applied]:mode:(auto systemd-resolved none)' \
+    '--no-browser[print the login URL instead of opening a browser]' \
+    '(-h --help)'{-h,--help}'[show help]' \
+    '*::openvpn argument:_default'
+}
+
+_aws-client-vpn "$@"

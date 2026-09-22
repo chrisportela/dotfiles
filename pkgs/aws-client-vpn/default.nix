@@ -8,7 +8,9 @@
   openvpn,
   writeShellApplication,
   coreutils,
+  gawk,
   gnugrep,
+  installShellFiles,
   iproute2,
   python3,
   systemd,
@@ -48,11 +50,12 @@ let
     systemd
   ];
 in
-writeShellApplication {
+(writeShellApplication {
   name = "aws-client-vpn";
 
   runtimeInputs = [
     coreutils
+    gawk
     gnugrep
     xdg-utils
   ];
@@ -86,4 +89,18 @@ writeShellApplication {
     platforms = lib.platforms.linux;
     mainProgram = "aws-client-vpn";
   };
-}
+}).overrideAttrs
+  (prev: {
+    # writeShellApplication builds through writeTextFile, whose buildCommand
+    # replaces the standard phases — a postInstall would never run.
+    nativeBuildInputs = (prev.nativeBuildInputs or [ ]) ++ [ installShellFiles ];
+
+    buildCommand = prev.buildCommand + ''
+      installShellCompletion --cmd aws-client-vpn \
+        --bash ${./completions/aws-client-vpn.bash} \
+        --zsh ${./completions/_aws-client-vpn} \
+        --fish ${./completions/aws-client-vpn.fish}
+      install -Dm644 ${./completions/aws-client-vpn.nu} \
+        "$out/share/nushell/vendor/autoload/aws-client-vpn.nu"
+    '';
+  })

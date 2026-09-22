@@ -30,6 +30,11 @@ aws-client-vpn --config ~/.config/aws-client-vpn/default.ovpn
 The tunnel itself runs under `sudo`; nothing is installed as a service, so a
 connection lasts only as long as the foreground command.
 
+Shell completions for bash, zsh, fish and nushell come with the package and are
+picked up from `environment.systemPackages` — see the
+[package README](../../../pkgs/aws-client-vpn/README.md#shell-completion) for
+what each flag completes.
+
 ## Dependencies
 
 - `pkgs.aws-client-vpn` via the overlay in `overlays/default.nix`

@@ -108,6 +108,24 @@ to `systemd-resolved` through OpenVPN's `update-systemd-resolved` helper when
 resolved is running; otherwise the push is ignored and the run says so. Pass
 `--dns none` to silence it, or `--dns systemd-resolved` to require it.
 
+### Shell completion
+
+Completions ship for bash, zsh, fish and nushell, installed to the usual
+places, so any of them picks them up when this package is in the environment.
+They complete flag names and:
+
+| Flag | Candidates |
+| --- | --- |
+| `--profile` | profiles from `~/.aws/config` (`[profile NAME]`, plus `[default]`) and every section of `~/.aws/credentials`. `[sso-session …]` and `[services …]` are not profiles and are skipped. `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` are honoured. |
+| `--config` | the `*.ovpn` files already in the profile directory, then ordinary path completion |
+| `--endpoint` | endpoint ids of those same files, minus `default`. Completing live endpoints would mean an `ec2:DescribeClientVpnEndpoints` call per keystroke, so it is deliberately limited to what has been exported before. |
+| `--region` | the regions named in `~/.aws/config`, rather than a hardcoded list that would go stale |
+| `--dns` | `auto`, `systemd-resolved`, `none` |
+
+The candidates come from `aws-client-vpn __complete <kind>`, a hidden helper
+kept out of `--help`, mirroring `wt __complete`. It never exits non-zero: a
+completion that errors is worse than one that offers nothing.
+
 ### Secrets on disk
 
 The assertion is a bearer credential. It is written to a `0600` file in a
@@ -120,7 +138,7 @@ variable, both of which are world-readable through `/proc`.
 - `openvpn` from nixpkgs, rebuilt with `openvpn-aws-2.6.patch`
 - `python3` — resolves the endpoint and runs the loopback listener
 - `xdg-utils` — opens the browser; `--no-browser` if it is not wanted
-- `coreutils`, `gnugrep`
+- `coreutils`, `gnugrep`, `gawk` (the latter parses the AWS config for completions)
 - `sudo` at runtime, for the second phase only
 - `awscli2` at runtime, only for `--endpoint`
 - `systemd` and `iproute2` at runtime, only for `--dns systemd-resolved`
@@ -131,17 +149,31 @@ variable, both of which are world-readable through `/proc`.
 - `openvpn-aws-2.6.patch` — AWS's OpenVPN patch, for the 2.6 series
 - `aws-client-vpn.sh` — the handshake, as a standalone script
 - `saml-listener.py` — the `127.0.0.1:35001` listener
+- `completions/` — bash, zsh, fish and nushell completions
 - `tests/test-connect-flow.sh` — end-to-end test of the handshake against stubs
+- `tests/test-completions.sh` — completion tests against a fake AWS setup
 
 ## Tests
 
 ```bash
 ./tests/test-connect-flow.sh
+./tests/test-completions.sh
 ```
 
-Runs the real script with a stub OpenVPN that answers with an `AUTH_FAILED`
-challenge, a stub resolver, and a curl standing in for the identity provider,
-then asserts on what the second phase would have sent. No network, no root.
+`test-connect-flow.sh` runs the real script with a stub OpenVPN that answers
+with an `AUTH_FAILED` challenge, a stub resolver, and a curl standing in for the
+identity provider, then asserts on what the second phase would have sent.
+
+`test-completions.sh` drives the completion scripts against a fake `HOME` with
+an AWS config, a credentials file and exported profiles. bash is required; zsh,
+fish and nushell are exercised when installed and skipped otherwise:
+
+```bash
+nix shell nixpkgs#zsh nixpkgs#fish nixpkgs#nushell \
+  --command ./tests/test-completions.sh
+```
+
+Neither test needs the network or root.
 
 ## Alternatives
 

@@ -41,6 +41,93 @@ die() {
   exit 1
 }
 
+# Candidate values for the shell completions in completions/, reached as
+# `aws-client-vpn __complete <kind>`. Kept out of usage() on purpose: it is
+# plumbing, not an interface. Never fails — a completion that errors is worse
+# than one that offers nothing.
+complete_candidates() {
+  local dir="${XDG_CONFIG_HOME:-$HOME/.config}/aws-client-vpn"
+  local file entry name
+
+  case "${1:-}" in
+    flags)
+      printf '%s\n' \
+        -c --config \
+        -e --endpoint \
+        -p --profile \
+        -r --region \
+        --port --timeout --dns --no-browser \
+        -h --help
+      ;;
+    profiles)
+      {
+        # In ~/.aws/config a profile is [profile NAME], with [default] the one
+        # exception; [sso-session ...] and [services ...] are not profiles.
+        file="${AWS_CONFIG_FILE:-$HOME/.aws/config}"
+        if [ -r "$file" ]; then
+          awk '
+            /^[[:space:]]*\[[[:space:]]*profile[[:space:]]+[^]]+\][[:space:]]*$/ {
+              name = $0
+              sub(/^[[:space:]]*\[[[:space:]]*profile[[:space:]]+/, "", name)
+              sub(/[[:space:]]*\][[:space:]]*$/, "", name)
+              print name
+              next
+            }
+            /^[[:space:]]*\[[[:space:]]*default[[:space:]]*\][[:space:]]*$/ { print "default" }
+          ' "$file"
+        fi
+
+        # In ~/.aws/credentials every section is a profile.
+        file="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+        if [ -r "$file" ]; then
+          awk '
+            /^[[:space:]]*\[[^]]+\][[:space:]]*$/ {
+              name = $0
+              sub(/^[[:space:]]*\[[[:space:]]*/, "", name)
+              sub(/[[:space:]]*\][[:space:]]*$/, "", name)
+              if (name !~ /[[:space:]]/) print name
+            }
+          ' "$file"
+        fi
+      } | sort -u
+      ;;
+    configs)
+      for entry in "$dir"/*.ovpn; do
+        if [ -f "$entry" ]; then printf '%s\n' "$entry"; fi
+      done
+      ;;
+    endpoints)
+      # Endpoint ids of the profiles already exported; asking AWS for the live
+      # list would need credentials and a round trip per keystroke.
+      for entry in "$dir"/*.ovpn; do
+        if [ -f "$entry" ]; then
+          name="$(basename "$entry" .ovpn)"
+          if [ "$name" != default ]; then printf '%s\n' "$name"; fi
+        fi
+      done
+      ;;
+    regions)
+      if [ -r "${AWS_CONFIG_FILE:-$HOME/.aws/config}" ]; then
+        awk '
+          /^[[:space:]]*region[[:space:]]*=/ {
+            sub(/^[^=]*=[[:space:]]*/, "")
+            sub(/[[:space:]]*$/, "")
+            if ($0 != "") print
+          }
+        ' "${AWS_CONFIG_FILE:-$HOME/.aws/config}" | sort -u
+      fi
+      ;;
+    dns)
+      printf '%s\n' auto systemd-resolved none
+      ;;
+  esac
+}
+
+if [ "${1:-}" = "__complete" ]; then
+  complete_candidates "${2:-}"
+  exit 0
+fi
+
 config="${AWS_VPN_CONFIG:-}"
 endpoint="${AWS_VPN_ENDPOINT_ID:-}"
 aws_profile="${AWS_PROFILE:-}"
