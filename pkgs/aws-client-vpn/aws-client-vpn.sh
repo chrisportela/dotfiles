@@ -8,6 +8,9 @@
 #
 # The nix wrapper prepends OPENVPN_AWS, SAML_LISTENER, PYTHON, RESOLVED_HELPER
 # and RESOLVED_PATH.
+#
+# Descended from samm-git/aws-vpn-client's aws-connect.sh; see ./README.md for
+# the full list of prior art.
 
 usage() {
   cat <<'EOF'

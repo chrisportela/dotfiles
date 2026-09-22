@@ -1,3 +1,10 @@
+AWS Client VPN's changes to OpenVPN, for the 2.6 series.
+
+Taken from the modified OpenVPN sources AWS publishes for GPL compliance
+(linked from the proprietary client's Third Party Notices), by way of
+samm-git/aws-vpn-client and dzervas/aws-client-vpn-flake. GPL-2.0-only, like
+OpenVPN itself. See ./README.md for what it changes and why.
+
 diff --git a/src/openvpn/buffer.h b/src/openvpn/buffer.h
 index d988ef2..3760175 100644
 --- a/src/openvpn/buffer.h

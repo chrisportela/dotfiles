@@ -32,10 +32,10 @@ installs its binary as `openvpn-aws` and keeps it off `$PATH`: it is not a
 drop-in `openvpn`, and pointing it at a normal VPN will fail in confusing ways.
 
 The patch in `openvpn-aws-2.6.patch` is AWS's own, from the modified OpenVPN
-sources they publish for GPL compliance (linked from the Windows/macOS client's
-"About" box). It is carried in the community clients — `samm-git/aws-vpn-client`,
-`dzervas/aws-client-vpn-flake` — and this is the same change, refreshed for the
-2.6 series. It applies cleanly to OpenVPN 2.6.19 (nixpkgs 25.11) and 2.6.21.
+sources they publish for GPL compliance, refreshed for the 2.6 series. It
+applies cleanly to OpenVPN 2.6.19 (nixpkgs 25.11) and 2.6.21. See
+[Credits and prior art](#credits-and-prior-art) — almost nothing here was
+worked out from scratch.
 
 Note that **none of this applies to certificate-based (mutual TLS) endpoints**.
 Those work with the `openvpn` in nixpkgs and need nothing from this package.
@@ -181,10 +181,53 @@ one, and otherwise says which shell it got instead of failing obscurely.
 
 Neither test needs the network or root.
 
+## Credits and prior art
+
+This package is mostly other people's reverse engineering, reassembled. What
+each source contributed:
+
+- **AWS.** `openvpn-aws-2.6.patch` is their own change, taken from the modified
+  OpenVPN sources they publish for GPL compliance (linked from the proprietary
+  client's Third Party Notices). GPL-2.0-only, like OpenVPN itself.
+- **["AWS Client VPN internals"](https://smallhacks.wordpress.com/2020/07/08/aws-client-vpn-internals/)**
+  by `sammczk` (July 2020) — the write-up that worked out what the proprietary
+  client actually does: a wrapper driving OpenVPN over its management
+  interface, the HTTP server on `127.0.0.1:35001`, the deliberately failing
+  first connection, and the two limits (`USER_PASS_LEN`, then
+  `TLS_CHANNEL_BUF_SIZE`) that stop a stock binary. The "Why AWS needs its own
+  OpenVPN" section above is that post's findings, re-checked against the 2.6
+  sources.
+- **[samm-git/aws-vpn-client](https://github.com/samm-git/aws-vpn-client)** —
+  the original proof of concept, and the direct ancestor of
+  `aws-client-vpn.sh`: `ACS::35001` as the first-phase password, the
+  `CRV1::<session id>::<assertion>` reply, resolving a random label once and
+  pinning that address for both phases, and a loopback listener for the
+  assertion.
+- **[dzervas/aws-client-vpn-flake](https://github.com/dzervas/aws-client-vpn-flake)**
+  (archived October 2025) — the Nix packaging this started from: overriding
+  nixpkgs' `openvpn` with the patch, naming the patch file by OpenVPN minor
+  version, and exporting a missing profile with
+  `aws ec2 export-client-vpn-client-configuration`.
+- **[imgrant/aws-vpn-client](https://github.com/imgrant/aws-vpn-client)** — a
+  Go client building on Ralim's and samm-git's work; used here to confirm the
+  CRV1 field layout and the password format.
+- **OpenVPN.** `update-systemd-resolved`, shipped inside the nixpkgs `openvpn`
+  derivation, is what applies the pushed DNS servers.
+- **[`pkgs/wt`](../wt/README.md)** in this repo — the completion layout: a
+  hidden `__complete` subcommand feeding thin per-shell scripts installed with
+  `installShellCompletion`.
+
+What this adds over the flake it started from: the assertion is kept out of
+argv and the process environment, the `SAMLResponse` is decoded by a real form
+parser rather than a single-substitution `printf` trick, every runtime
+dependency is declared instead of inherited from `$PATH`, the challenge is
+parsed field-by-field instead of by colon index, DNS is wired to
+systemd-resolved, and there are tests and shell completions.
+
 ## Alternatives
 
 - **AWS Client VPN for Linux**, AWS's own build, ships as an Ubuntu `.deb` with
   a bundled `acvc-openvpn` and a systemd service. It has never been packaged in
   nixpkgs.
-- **`dzervas/aws-client-vpn-flake`**, archived in October 2025, is the flake this
-  package started from.
+- **OpenVPN 3** handles web-based auth for some providers, but not AWS's
+  modified control channel.
