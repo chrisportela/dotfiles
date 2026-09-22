@@ -169,9 +169,15 @@ an AWS config, a credentials file and exported profiles. bash is required; zsh,
 fish and nushell are exercised when installed and skipped otherwise:
 
 ```bash
-nix shell nixpkgs#zsh nixpkgs#fish nixpkgs#nushell \
+nix shell nixpkgs#bashInteractive nixpkgs#zsh nixpkgs#fish nixpkgs#nushell \
   --command ./tests/test-completions.sh
 ```
+
+`bashInteractive` is in there because the bash checks need programmable
+completion (`compgen`, `complete`), and inside a nix devshell `env bash` can
+resolve to something that does not have it — or to a shell that is not bash at
+all. The test probes for that, re-execs under a capable bash when it can find
+one, and otherwise says which shell it got instead of failing obscurely.
 
 Neither test needs the network or root.
 

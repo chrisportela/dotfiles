@@ -9,6 +9,29 @@
 #
 # Usage: ./test-completions.sh
 
+# The bash checks below need a shell with programmable completion. `env bash`
+# inside a nix devshell can land on something that does not have it — or on
+# something that is not bash at all — so probe, and re-exec under a shell that
+# does rather than reporting a puzzling "compgen: command not found".
+if ! (compgen -W x -- x) > /dev/null 2>&1; then
+  for candidate in /run/current-system/sw/bin/bash /usr/bin/bash /bin/bash; do
+    if [ -x "$candidate" ] && "$candidate" -c 'compgen -W x -- x' > /dev/null 2>&1; then
+      exec "$candidate" "$0" "$@"
+    fi
+  done
+  {
+    echo "error: no bash with programmable completion found."
+    echo "  argv0:   $0"
+    echo "  bash:    $(command -v bash 2>/dev/null || echo '<none on PATH>')"
+    echo "  version: $(bash --version 2>&1 | head -1 || true)"
+    echo
+    echo "Re-run with one in scope, e.g.:"
+    echo "  nix shell nixpkgs#bashInteractive nixpkgs#zsh nixpkgs#fish nixpkgs#nushell \\"
+    echo "    --command ./tests/test-completions.sh"
+  } >&2
+  exit 1
+fi
+
 set -euo pipefail
 
 here="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -95,7 +118,7 @@ pass "an unknown kind is quietly empty"
 complete_with_bash() {
   # $@ = the words on the command line; completes the last one.
   local words=("$@")
-  bash --noprofile --norc -c '
+  "${BASH:-bash}" --noprofile --norc -c '
     source "$1"; shift
     COMP_WORDS=("$@")
     COMP_CWORD=$(($# - 1))
