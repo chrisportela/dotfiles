@@ -7,12 +7,12 @@
 let
   plane-sdk = python3Packages.buildPythonPackage rec {
     pname = "plane_sdk";
-    version = "0.3.0";
+    version = "0.3.1";
     pyproject = true;
 
     src = fetchPypi {
       inherit pname version;
-      hash = "sha256-CrbGxxi4+yJ0C5xlKpmuLrvyX+ssnbcKdiCY69rK5NI=";
+      hash = "sha256-4JPw1syDoVXMnhZw0m2hTo9X9Nwz/tlnKqeF9wZi7GQ=";
     };
 
     build-system = [ python3Packages.setuptools ];
@@ -27,12 +27,12 @@ let
 in
 python3Packages.buildPythonApplication rec {
   pname = "plane_mcp_server";
-  version = "0.3.2";
+  version = "0.3.3";
   pyproject = true;
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-5Thb3QWVoA0wOlEcV9zozNI6CLxzFQwGqrcqEvYAIuM=";
+    hash = "sha256-Iia+DWopGCz7au7I+q4qQWpCULQj91/tB+u5BT9f26k=";
   };
 
   build-system = [ python3Packages.setuptools ];
