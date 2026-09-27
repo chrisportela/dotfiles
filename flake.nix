@@ -159,7 +159,6 @@
               opencode-cursor = pkgs.pkgsUnstable.callPackage ./pkgs/opencode-cursor/package.nix { };
               claude-code = pkgs.pkgsUnstable.callPackage ./pkgs/claude-code/package.nix { };
               cursor-agent = pkgs.pkgsUnstable.callPackage ./pkgs/cursor-agent/package.nix { };
-              opencode = pkgs.pkgsUnstable.callPackage ./pkgs/opencode/package.nix { };
               context7 = pkgs.pkgsUnstable.callPackage ./pkgs/context7/default.nix { };
               claude-history = inputs.claude-history.packages.${system}.default;
               claude-session = pkgs.pkgsUnstable.callPackage ./pkgs/claude-session/package.nix { };
@@ -336,7 +335,6 @@
               opencode-cursor.${sys} = pkgs.opencode-cursor;
               claude-code.${sys} = pkgs.claude-code;
               cursor-agent.${sys} = pkgs.cursor-agent;
-              opencode.${sys} = pkgs.opencode;
               context7.${sys} = pkgs.context7;
               claude-history.${sys} = pkgs.claude-history;
               claude-session.${sys} = pkgs.claude-session;

@@ -78,17 +78,17 @@
     }
   );
 
+  # opencode comes from nixpkgs-unstable, not a vendored build. We used to
+  # carry upstream's nix/ expressions in pkgs/opencode with its hashes.json
+  # copied verbatim, but those node_modules hashes are only reproducible with
+  # the bun version upstream pins (1.3.13 in 2026-09) and drifted every time
+  # our nixpkgs-unstable moved bun (1.4.2 broke all linux hashes). nixpkgs
+  # maintains its own hashes against its own bun, so its build is the one
+  # that reliably works. Stable pkgs gets the unstable package; inside
+  # pkgsUnstable itself (no pkgsUnstable attr) this is a no-op.
   opencode = (
-    final: prev:
-    let
-      ours = self.packages.${final.stdenv.system}.opencode;
-    in
-    {
-      opencode =
-        if prev ? opencode && prev.lib.versionAtLeast prev.opencode.version ours.version then
-          prev.opencode
-        else
-          ours;
+    final: prev: {
+      opencode = if prev ? pkgsUnstable then prev.pkgsUnstable.opencode else prev.opencode;
     }
   );
 

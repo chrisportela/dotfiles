@@ -97,9 +97,8 @@ push+pin flow stays for the public cachix cache.
 ## Gotchas encoded in the scripts (don't regress these)
 
 - Bots never run `nix fmt` (formatter drift produces noisy diffs) and never
-  regenerate the vendored IFD-workaround files (`pkgs/opencode/*.nix`,
-  `pkgs/claude-session/skill/SKILL.md`) — those belong to the package
-  update scripts, and a nixpkgs bump that invalidates them is *supposed* to
+  regenerate vendored IFD-workaround files (`pkgs/claude-session/skill/SKILL.md`)
+  — those belong to the package update scripts, and a nixpkgs bump that invalidates them is *supposed* to
   fail CI and hold the PR for a human.
 - `virby` is rev-pinned in its input URL; `nix flake update` correctly
   leaves it alone.
