@@ -153,6 +153,8 @@ let
     };
 
   enabledInstances = lib.filterAttrs (_: inst: inst.enable) cfg.instances;
+
+  sliceName = "forgejo-runner";
 in
 {
   options.chrisportela.forgejo-runner = {
@@ -168,6 +170,25 @@ in
       type = lib.types.attrsOf (lib.types.submodule instanceModule);
       default = { };
       description = "Runner instances to configure";
+    };
+
+    slice = {
+      enable = lib.mkEnableOption ''
+        a shared forgejo-runner.slice holding every runner daemon and its
+        docker job containers (via --cgroup-parent), with memory ceilings on
+        the slice as a whole. Nix builds a job triggers through a shared
+        nix-daemon run in nix-daemon.service and are NOT covered by this slice
+      '';
+      memoryMax = lib.mkOption {
+        type = lib.types.str;
+        example = "6G";
+        description = "Hard memory ceiling for the whole slice (kernel OOM-kills inside it).";
+      };
+      memoryHigh = lib.mkOption {
+        type = lib.types.str;
+        example = "5G";
+        description = "Soft threshold; the slice is throttled/reclaimed above it.";
+      };
     };
   };
 
@@ -206,7 +227,12 @@ in
           extraHostOpts = lib.optionals isDocker (
             map (h: "--add-host=${h}:host-gateway") inst.docker.extraHosts
           );
-          allContainerOpts = nixShareOpts ++ caShareOpts ++ extraHostOpts;
+          # Job containers are children of dockerd, not the runner service,
+          # so they must be re-parented explicitly to land in the slice.
+          sliceOpts = lib.optionals (isDocker && cfg.slice.enable) [
+            "--cgroup-parent=${sliceName}.slice"
+          ];
+          allContainerOpts = nixShareOpts ++ caShareOpts ++ extraHostOpts ++ sliceOpts;
           allValidVolumes = nixShareVols ++ caShareVols;
         in
         {
@@ -290,8 +316,22 @@ in
               '')
             ];
             ExecStart = lib.mkForce "${lib.getExe config.services.gitea-actions-runner.package} daemon --config \${STATE_DIRECTORY}/${name}/config.yaml";
-          };
+          }
+          // lib.optionalAttrs cfg.slice.enable { Slice = "${sliceName}.slice"; };
       }
     ) enabledInstances;
+
+    systemd.slices.${sliceName} = lib.mkIf cfg.slice.enable {
+      description = "Forgejo Actions runners and their job containers";
+      sliceConfig = {
+        MemoryMax = cfg.slice.memoryMax;
+        MemoryHigh = cfg.slice.memoryHigh;
+        ManagedOOMMemoryPressure = "kill";
+        ManagedOOMMemoryPressureLimit = "80%";
+        # Opt in to oomd's SwapUsedLimit kills: swap exhaustion should end
+        # CI jobs before it reaches the interactive session.
+        ManagedOOMSwap = "kill";
+      };
+    };
   };
 }
