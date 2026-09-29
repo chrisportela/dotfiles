@@ -83,9 +83,10 @@
     # zram) is unnecessary; 100 keeps anon and file-cache reclaim balanced.
     "vm.swappiness" = 100;
 
-    # Wake kswapd at ~2% free RAM (~1.3GB on 64GB) instead of the default
-    # 0.1% (~64MB). Default is too late on big-memory boxes.
-    "vm.watermark_scale_factor" = 200;
+    # Wake kswapd at ~1% free RAM (~1.3GB on 128GB) instead of the default
+    # 0.1% (~128MB). Default is too late on big-memory boxes. Was 200 (2%)
+    # on 64GB; halved at the 128GB upgrade to keep the same absolute gap.
+    "vm.watermark_scale_factor" = 100;
 
     # Bias toward keeping file cache under pressure. Helps nix-store reads
     # + ZFS ARC interactions.
@@ -95,14 +96,25 @@
   zramSwap.enable = false;
 
   # zswap: compressed-page pool in front of Optane swap. Hot pages stay
-  # compressed in RAM (40% pool ≈ 25.6GB on 64GB), cold pages spill to
-  # the 4×16GB Optane swap partitions.
+  # compressed in RAM, cold pages spill to the 4×16GB Optane swap
+  # partitions. Every zswapped page still reserves a swap slot, so the pool
+  # can't usefully exceed 64GB ÷ compression ratio (~3:1 zstd ≈ 21GB);
+  # 20% of 128GB ≈ 25.6GB matches the old 40%-of-64GB ceiling.
   boot.kernelParams = [
     "zswap.enabled=1"
     "zswap.compressor=zstd"
     "zswap.zpool=zsmalloc"
-    "zswap.max_pool_percent=40"
+    "zswap.max_pool_percent=20"
     "zswap.shrinker_enabled=Y"
+
+    # Cap ZFS ARC at 32GiB (~25% of RAM). OpenZFS >= 2.3 defaults c_max to
+    # ~RAM-1G on Linux, and ARC is NOT charged to any cgroup — it's
+    # invisible to the memory-protection ceilings below and only shrinks
+    # reactively, lagging behind PSI/oomd. 32GiB covers zroot + tank
+    # metadata and hot data; leaves the rest predictable for workloads.
+    # Kernel param (not modprobe.d) so it applies when zfs.ko loads in
+    # stage 1 for the ZFS root.
+    "zfs.zfs_arc_max=34359738368"
   ];
 
   # systemd-oomd: userspace OOM killer using PSI (pressure stall) metrics.
@@ -126,22 +138,35 @@
 
   # Memory protection: cgroup ceilings + critical-service hardening.
   # See modules/nixos/memory-protection/README.md for layer architecture.
+  #
+  # Ceilings are RAM-only (cgroup v2 memory.max/high; memory.swap.max stays
+  # "max"), but reclaim at either limit swaps out rather than killing. So:
+  #   memoryHigh < usable RAM minus the always-on floor → a runaway gets
+  #     throttled and pushed into zswap/Optane before host RAM runs out.
+  #   memoryMax > RAM, sized against 125GiB RAM + 64GiB swap ≈ 189GiB →
+  #     the group can keep swapping; the kernel OOM-kills only once swap is
+  #     nearly gone (oomd's SwapUsedLimit=90% usually acts first).
+  # Always-on floor measured 2026-09-28: llama ~10G, microvms ~4G (hermes
+  # up to 8G), docker services ~4G, rest of system.slice ~5G ≈ 23G, plus
+  # ARC (capped 32G above, shrinkable to ~4G c_min). One heavy group at a
+  # time is assumed; oomd arbitrates if several go heavy together.
   chrisportela.memory-protection = {
     enable = true;
     nixDaemon = {
       enable = true;
-      memoryMax = "90G";
-      memoryHigh = "75G";
+      memoryMax = "160G";
+      memoryHigh = "96G";
     };
     dockerSlice = {
       enable = true;
-      memoryMax = "90G";
-      memoryHigh = "75G";
+      memoryMax = "160G";
+      memoryHigh = "96G";
     };
     userSlice = {
       enable = true;
-      memoryMax = "100G";
-      memoryHigh = "85G";
+      # Higher: KDE + browser + Steam + ad-hoc builds share this slice.
+      memoryMax = "176G";
+      memoryHigh = "104G";
     };
     microvmHost = true;
   };
