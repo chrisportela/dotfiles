@@ -33,6 +33,7 @@ let
       context7
       claude-history
       claude-session
+      git-annex
       poetry
       openldap
     ]);

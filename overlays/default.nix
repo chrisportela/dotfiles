@@ -64,20 +64,6 @@
     }
   );
 
-  llmfit = (
-    final: prev:
-    let
-      ours = self.packages.${final.stdenv.system}.llmfit;
-    in
-    {
-      llmfit =
-        if prev ? llmfit && prev.lib.versionAtLeast prev.llmfit.version ours.version then
-          prev.llmfit
-        else
-          ours;
-    }
-  );
-
   # opencode comes from nixpkgs-unstable, not a vendored build. We used to
   # carry upstream's nix/ expressions in pkgs/opencode with its hashes.json
   # copied verbatim, but those node_modules hashes are only reproducible with
@@ -138,6 +124,18 @@
   claude-session = (
     final: prev: {
       claude-session = self.packages.${final.stdenv.system}.claude-session;
+    }
+  );
+
+  # git-annex 10.20260421's bup special remote passes `bup -r <path>`, which
+  # bup 0.34 (what nixpkgs pins) no longer accepts for plain paths. Upstream's
+  # fix switches to `bup -d` for paths; see the patch header for the upstream
+  # commit and the rebase notes. Drop this once nixpkgs' git-annex reaches
+  # 10.20260902 or later, which includes the fix — past that point the patch
+  # will fail to apply and break the build.
+  git-annex = (
+    final: prev: {
+      git-annex = prev.haskell.lib.compose.appendPatch ./patches/git-annex-support-bup-0.34.patch prev.git-annex;
     }
   );
 
