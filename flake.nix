@@ -166,7 +166,6 @@
               setup-envrc = pkgs.callPackage ./pkgs/setup-envrc.nix { };
               update = pkgs.callPackage ./pkgs/update.nix { };
               wt = pkgs.callPackage ./pkgs/wt/default.nix { };
-              llmfit = pkgs.callPackage ./pkgs/llmfit/package.nix { };
               niks3-client = inputs.niks3.packages.${system}.niks3;
               pi = self.nixosConfigurations.rpi4.config.system.build.sdImage;
               default = legacyPackages.homeConfigurations.cmp.activationPackage;
@@ -342,7 +341,6 @@
               setup-envrc.${sys} = pkgs.setup-envrc;
               update.${sys} = pkgs.update;
               wt.${sys} = pkgs.wt;
-              llmfit.${sys} = pkgs.llmfit;
               niks3-client.${sys} = pkgs.niks3-client;
               aws-client-vpn.${sys} = pkgs.aws-client-vpn;
             };

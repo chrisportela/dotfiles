@@ -64,20 +64,6 @@
     }
   );
 
-  llmfit = (
-    final: prev:
-    let
-      ours = self.packages.${final.stdenv.system}.llmfit;
-    in
-    {
-      llmfit =
-        if prev ? llmfit && prev.lib.versionAtLeast prev.llmfit.version ours.version then
-          prev.llmfit
-        else
-          ours;
-    }
-  );
-
   # opencode comes from nixpkgs-unstable, not a vendored build. We used to
   # carry upstream's nix/ expressions in pkgs/opencode with its hashes.json
   # copied verbatim, but those node_modules hashes are only reproducible with
