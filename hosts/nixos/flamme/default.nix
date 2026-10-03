@@ -42,6 +42,14 @@
         docker.shareHostNixStore = true;
         docker.shareHostCAs = true;
       };
+      # Runner daemon + job containers as one cgroup. Nix builds jobs start
+      # run in nix-daemon.service instead (see memory-protection.nixDaemon
+      # in hardware.nix and nix.settings below).
+      slice = {
+        enable = true;
+        memoryMax = "6G";
+        memoryHigh = "5G";
+      };
     };
   };
 
@@ -88,10 +96,18 @@
     "armv6l-linux"
   ];
 
-  nix.settings.trusted-users = [
-    "root"
-    "cmp"
-  ];
+  nix.settings = {
+    trusted-users = [
+      "root"
+      "cmp"
+    ];
+    # The defaults (max-jobs = auto → 18, cores = 0 → all 18 threads) let one
+    # CI job fan out to 18 builds × 18 compilers on 15 GiB. Runner capacity
+    # is already 1; this is where job concurrency actually multiplies.
+    # Also applies to local builds on flamme.
+    max-jobs = 2;
+    cores = 8;
+  };
 
   users.users.cmp = {
     extraGroups = [

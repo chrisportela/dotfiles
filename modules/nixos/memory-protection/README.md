@@ -48,11 +48,16 @@ chrisportela.memory-protection = {
 };
 ```
 
-## Example: smaller host (e.g., flamme, 16GB)
+## Example: smaller host (flamme, 15 GiB)
 
 ```nix
 chrisportela.memory-protection = {
   enable = true;
-  nixDaemon = { enable = true; memoryMax = "14G"; memoryHigh = "12G"; };
+  nixDaemon = { enable = true; memoryMax = "11G"; memoryHigh = "9G"; };
+  microvmHost = true;
 };
 ```
+
+flamme pairs this with `nix.settings.max-jobs = 2; cores = 8;` and a
+`chrisportela.forgejo-runner.slice` ceiling for CI job containers (see
+`hosts/nixos/flamme/`).

@@ -17,6 +17,8 @@ lucy's `nix-docker` instance in the infra repo.
 | `enable` | `false` | Enable the runners. |
 | `serverUrl` | `https://git.cafecito.cloud` | Forgejo instance (tailnet-only; the host must be on the tailnet). |
 | `instances.<name>` | `{ }` | One attrset per runner daemon. |
+| `slice.enable` | `false` | Put every runner daemon (`Slice=`) and its docker job containers (`--cgroup-parent`) in one `forgejo-runner.slice`, managed by systemd-oomd. |
+| `slice.memoryMax` / `slice.memoryHigh` | — | Hard ceiling / soft throttle threshold for that slice as a whole. |
 
 Per instance:
 
@@ -55,6 +57,24 @@ directory from the systemd `EnvironmentFile` (`tokenFile`).
 Rotation: re-register server-side, re-encrypt, update `uuid`, and
 `systemctl restart gitea-runner-<name>` (systemd escapes dashes:
 `gitea-runner-flamme\x2ddocker.service`).
+
+## Memory containment (`slice`)
+
+A CI job's memory lives in up to three cgroups, and `slice` covers only the
+first two:
+
+1. the runner daemon (`gitea-runner-<name>.service`), which is tiny;
+2. the job container, which by default is a child of **dockerd**
+   (`system.slice`), not of the runner service, so capping the service alone
+   caps nothing. `--cgroup-parent=forgejo-runner.slice` re-parents it. This
+   relies on docker's systemd cgroup driver, the NixOS default on cgroup v2;
+3. **nix builds** a `shareHostNixStore` job starts through the daemon socket,
+   which run in `nix-daemon.service`. Bound them with
+   `chrisportela.memory-protection.nixDaemon` and the host's
+   `nix.settings.max-jobs`/`cores`, not with this slice.
+
+Verify on a live job: `docker inspect -f '{{.HostConfig.CgroupParent}}' <id>`
+should print `forgejo-runner.slice`, and `oomctl` should list the slice.
 
 ## Dependencies
 

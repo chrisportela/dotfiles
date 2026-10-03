@@ -60,44 +60,70 @@
     systemd-boot.consoleMode = "max";
   };
 
+  # Memory: same four-layer design as ada (see hosts/nixos/ada/hardware.nix
+  # and modules/nixos/memory-protection/README.md), sized for 15 GiB RAM.
   boot.kernel.sysctl = {
-    "vm.swappiness" = 133;
+    # Heuristic overcommit. Per-cgroup ceilings (Layer 2 below) are the real
+    # runaway protection; strict mode 2 made legitimate allocations fail.
+    "vm.overcommit_memory" = 0;
 
-    # Overcommit mode 2: strict accounting. malloc fails with ENOMEM instead of
-    # letting the system exhaust all memory and having the kernel OOM-kill
-    # critical services (systemd, dbus, tmux).
-    "vm.overcommit_memory" = 2;
-    "vm.overcommit_ratio" = 95;
+    # zswap in front of a disk swapfile: balanced anon vs file-cache reclaim.
+    # (133 was tuned for zram, where swapping is nearly free.)
+    "vm.swappiness" = 100;
+
+    # Wake kswapd at ~2% free RAM (~300MB) instead of the 0.1% default.
+    "vm.watermark_scale_factor" = 200;
+
+    # Bias toward keeping dentry/inode cache (nix-store lookups).
+    "vm.vfs_cache_pressure" = 50;
   };
 
-  zramSwap = {
-    enable = true;
-    priority = 5;
-    algorithm = "zstd";
-    memoryPercent = 50;
-  };
+  # Layer 1: zswap (compressed pool in RAM) backed by a swapfile. The
+  # swapfile sits inside the LUKS root, so it's encrypted at rest.
+  zramSwap.enable = false;
+  swapDevices = [
+    {
+      device = "/var/lib/swapfile";
+      size = 16 * 1024; # MiB
+    }
+  ];
+  # No zswap.zpool: kernel 7.x dropped the parameter (zsmalloc only).
+  boot.kernelParams = [
+    "zswap.enabled=1"
+    "zswap.compressor=zstd"
+    "zswap.max_pool_percent=25"
+    "zswap.shrinker_enabled=Y"
+  ];
 
-  # systemd-oomd: userspace OOM killer using PSI (pressure stall) metrics.
-  # Acts on cgroup-level pressure before the kernel OOM killer fires.
+  # Layer 3: systemd-oomd acts on cgroup PSI pressure before the kernel
+  # OOM killer fires.
   systemd.oomd = {
     enable = true;
     enableRootSlice = true;
     enableUserSlices = true;
     enableSystemSlice = true;
+    settings.OOM = {
+      # Default 30s is too patient on an interactive laptop.
+      DefaultMemoryPressureDurationSec = "10s";
+      # Swap nearly exhausted means reclaim budget is gone. Only acts on
+      # cgroups with ManagedOOMSwap=kill: nix-daemon (below) and
+      # forgejo-runner.slice. The GNOME session is deliberately not opted in.
+      SwapUsedLimit = "90%";
+    };
   };
+  systemd.services.nix-daemon.serviceConfig.ManagedOOMSwap = "kill";
 
-  # Protect critical system services from OOM
-  systemd.services.dbus.serviceConfig.ManagedOOMPreference = "avoid";
-  systemd.services.systemd-journald.serviceConfig.ManagedOOMPreference = "avoid";
-
-  # Limit nix-daemon builds to prevent runaway memory consumption.
-  # MemoryHigh triggers systemd-oomd to kill within this cgroup.
-  # MemoryMax is a hard ceiling enforced by the kernel.
-  systemd.services.nix-daemon.serviceConfig = {
-    ManagedOOMMemoryPressure = "kill";
-    ManagedOOMMemoryPressureLimit = "80%";
-    MemoryMax = "14G";
-    MemoryHigh = "12G";
+  # Layers 2 + 4: cgroup ceilings + critical-service hardening. The CI
+  # runner's own slice is configured next to the runner in default.nix.
+  chrisportela.memory-protection = {
+    enable = true;
+    # Every CI nix build lands here (jobs share the host daemon socket).
+    nixDaemon = {
+      enable = true;
+      memoryMax = "11G";
+      memoryHigh = "9G";
+    };
+    microvmHost = true;
   };
 
   # Enable OpenGL
