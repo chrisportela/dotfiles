@@ -8,6 +8,7 @@
   writableTmpDirAsHomeHook ? null,
   bubblewrap ? null,
   procps,
+  nodejs,
   socat ? null,
 }:
 
@@ -44,6 +45,8 @@ buildNpmPackage (finalAttrs: {
   postInstall = ''
     # npmInstallHook creates a Node.js shim for bin/claude, but claude-code
     # is now a native binary. Replace the shim with a direct wrapper.
+    # nodejs is suffixed (not prefixed) so npx-based MCP servers and plugin
+    # hooks always find node, while a project devShell's pinned node wins.
     rm $out/bin/claude
     makeWrapper $out/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe $out/bin/claude \
       --set DISABLE_AUTOUPDATER 1 \
@@ -57,7 +60,8 @@ buildNpmPackage (finalAttrs: {
             lib.optional (bubblewrap != null) bubblewrap ++ lib.optional (socat != null) socat
           )
         )
-      }
+      } \
+      --suffix PATH : ${lib.makeBinPath [ nodejs ]}
   '';
 
   doInstallCheck = versionCheckHook != null && writableTmpDirAsHomeHook != null;
