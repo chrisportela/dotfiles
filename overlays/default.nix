@@ -29,6 +29,12 @@
     }
   );
 
+  prime-agent = (
+    final: prev: {
+      prime-agent = self.packages.${final.stdenv.system}.prime-agent;
+    }
+  );
+
   aws-client-vpn = (
     final: prev:
     prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {

@@ -13,5 +13,6 @@
     ./forgejo-runner
     ./memory-protection
     ./nginx-cloudflare.nix
+    ./prime-agent
   ];
 }

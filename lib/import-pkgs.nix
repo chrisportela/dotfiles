@@ -24,6 +24,7 @@ let
       aws-client-vpn
       claude-code
       cursor-agent
+      prime-agent
       opencode
       openclaw
       opencode-cursor

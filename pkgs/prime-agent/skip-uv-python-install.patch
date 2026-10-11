@@ -1,0 +1,18 @@
+--- a/crates/pa-core/src/kernel/bootstrap/venv.rs
++++ b/crates/pa-core/src/kernel/bootstrap/venv.rs
+@@ -134,15 +134,6 @@
+     run_async(
+         &uv,
+         &[
+-            "python".to_string(),
+-            "install".to_string(),
+-            PYTHON_VERSION.to_string(),
+-        ],
+-    )
+-    .await?;
+-    run_async(
+-        &uv,
+-        &[
+             "venv".to_string(),
+             venv_str,
+             "--python".to_string(),

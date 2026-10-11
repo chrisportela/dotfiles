@@ -57,6 +57,7 @@ in
         claude-history
         claude-monitor
         claude-session
+        prime-agent
       ]
       ++ [
         cursor-agent

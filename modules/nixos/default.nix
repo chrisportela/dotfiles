@@ -11,6 +11,7 @@
   nixpkgs = ./nixpkgs.nix;
   nginx-cloudflare = ./nginx-cloudflare.nix;
   openssh = ./openssh.nix;
+  prime-agent = ./prime-agent;
   # Single module that imports all of the above; use this in host configs.
   default = ./all.nix;
 }
