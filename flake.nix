@@ -335,6 +335,7 @@
               opencode-cursor.${sys} = pkgs.opencode-cursor;
               claude-code.${sys} = pkgs.claude-code;
               cursor-agent.${sys} = pkgs.cursor-agent;
+              prime-agent.${sys} = pkgs.prime-agent;
               context7.${sys} = pkgs.context7;
               claude-history.${sys} = pkgs.claude-history;
               claude-session.${sys} = pkgs.claude-session;
