@@ -133,18 +133,6 @@
     }
   );
 
-  # git-annex 10.20260421's bup special remote passes `bup -r <path>`, which
-  # bup 0.34 (what nixpkgs pins) no longer accepts for plain paths. Upstream's
-  # fix switches to `bup -d` for paths; see the patch header for the upstream
-  # commit and the rebase notes. Drop this once nixpkgs' git-annex reaches
-  # 10.20260902 or later, which includes the fix — past that point the patch
-  # will fail to apply and break the build.
-  git-annex = (
-    final: prev: {
-      git-annex = prev.haskell.lib.compose.appendPatch ./patches/git-annex-support-bup-0.34.patch prev.git-annex;
-    }
-  );
-
   # poetry 2.4.1's test suite spins up a MockEnv defaulting to version_info
   # (3, 7, 0) and exercises the embedded-pip fallback path. virtualenv 21.6.1
   # (pulled in transitively) only bundles bootstrap pip/setuptools wheels for
